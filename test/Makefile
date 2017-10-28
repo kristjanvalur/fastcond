@@ -1,13 +1,36 @@
+IDIR=../fastcond
+LDLIBS=-lpthread -lm
 
-qtest1: qtest.c
-	cc -o qtest1 -I ../fastcond qtest.c ../fastcond/fastcond.c -lpthread
-
-strongtest_p: strongtest.c
-	cc -o strongtest_p -I ../fastcond strongtest.c ../fastcond/fastcond.c -lpthread
-strongtest_wc: strongtest.c
-	cc -o strongtest_wc -DFASTCOND_PATCH_WCOND -I ../fastcond strongtest.c ../fastcond/fastcond.c -lpthread
-strongtest_c: strongtest.c
-	cc -o strongtest_c -DFASTCOND_PATCH_COND -I ../fastcond strongtest.c ../fastcond/fastcond.c -lpthread
+INCLUDES=-I../fastcond
+CFLAGS=-O3
 
 
-all: qtest1 strongtest_p strongtest_wc strongtest_c
+_DEPS = fastcond.h fastcond_patch.h
+DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
+
+PATCH=COND
+DOPATCH=-DFASTCOND_PATCH_$(PATCH)
+
+fastcond.o: ../fastcond/fastcond.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c -o $@ $^ 
+
+qtest_pt: qtest.c fastcond.o
+	$(CC) $(INCLUDES) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+qtest_fc: qtest.c fastcond.o
+	$(CC) $(INCLUDES) $(CFLAGS) $(DOPATCH) -o $@ $^ $(LDLIBS)
+
+strongtest_pt: strongtest.c fastcond.o 
+	$(CC) $(INCLUDES) $(CFLAGS) -o $@ $^ $(LDLIBS)
+strongtest_fc: strongtest.c fastcond.o
+	$(CC) $(INCLUDES) $(CFLAGS) $(DOPATCH) -o $@ $^ $(LDLIBS)
+
+
+ALL=qtest_pt qtest_fc strongtest_pt strongtest_fc
+
+.PHONY: all
+all: $(ALL)
+
+.PHONY: clean
+clean:
+	rm -f *.o $(ALL)
