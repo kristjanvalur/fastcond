@@ -218,21 +218,17 @@ benchmarks = [
 
 ## Continuous Integration
 
-The benchmark system can be integrated into CI/CD:
+The project includes automated CI/CD benchmarking with:
+- Automatic runs on commits and PRs
+- Performance regression detection
+- GitHub Pages deployment for public results
+- Artifact archival
 
+**See [ci-benchmarks.md](ci-benchmarks.md) for complete CI/CD setup and usage.**
+
+Quick start:
 ```bash
-# In GitHub Actions
-- name: Run performance benchmarks
-  run: ./scripts/run_benchmarks.sh
-
-- name: Upload benchmark results
-  uses: actions/upload-artifact@v3
-  with:
-    name: benchmark-results
-    path: |
-      docs/benchmark-results.json
-      docs/benchmark-results.md
-      docs/*.png
+./scripts/setup_github_pages.sh
 ```
 
 ## Dependencies

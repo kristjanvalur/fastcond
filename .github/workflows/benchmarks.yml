@@ -1,0 +1,208 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:  # Allow manual trigger
+  schedule:
+    # Run weekly on Monday at 00:00 UTC to track performance over time
+    - cron: '0 0 * * 1'
+
+jobs:
+  benchmark:
+    name: Run Performance Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for performance tracking
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+    
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake
+    
+    - name: Install Python dependencies
+      run: uv sync
+    
+    - name: Build tests (Release mode for accurate benchmarks)
+      run: |
+        cd test
+        make clean
+        make all CFLAGS="-O3 -DNDEBUG"
+    
+    - name: Run benchmark suite
+      run: ./scripts/run_benchmarks.sh
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results-${{ github.sha }}
+        path: |
+          docs/benchmark-results.json
+          docs/benchmark-results.md
+          docs/throughput-comparison.png
+          docs/latency-comparison.png
+        retention-days: 90
+    
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const resultsTable = fs.readFileSync('docs/benchmark-results.md', 'utf8');
+          
+          // Create comment body
+          const body = `## 📊 Performance Benchmark Results
+          
+          ${resultsTable}
+          
+          <details>
+          <summary>View Charts</summary>
+          
+          See the workflow artifacts for throughput and latency comparison charts.
+          
+          </details>
+          
+          ---
+          *Benchmarked on: \`${{ runner.os }}\` with \`${{ runner.arch }}\`*
+          *Commit: \`${{ github.sha }}\`*`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: body
+          });
+    
+    - name: Deploy results to GitHub Pages (master only)
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs
+        destination_dir: benchmarks/${{ github.sha }}
+        keep_files: true
+    
+    - name: Update latest benchmark link
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      run: |
+        # Create an index page for the latest results
+        mkdir -p gh-pages
+        cat > gh-pages/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>fastcond Performance Benchmarks</title>
+          <meta http-equiv="refresh" content="0; url=benchmarks/${{ github.sha }}/benchmark-results.md">
+        </head>
+        <body>
+          <p>Redirecting to latest benchmark results...</p>
+          <p>If not redirected, <a href="benchmarks/${{ github.sha }}/benchmark-results.md">click here</a>.</p>
+        </body>
+        </html>
+        EOF
+    
+    - name: Deploy index to GitHub Pages
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./gh-pages
+        keep_files: true
+
+  compare-baseline:
+    name: Compare with Baseline
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake
+        uv sync
+    
+    # Run benchmarks on PR branch
+    - name: Build and benchmark PR
+      run: |
+        cd test && make clean && make all CFLAGS="-O3 -DNDEBUG"
+        cd ..
+        ./scripts/run_benchmarks.sh
+        mv docs/benchmark-results.json /tmp/pr-results.json
+    
+    # Checkout and run benchmarks on base branch
+    - name: Checkout base branch
+      run: |
+        git fetch origin ${{ github.base_ref }}
+        git checkout origin/${{ github.base_ref }}
+    
+    - name: Build and benchmark base
+      run: |
+        cd test && make clean && make all CFLAGS="-O3 -DNDEBUG"
+        cd ..
+        ./scripts/run_benchmarks.sh
+        mv docs/benchmark-results.json /tmp/base-results.json
+    
+    - name: Compare results
+      run: |
+        # Create a comparison script
+        cat > compare.py << 'PYEOF'
+        import json
+        import sys
+        
+        def load_results(path):
+            with open(path) as f:
+                return {r['benchmark'] + '_' + r['implementation']: r for r in json.load(f)}
+        
+        base = load_results('/tmp/base-results.json')
+        pr = load_results('/tmp/pr-results.json')
+        
+        print("## Performance Comparison vs Base Branch\n")
+        
+        for key in sorted(pr.keys()):
+            if key not in base:
+                continue
+            
+            pr_throughput = pr[key]['results']['overall'].get('throughput_items_per_sec', 0)
+            base_throughput = base[key]['results']['overall'].get('throughput_items_per_sec', 0)
+            
+            if base_throughput > 0:
+                change = ((pr_throughput / base_throughput) - 1) * 100
+                emoji = "🟢" if change > 2 else "🔴" if change < -2 else "⚪"
+                print(f"{emoji} **{key}**: {change:+.1f}% ({pr_throughput:,.0f} vs {base_throughput:,.0f} items/sec)")
+        PYEOF
+        
+        uv run python compare.py > /tmp/comparison.md
+        cat /tmp/comparison.md
+    
+    - name: Comment comparison
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const comparison = fs.readFileSync('/tmp/comparison.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## 🔬 Performance Regression Check\n\n${comparison}\n\n---\n*Changes > ±2% are highlighted*`
+          });
