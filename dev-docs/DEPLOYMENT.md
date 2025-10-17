@@ -266,5 +266,5 @@ You'll have:
 ## Need Help?
 
 - **CI Issues:** Check Actions tab → Click workflow → View logs
-- **Local Issues:** See [docs/benchmarking.md](docs/benchmarking.md)
-- **GitHub Pages:** See [docs/ci-benchmarks.md](docs/ci-benchmarks.md)
+- **Local Issues:** See [benchmarking.md](benchmarking.md)
+- **GitHub Pages:** See [ci-benchmarks.md](ci-benchmarks.md)

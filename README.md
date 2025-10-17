@@ -22,7 +22,7 @@ ctest --test-dir build --output-on-failure
 ./scripts/run_benchmarks.sh
 ```
 
-See [BUILD.md](BUILD.md) for detailed build instructions and [docs/benchmarking.md](docs/benchmarking.md) for performance testing.
+See [BUILD.md](BUILD.md) for detailed build instructions and [dev-docs/benchmarking.md](dev-docs/benchmarking.md) for performance testing.
 
 ## Development
 
@@ -76,3 +76,9 @@ On multi-core systems, fastcond shows significant performance improvements over 
 
 See [docs/performance-analysis.md](docs/performance-analysis.md) for detailed benchmark results and analysis.
 
+## Documentation
+
+- **[docs/](docs/)** - User-facing documentation (performance results, API reference)
+- **[dev-docs/](dev-docs/)** - Development documentation (benchmarking, CI/CD, deployment)
+- **[BUILD.md](BUILD.md)** - Build instructions
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines

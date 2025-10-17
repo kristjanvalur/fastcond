@@ -88,8 +88,8 @@ docs/
 
 ## 🔗 Documentation
 
-- **[benchmarking.md](docs/benchmarking.md)** - Complete local benchmarking guide
-- **[ci-benchmarks.md](docs/ci-benchmarks.md)** - Complete CI/CD integration guide
+- **[benchmarking.md](benchmarking.md)** - Complete local benchmarking guide
+- **[ci-benchmarks.md](ci-benchmarks.md)** - Complete CI/CD integration guide
 - **[performance-analysis.md](docs/performance-analysis.md)** - Performance analysis and insights
 
 ## 🚀 Quick Examples
@@ -130,6 +130,6 @@ new = json.load(open('docs/benchmark-results.json'))
 
 ## ❓ Need Help?
 
-- **Local issues**: See [benchmarking.md](docs/benchmarking.md)
-- **CI issues**: See [ci-benchmarks.md](docs/ci-benchmarks.md)
+- **Local issues**: See [benchmarking.md](benchmarking.md)
+- **CI issues**: See [ci-benchmarks.md](ci-benchmarks.md)
 - **Build issues**: See [BUILD.md](BUILD.md)
