@@ -14,14 +14,22 @@ echo -e "${BLUE}fastcond Performance Benchmark${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-# Determine test directory
-if [ -d "build" ]; then
+# Determine test directory - check if we're being called from CMake
+if [ -n "$CMAKE_CURRENT_BINARY_DIR" ]; then
+    TEST_DIR="$CMAKE_CURRENT_BINARY_DIR"
+elif [ -d "build" ]; then
     TEST_DIR="build"
 elif [ -d "test" ]; then
     TEST_DIR="test"
 else
-    echo "Error: Cannot find test executables"
-    exit 1
+    # Try to find from current directory
+    if [ -f "./qtest_pt" ]; then
+        TEST_DIR="."
+    else
+        echo "Error: Cannot find test executables"
+        echo "Run from project root or build directory, or build tests first."
+        exit 1
+    fi
 fi
 
 cd "$TEST_DIR" 2>/dev/null || true

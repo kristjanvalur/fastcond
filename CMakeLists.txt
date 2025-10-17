@@ -104,23 +104,13 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     endif()
 
     # Benchmark targets (not run by default in ctest)
+    # Use scripts/benchmark.sh for running benchmarks
     if(FASTCOND_BUILD_BENCHMARKS)
         add_custom_target(benchmark
-            COMMAND ${CMAKE_COMMAND} -E echo "=== qtest Latency Benchmark ==="
-            COMMAND ${CMAKE_COMMAND} -E echo "Pthread implementation:"
-            COMMAND $<TARGET_FILE:qtest_pt> 10000 4 10
-            COMMAND ${CMAKE_COMMAND} -E echo ""
-            COMMAND ${CMAKE_COMMAND} -E echo "Fastcond (strong) implementation:"
-            COMMAND $<TARGET_FILE:qtest_fc> 10000 4 10
-            COMMAND ${CMAKE_COMMAND} -E echo ""
-            COMMAND ${CMAKE_COMMAND} -E echo "=== strongtest Benchmark ==="
-            COMMAND ${CMAKE_COMMAND} -E echo "Pthread implementation:"
-            COMMAND $<TARGET_FILE:strongtest_pt> 10000 5
-            COMMAND ${CMAKE_COMMAND} -E echo ""
-            COMMAND ${CMAKE_COMMAND} -E echo "Fastcond (strong) implementation:"
-            COMMAND $<TARGET_FILE:strongtest_fc> 10000 5
+            COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Running benchmarks via scripts/benchmark.sh"
+            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/benchmark.sh
             DEPENDS qtest_pt qtest_fc strongtest_pt strongtest_fc
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Running performance benchmarks..."
         )
     endif()
