@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/strongtest_pt.dir/test/strongtest.c.o -o strongtest_pt  libfastcond.a -lm 

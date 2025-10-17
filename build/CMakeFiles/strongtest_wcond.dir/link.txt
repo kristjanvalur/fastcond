@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/strongtest_wcond.dir/test/strongtest.c.o -o strongtest_wcond  libfastcond.a -lm 

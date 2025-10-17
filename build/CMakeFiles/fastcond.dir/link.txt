@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfastcond.a CMakeFiles/fastcond.dir/fastcond/fastcond.c.o
+/usr/bin/ranlib libfastcond.a

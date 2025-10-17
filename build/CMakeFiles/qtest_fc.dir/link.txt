@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/qtest_fc.dir/test/qtest.c.o -o qtest_fc  libfastcond.a -lm 

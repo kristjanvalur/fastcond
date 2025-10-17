@@ -3,6 +3,24 @@
 This provides an alternate implementation of posix _condition variables_,
 based only on posix semaphores.
 
+## Quick Start
+
+```bash
+# Build with CMake (recommended)
+cmake -B build
+cmake --build build
+
+# Run tests
+ctest --test-dir build --output-on-failure
+# or
+./scripts/run_tests.sh
+
+# Run benchmarks
+./scripts/benchmark.sh
+```
+
+See [BUILD.md](BUILD.md) for detailed build instructions.
+
 They can be used instead of regular `pthread_cond_t` objects subject to the
 following restrictions:
 
