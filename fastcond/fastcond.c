@@ -3,8 +3,8 @@
 #include "fastcond.h"
 
 #include <assert.h>
-#include <sched.h>
 #include <errno.h>
+#include <sched.h>
 
 /*  The fastcond_wcond_t code - weak condition variable (see below for `weak`)
 
@@ -49,7 +49,7 @@
     the waiting threads.  In particular, the thread that makes the 'signal'
     may subsequently 'wait', but wake itself up, rather than one of the
     other threads.
-    
+
     For many cases, this is fine.  Whenever it is sufficient that _a_ thread is
     indeed awoken, a weak condition variable works well.  This is the case if
     all the threads that can wait are equivalent.
@@ -74,7 +74,6 @@
     http://www.cse.wustl.edu/~schmidt/win32-cv-1.html
 */
 
-
 FASTCOND_API(int)
 fastcond_wcond_init(fastcond_wcond_t *restrict cond, const pthread_condattr_t *attr)
 {
@@ -82,28 +81,21 @@ fastcond_wcond_init(fastcond_wcond_t *restrict cond, const pthread_condattr_t *a
     return sem_init(&cond->sem, 0, 0) ? errno : 0;
 }
 
-
 FASTCOND_API(int)
 fastcond_wcond_fini(fastcond_wcond_t *cond)
 {
     return sem_destroy(&cond->sem) ? errno : 0;
 }
 
- 
 FASTCOND_API(int)
-fastcond_wcond_wait(
-    fastcond_wcond_t *restrict cond,
-    pthread_mutex_t *restrict mutex)
+fastcond_wcond_wait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex)
 {
     return fastcond_wcond_timedwait(cond, mutex, 0);
-} 
-
+}
 
 FASTCOND_API(int)
-fastcond_wcond_timedwait(
-    fastcond_wcond_t *restrict cond,
-    pthread_mutex_t *restrict mutex,
-    const struct timespec *restrict abstime)
+fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex,
+                         const struct timespec *restrict abstime)
 {
     int wait, err1, err2;
     cond->waiting++;
@@ -126,17 +118,15 @@ fastcond_wcond_timedwait(
         --cond->waiting;
 
     if (err1 == EINTR)
-        err1 = 0;  /* signals, etc, cause spurious wakeup */
-    
+        err1 = 0; /* signals, etc, cause spurious wakeup */
+
     if (err2)
         return err2;
     return err1;
 }
 
-
 FASTCOND_API(int)
-fastcond_wcond_signal(
-    fastcond_wcond_t *cond)
+fastcond_wcond_signal(fastcond_wcond_t *cond)
 {
     if (cond->waiting > 0) {
         if (sem_post(&cond->sem))
@@ -146,21 +136,16 @@ fastcond_wcond_signal(
     return 0;
 }
 
-
 FASTCOND_API(int)
-fastcond_wcond_broadcast(
-    fastcond_wcond_t *cond)
+fastcond_wcond_broadcast(fastcond_wcond_t *cond)
 {
     while (cond->waiting > 0) {
         if (sem_post(&cond->sem))
             return errno;
-        cond->waiting --;
+        cond->waiting--;
     }
     return 0;
 }
-
-
-
 
 /*  fastcond_cond_t code - the strong condition variable
 
@@ -195,7 +180,6 @@ fastcond_cond_init(fastcond_cond_t *restrict cond, const pthread_condattr_t *res
     return err;
 }
 
-
 FASTCOND_API(int)
 fastcond_cond_fini(fastcond_cond_t *cond)
 {
@@ -203,21 +187,15 @@ fastcond_cond_fini(fastcond_cond_t *cond)
     return err;
 }
 
-
 FASTCOND_API(int)
-fastcond_cond_wait(
-    fastcond_cond_t *restrict cond,
-    pthread_mutex_t *restrict mutex)
+fastcond_cond_wait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex)
 {
     return fastcond_cond_timedwait(cond, mutex, NULL);
 }
- 
 
 FASTCOND_API(int)
-fastcond_cond_timedwait(
-    fastcond_cond_t *restrict cond,
-    pthread_mutex_t *restrict mutex,
-    const struct timespec *restrict abstime)
+fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex,
+                        const struct timespec *restrict abstime)
 {
     int err;
     assert(cond->n_wakeup <= cond->n_waiting);
@@ -242,15 +220,14 @@ fastcond_cond_timedwait(
     else
         err = fastcond_wcond_timedwait(&cond->wait, mutex, abstime);
     cond->n_waiting--;
-    if(cond->n_wakeup > 0)
+    if (cond->n_wakeup > 0)
         cond->n_wakeup--;
     return err;
 }
 
-
 static int _fastcond_cond_signal_n(fastcond_cond_t *cond, int n)
 {
-    int err=0, unwoken = cond->n_waiting - cond->n_wakeup;
+    int err = 0, unwoken = cond->n_waiting - cond->n_wakeup;
     if (unwoken > 0) {
         /* negative n means all, positive is the minimal amount to wake */
         if (n == 1 || unwoken == 1) {
@@ -258,7 +235,7 @@ static int _fastcond_cond_signal_n(fastcond_cond_t *cond, int n)
             n = 1;
         } else if (n > 0 && n < unwoken) {
             int i;
-            for (i = 0; err == 0 && i<n; i++)
+            for (i = 0; err == 0 && i < n; i++)
                 err = fastcond_wcond_signal(&cond->wait);
         } else {
             err = fastcond_wcond_broadcast(&cond->wait);
@@ -269,7 +246,6 @@ static int _fastcond_cond_signal_n(fastcond_cond_t *cond, int n)
     }
     return err;
 }
-
 
 FASTCOND_API(int)
 fastcond_cond_signal(fastcond_cond_t *cond)

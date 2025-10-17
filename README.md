@@ -24,6 +24,17 @@ ctest --test-dir build --output-on-failure
 
 See [BUILD.md](BUILD.md) for detailed build instructions.
 
+## Development
+
+Before committing, format your code:
+```bash
+./scripts/format.sh
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
+## Usage
+
 They can be used instead of regular `pthread_cond_t` objects subject to the
 following restrictions:
 

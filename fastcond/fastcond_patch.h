@@ -1,6 +1,6 @@
 /* Copyright (c) 2017 Kristján Valur Jónsson */
 
-#ifndef _FASTCOND_PATCH_H_ 
+#ifndef _FASTCOND_PATCH_H_
 #define _FASTCOND_PATCH_H_
 
 /*

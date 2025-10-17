@@ -216,6 +216,39 @@ cmake -B build -DCMAKE_C_COMPILER=clang
 ### Windows (WSL/MinGW)
 CMake should work with appropriate toolchain. Native Windows support is untested.
 
+## Code Formatting
+
+The project uses `clang-format` for consistent code style. CI will check formatting.
+
+### Format all code
+
+```bash
+./scripts/format.sh
+```
+
+Or manually:
+```bash
+find fastcond test -name "*.c" -o -name "*.h" | xargs clang-format -i
+```
+
+### Check formatting without modifying files
+
+```bash
+find fastcond test -name "*.c" -o -name "*.h" | xargs clang-format -n -Werror
+```
+
+This will report errors if files need formatting (same check as CI).
+
+### Install clang-format
+
+```bash
+# Ubuntu/Debian
+sudo apt install clang-format
+
+# macOS
+brew install clang-format
+```
+
 ## Troubleshooting
 
 ### "pthread not found"
