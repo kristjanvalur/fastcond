@@ -8,10 +8,14 @@
 
 /* Platform-specific semaphore wrapper macros for cleaner code */
 #ifdef FASTCOND_USE_GCD
-/* GCD semaphores for macOS */
-#define SEM_INIT(sem) ((sem) = dispatch_semaphore_create(0), (sem) ? 0 : errno)
+/* GCD semaphores for macOS
+ * dispatch_semaphore_wait returns 0 on success (semaphore decremented)
+ * dispatch_semaphore_wait returns non-zero on timeout
+ * dispatch_semaphore_signal returns non-zero if thread was woken, always succeeds
+ */
+#define SEM_INIT(sem) ((sem) = dispatch_semaphore_create(0), (sem) ? 0 : ENOMEM)
 #define SEM_DESTROY(sem) (dispatch_release(sem), 0)
-#define SEM_WAIT(sem) (dispatch_semaphore_wait((sem), DISPATCH_TIME_FOREVER) ? errno : 0)
+#define SEM_WAIT(sem) (dispatch_semaphore_wait((sem), DISPATCH_TIME_FOREVER))
 #define SEM_TIMEDWAIT(sem, abstime) _sem_timedwait_gcd((sem), (abstime))
 #define SEM_POST(sem) (dispatch_semaphore_signal(sem), 0)
 
@@ -22,7 +26,7 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
 
     if (!abstime) {
         /* NULL means infinite wait */
-        return dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER) ? errno : 0;
+        return dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
     }
 
     /* Convert absolute timespec to dispatch_time_t */
@@ -40,11 +44,8 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
     }
 
     long result = dispatch_semaphore_wait(sem, timeout);
-    if (result != 0) {
-        /* Timeout or error */
-        return ETIMEDOUT;
-    }
-    return 0;
+    /* dispatch_semaphore_wait returns 0 on success, non-zero on timeout */
+    return result ? ETIMEDOUT : 0;
 }
 #else
 /* POSIX semaphores for Linux and other Unix systems */
