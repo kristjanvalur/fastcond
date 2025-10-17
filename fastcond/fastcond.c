@@ -6,6 +6,12 @@
 #include <errno.h>
 #include <sched.h>
 
+/* Platform compatibility check */
+#ifdef __APPLE__
+#warning "fastcond uses POSIX unnamed semaphores which are deprecated on macOS"
+#warning "This library is intended for Linux/POSIX systems"
+#endif
+
 /*  The fastcond_wcond_t code - weak condition variable (see below for `weak`)
 
     The following comes out of work to create a working CriticalSection
@@ -90,9 +96,35 @@ fastcond_wcond_fini(fastcond_wcond_t *cond)
 FASTCOND_API(int)
 fastcond_wcond_wait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex)
 {
+#ifndef FASTCOND_NO_TIMEDWAIT
     return fastcond_wcond_timedwait(cond, mutex, 0);
+#else
+    int err1, err2;
+    cond->waiting++;
+    err1 = pthread_mutex_unlock(mutex);
+    if (err1)
+        return err1;
+
+    if (sem_wait(&cond->sem))
+        err1 = errno;
+    else
+        err1 = 0;
+    err2 = pthread_mutex_lock(mutex);
+
+    if (err1)
+        /* wakeup did not adjust this, must do it ourselves */
+        --cond->waiting;
+
+    if (err1 == EINTR)
+        err1 = 0; /* signals, etc, cause spurious wakeup */
+
+    if (err2)
+        return err2;
+    return err1;
+#endif
 }
 
+#ifndef FASTCOND_NO_TIMEDWAIT
 FASTCOND_API(int)
 fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex,
                          const struct timespec *restrict abstime)
@@ -124,6 +156,7 @@ fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restr
         return err2;
     return err1;
 }
+#endif /* FASTCOND_NO_TIMEDWAIT */
 
 FASTCOND_API(int)
 fastcond_wcond_signal(fastcond_wcond_t *cond)
@@ -190,9 +223,36 @@ fastcond_cond_fini(fastcond_cond_t *cond)
 FASTCOND_API(int)
 fastcond_cond_wait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex)
 {
+#ifndef FASTCOND_NO_TIMEDWAIT
     return fastcond_cond_timedwait(cond, mutex, NULL);
+#else
+    int err;
+    assert(cond->n_wakeup <= cond->n_waiting);
+    if (cond->n_wakeup) {
+        /* there are signalled threads that haven't woken up.
+         * I cannot take the chance of pre-empting them, which would violate
+         * the strong condition that the threads already wating must be woken
+         * up.  Therefore, we will perform a spurious wakeup (which is allowed)
+         * while still allowing the waiting threads to wake up.
+         * We must yield the lock to allow the other threads a chance to
+         * wake up as well, throwing in a scheduler yield for good measure.
+         */
+        err = pthread_mutex_unlock(mutex);
+        if (err)
+            return err;
+        sched_yield();
+        return pthread_mutex_lock(mutex);
+    }
+    cond->n_waiting++;
+    err = fastcond_wcond_wait(&cond->wait, mutex);
+    cond->n_waiting--;
+    if (cond->n_wakeup > 0)
+        cond->n_wakeup--;
+    return err;
+#endif
 }
 
+#ifndef FASTCOND_NO_TIMEDWAIT
 FASTCOND_API(int)
 fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex,
                         const struct timespec *restrict abstime)
@@ -224,6 +284,7 @@ fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restric
         cond->n_wakeup--;
     return err;
 }
+#endif /* FASTCOND_NO_TIMEDWAIT */
 
 static int _fastcond_cond_signal_n(fastcond_cond_t *cond, int n)
 {

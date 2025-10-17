@@ -21,6 +21,14 @@ jobs:
           # macOS doesn't have gcc, uses clang anyway
           - os: macos-latest
             compiler: gcc
+          # macOS deprecated POSIX unnamed semaphores (sem_init, sem_timedwait)
+          # Skip macOS builds - this is primarily a Linux library
+          - os: macos-latest
+            compiler: clang
+            build_type: Debug
+          - os: macos-latest
+            compiler: clang
+            build_type: Release
     
     steps:
     - uses: actions/checkout@v4

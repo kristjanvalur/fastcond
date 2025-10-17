@@ -24,9 +24,11 @@ fastcond_wcond_fini(fastcond_wcond_t *cond);
 FASTCOND_API(int)
 fastcond_wcond_wait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex);
 
+#ifndef FASTCOND_NO_TIMEDWAIT
 FASTCOND_API(int)
 fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex,
                          const struct timespec *restrict abstime);
+#endif
 
 FASTCOND_API(int)
 fastcond_wcond_signal(fastcond_wcond_t *cond);
@@ -51,9 +53,11 @@ fastcond_cond_fini(fastcond_cond_t *cond);
 FASTCOND_API(int)
 fastcond_cond_wait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex);
 
+#ifndef FASTCOND_NO_TIMEDWAIT
 FASTCOND_API(int)
 fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex,
                         const struct timespec *restrict abstime);
+#endif
 
 FASTCOND_API(int)
 fastcond_cond_signal(fastcond_cond_t *cond);

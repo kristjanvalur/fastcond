@@ -205,16 +205,15 @@ gcc -I/usr/local/include/fastcond myapp.c -L/usr/local/lib -lfastcond -lpthread 
 ## Cross-Platform Notes
 
 ### Linux
-Standard build should work out of the box.
+Standard build should work out of the box. This is the primary supported platform.
 
 ### macOS
-Use Homebrew-installed gcc or system clang:
-```bash
-cmake -B build -DCMAKE_C_COMPILER=clang
-```
+**Not supported.** macOS has deprecated POSIX unnamed semaphores (`sem_init`, `sem_timedwait`), which are required by fastcond. 
+
+Alternative on macOS: Use standard `pthread_cond_t` or Grand Central Dispatch semaphores.
 
 ### Windows (WSL/MinGW)
-CMake should work with appropriate toolchain. Native Windows support is untested.
+May work with appropriate POSIX compatibility layer. Not regularly tested.
 
 ## Code Formatting
 

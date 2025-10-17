@@ -42,6 +42,11 @@ following restrictions:
 * They don't provide *cancellation points*.
 * They cannot be initialized with a static initializer
 
+**Platform Support:**
+- ✅ Linux (fully supported - tested on Ubuntu with gcc and clang)
+- ⚠️ macOS (supported but without `*_timedwait` functions - macOS lacks `sem_timedwait`)
+- ❓ Other POSIX systems with full semaphore support should work
+
  Two versions are provided, the _weak_ and the _strong_ condition variables.  This
  terminology is my own.
 
