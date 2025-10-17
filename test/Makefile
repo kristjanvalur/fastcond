@@ -20,13 +20,16 @@ qtest_pt: qtest.c fastcond.o
 qtest_fc: qtest.c fastcond.o
 	$(CC) $(INCLUDES) $(CFLAGS) $(DOPATCH) -o $@ $^ $(LDLIBS)
 
+qtest_wcond: qtest.c fastcond.o
+	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_PATCH_WCOND -o $@ $^ $(LDLIBS)
+
 strongtest_pt: strongtest.c fastcond.o 
 	$(CC) $(INCLUDES) $(CFLAGS) -o $@ $^ $(LDLIBS)
 strongtest_fc: strongtest.c fastcond.o
 	$(CC) $(INCLUDES) $(CFLAGS) $(DOPATCH) -o $@ $^ $(LDLIBS)
 
 
-ALL=qtest_pt qtest_fc strongtest_pt strongtest_fc
+ALL=qtest_pt qtest_fc qtest_wcond strongtest_pt strongtest_fc
 
 .PHONY: all
 all: $(ALL)
