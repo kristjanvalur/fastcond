@@ -1,9 +1,9 @@
 
+#include <math.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <math.h>
 
 #include "fastcond.h"
 #ifdef TEST_WCOND
@@ -25,9 +25,9 @@ typedef struct _queue {
     pthread_mutex_t mutex;
     int n_data; /* current size of queue */
     pthread_cond_t cond;
-    int max_queue; /* how much fits in the queue */
-    int max_send;  /* how many packets to send? (termination test) */
-    int n_sent;    /* total amount sent */
+    int max_queue;               /* how much fits in the queue */
+    int max_send;                /* how many packets to send? (termination test) */
+    int n_sent;                  /* total amount sent */
     struct timespec *timestamps; /* track enqueue times for latency measurement */
 } queue_t;
 
@@ -90,7 +90,7 @@ void *receiver(void *arg)
         if (have_data) {
             /* simulate getting rid of the data */
             pthread_mutex_unlock(&q->mutex);
-            
+
             /* Compute latency if we have timestamp data */
             if (q->timestamps) {
                 now.tv_sec -= enqueue_time.tv_sec;
@@ -107,7 +107,7 @@ void *receiver(void *arg)
                 if (time > max_time)
                     max_time = time;
             }
-            
+
             sched_yield();
             pthread_mutex_lock(&q->mutex);
             have_data = 0;
@@ -128,22 +128,23 @@ void *receiver(void *arg)
         }
     }
     pthread_mutex_unlock(&q->mutex);
-    
+
     /* Compute and print stats */
     if (q->timestamps) {
         float avg = 0.0f, variance = 0.0f, stdev = 0.0f;
         if (n_got > 0) {
             avg = sum_time / (float) n_got;
             if (n_got > 1) {
-                variance = (sum_time2 - (sum_time * sum_time) / (float) n_got) / (float) (n_got - 1);
+                variance =
+                    (sum_time2 - (sum_time * sum_time) / (float) n_got) / (float) (n_got - 1);
                 stdev = sqrtf(variance);
             }
         } else {
             min_time = 0.0f;
             max_time = 0.0f;
         }
-        printf("receiver %d got %d latency avg %e stdev %e min %e max %e\n",
-               args->id, n_got, avg, stdev, min_time, max_time);
+        printf("receiver %d got %d latency avg %e stdev %e min %e max %e\n", args->id, n_got, avg,
+               stdev, min_time, max_time);
     } else {
         printf("receiver %d got %d\n", args->id, n_got);
     }
@@ -202,11 +203,11 @@ int main(int argc, char *argv[])
 
     /* End timing */
     clock_gettime(CLOCK_MONOTONIC, &end_time);
-    
+
     /* Calculate elapsed time */
-    elapsed_sec = (end_time.tv_sec - start_time.tv_sec) + 
-                  (end_time.tv_nsec - start_time.tv_nsec) * 1e-9;
-    
+    elapsed_sec =
+        (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) * 1e-9;
+
     /* Print overall statistics */
     printf("=== Overall Statistics ===\n");
     printf("Total items: %d\n", n_data);

@@ -86,7 +86,7 @@ void *receiver(void *arg)
     int n_got = 0;
     int have_data = 0;
     float time, sum_time = 0.0, sum_time2 = 0.0; /* stats */
-    float min_time = 1e9, max_time = 0.0; /* min/max tracking */
+    float min_time = 1e9, max_time = 0.0;        /* min/max tracking */
     struct timespec data, now;
     pthread_mutex_lock(&q->mutex);
     while (q->n_sent < q->max_send || q->n_queue) {
@@ -135,7 +135,8 @@ void *receiver(void *arg)
             avg = sum_time / (float) n_got;
             /* Correct variance formula: Var(X) = E[X²] - E[X]² */
             if (n_got > 1) {
-                variance = (sum_time2 - (sum_time * sum_time) / (float) n_got) / (float) (n_got - 1);
+                variance =
+                    (sum_time2 - (sum_time * sum_time) / (float) n_got) / (float) (n_got - 1);
                 stdev = sqrtf(variance);
             }
         } else {
@@ -144,8 +145,8 @@ void *receiver(void *arg)
             max_time = 0.0f;
         }
 
-        printf("receiver %d got %d latency avg %e stdev %e min %e max %e\n", 
-               args->id, n_got, avg, stdev, min_time, max_time);
+        printf("receiver %d got %d latency avg %e stdev %e min %e max %e\n", args->id, n_got, avg,
+               stdev, min_time, max_time);
     }
     return NULL;
 }
@@ -216,11 +217,11 @@ int main(int argc, char *argv[])
 
     /* End timing */
     clock_gettime(CLOCK_MONOTONIC, &end_time);
-    
+
     /* Calculate elapsed time */
-    elapsed_sec = (end_time.tv_sec - start_time.tv_sec) + 
-                  (end_time.tv_nsec - start_time.tv_nsec) * 1e-9;
-    
+    elapsed_sec =
+        (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) * 1e-9;
+
     /* Print overall statistics */
     printf("=== Overall Statistics ===\n");
     printf("Total items: %d\n", n_data);
@@ -229,7 +230,7 @@ int main(int argc, char *argv[])
     printf("Total time: %.6f seconds\n", elapsed_sec);
     printf("Throughput: %.2f items/sec\n", n_data / elapsed_sec);
     printf("==========================\n");
-    
+
     printf("All threads completed, cleaning up\n");
     fflush(stdout);
 
