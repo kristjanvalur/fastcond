@@ -17,12 +17,26 @@
         
         .header {
             text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #9b59b6 100%);
             color: white;
             padding: 30px;
             border-radius: 10px;
             margin-bottom: 30px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
         }
         
         .header h1 {
@@ -249,9 +263,9 @@
 </head>
 <body>
     <div class="header">
-        <h1>🚀 fastcond: The Absolute Business</h1>
-        <div class="subtitle">Why settle for pthread when you can have <strong>proper performance</strong>? Your threads deserve better than pedestrian synchronisation primitives.</div>
-        <div class="tagline">⚡ 38% faster • 🎯 26% lower latency • 🏆 Consistently brilliant</div>
+        <h1>❄️ fastcond: Nordic Engineering Excellence</h1>
+        <div class="subtitle">Forged during Iceland's long winter nights when there's proper time for benchmarking. Fast threads mean more time for stargazing and rum-spiked cocoa.</div>
+        <div class="tagline">⚡ 38% faster • 🎯 26% lower latency • ✨ More time for life's pleasures</div>
     </div>
     
     <div class="nav-links">
@@ -263,10 +277,13 @@
     
     <div class="intro-section">
         <div class="intro-card">
-            <h2>🎯 Why fastcond?</h2>
-            <p>Because your threads deserve better than the rather pedestrian performance of <code>pthread_cond_t</code>! 
-            Built using nothing but POSIX semaphores and a proper dose of engineering excellence, 
-            fastcond delivers the sort of performance that makes other synchronisation primitives look rather shabby.</p>
+            <h2>❄️ Why fastcond?</h2>
+            <p>Because life is too precious to waste on sluggish thread synchronisation. Built in Iceland's long winter nights, 
+            fastcond understands that your threads should work efficiently so <em>you</em> can enjoy the important things: 
+            reading poetry under starry skies, sipping rum-spiked cocoa by the fireplace, or watching the aurora dance across the darkness.</p>
+            
+            <p>Built using nothing but POSIX semaphores and Nordic engineering sensibilities, 
+            fastcond delivers performance that lets you spend less time debugging race conditions and more time living.</p>
             
             <p><strong>Two varieties of excellence:</strong></p>
             <ul>
@@ -274,7 +291,7 @@
                 <li><strong>🏃 Weak</strong> - Relaxed semantics for when you're feeling adventurous</li>
             </ul>
             
-            <p><em>Rather amusing fact: Both are faster than pthread. We've checked. Thoroughly. With proper charts and everything.</em></p>
+            <p><em>Rather amusing fact: Both are faster than pthread. We've checked. Thoroughly. During those long Nordic nights when there's proper time for benchmarking.</em></p>
         </div>
     </div>
 
@@ -462,12 +479,12 @@
     </div>
     
     <div class="footer">
-        <p>🐝 <strong>fastcond</strong> - Proper condition variables for discerning developers (your grandmother would approve!)</p>
-        <p>Built with semaphores, care, and a healthy disdain for sluggish synchronisation primitives</p>
-        <p>Why use dreary old pthread when you can have something <em>rather good</em>? Your threads will be positively chuffed. 🚀</p>
+        <p>❄️ <strong>fastcond</strong> - Forged in Iceland's winter nights so you can spend less time synchronising and more time living</p>
+        <p>Built with semaphores, Nordic pragmatism, and the understanding that efficient code means more time for poetry and cocoa</p>
+        <p>Why waste precious moments on sluggish pthread when you could be watching stars? Your threads will work brilliantly whilst you enjoy life's finer pleasures. ✨</p>
         <p><a href="https://github.com/kristjanvalur/fastcond">Star us on GitHub</a> | 
            <a href="benchmark-results.json">Download the Evidence</a> | 
-           <a href="https://github.com/kristjanvalur/fastcond/issues/new">Tell us how brilliant we are</a></p>
+           <a href="https://github.com/kristjanvalur/fastcond/issues/new">Share your cocoa-fuelled thoughts</a></p>
     </div>
     
 </body>

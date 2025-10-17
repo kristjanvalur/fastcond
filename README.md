@@ -5,9 +5,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Performance](https://img.shields.io/badge/performance-38%25_faster-brightgreen)](https://kristjanvalur.github.io/fastcond/)
 
-> **🚀 38% faster than pthread condition variables** — Because one's threads deserve to be rather sprightly, don't they?
+> **❄️ 38% faster than pthread condition variables** — Because life's too short for sluggish synchronisation
 
-Fast, reliable POSIX condition variable alternatives built with semaphores. When `pthread_cond_t` simply won't do, fastcond delivers the performance your applications rather deserve.
+Fast, reliable POSIX condition variable alternatives forged during Iceland's long winter nights. When `pthread_cond_t` keeps you debugging instead of stargazing, fastcond delivers the performance that lets you spend more time on life's finer pleasures.
 
 ## 📈 Performance That Speaks for Itself
 
@@ -92,7 +92,7 @@ Because life's rather too short for sluggish condition variables, wouldn't you s
 
 **🎯 [Explore the Interactive Performance Dashboard →](https://kristjanvalur.github.io/fastcond/)**
 
-*Featuring live benchmarks, proper charts, and all the performance data your engineering soul could desire.*
+*Featuring benchmarks crafted during Nordic winter nights, proper charts, and all the performance data needed to free you for poetry and cocoa.*
 
 ## Documentation
 
