@@ -86,6 +86,7 @@ void *receiver(void *arg)
     int n_got = 0;
     int have_data = 0;
     float time, sum_time = 0.0, sum_time2 = 0.0; /* stats */
+    float min_time = 1e9, max_time = 0.0; /* min/max tracking */
     struct timespec data, now;
     pthread_mutex_lock(&q->mutex);
     while (q->n_sent < q->max_send || q->n_queue) {
@@ -103,6 +104,10 @@ void *receiver(void *arg)
             time = (float) now.tv_sec + (float) now.tv_nsec * 1e-9f;
             sum_time += time;
             sum_time2 += time * time;
+            if (time < min_time)
+                min_time = time;
+            if (time > max_time)
+                max_time = time;
             sched_yield();
             pthread_mutex_lock(&q->mutex);
             have_data = 0;
@@ -125,13 +130,22 @@ void *receiver(void *arg)
     pthread_mutex_unlock(&q->mutex);
     /* compute stats */
     {
-        float avg = 0.0f, sigma = 0.0f;
-        if (n_got) {
+        float avg = 0.0f, variance = 0.0f, stdev = 0.0f;
+        if (n_got > 0) {
             avg = sum_time / (float) n_got;
-            sigma = sqrtf((float) n_got * sum_time - sum_time2) / (float) n_got;
+            /* Correct variance formula: Var(X) = E[X²] - E[X]² */
+            if (n_got > 1) {
+                variance = (sum_time2 - (sum_time * sum_time) / (float) n_got) / (float) (n_got - 1);
+                stdev = sqrtf(variance);
+            }
+        } else {
+            /* No data collected - set min/max to 0 */
+            min_time = 0.0f;
+            max_time = 0.0f;
         }
 
-        printf("receiver %d got %d latency avg %e stdev %e\n", args->id, n_got, avg, sigma);
+        printf("receiver %d got %d latency avg %e stdev %e min %e max %e\n", 
+               args->id, n_got, avg, stdev, min_time, max_time);
     }
     return NULL;
 }
@@ -146,6 +160,8 @@ int main(int argc, char *argv[])
     int i;
     args_t *senders, *receivers;
     void *retval;
+    struct timespec start_time, end_time;
+    double elapsed_sec;
 
     /* Unbuffer stdout to ensure output appears immediately */
     setbuf(stdout, NULL);
@@ -171,6 +187,9 @@ int main(int argc, char *argv[])
     pthread_cond_init(&q.not_empty, NULL);
     pthread_cond_init(&q.not_full, NULL);
 
+    /* Start timing */
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+
     /* create receivers */
     receivers = (args_t *) malloc(n_receivers * sizeof(args_t));
     for (i = 0; i < n_receivers; i++) {
@@ -194,6 +213,23 @@ int main(int argc, char *argv[])
     for (i = 0; i < n_senders; i++) {
         pthread_join(senders[i].pid, &retval);
     }
+
+    /* End timing */
+    clock_gettime(CLOCK_MONOTONIC, &end_time);
+    
+    /* Calculate elapsed time */
+    elapsed_sec = (end_time.tv_sec - start_time.tv_sec) + 
+                  (end_time.tv_nsec - start_time.tv_nsec) * 1e-9;
+    
+    /* Print overall statistics */
+    printf("=== Overall Statistics ===\n");
+    printf("Total items: %d\n", n_data);
+    printf("Threads: %d senders, %d receivers\n", n_senders, n_receivers);
+    printf("Queue size: %d\n", s_queue);
+    printf("Total time: %.6f seconds\n", elapsed_sec);
+    printf("Throughput: %.2f items/sec\n", n_data / elapsed_sec);
+    printf("==========================\n");
+    
     printf("All threads completed, cleaning up\n");
     fflush(stdout);
 
