@@ -45,6 +45,8 @@ void *sender(void *arg)
     queue_t *q = args->queue;
     int n_sent = 0;
     int have_data = 0;
+    printf("sender %d starting\n", args->id);
+    fflush(stdout);
     pthread_mutex_lock(&q->mutex);
     while (q->n_sent < q->max_send) {
         if (!have_data) {
@@ -54,9 +56,15 @@ void *sender(void *arg)
             pthread_mutex_lock(&q->mutex);
             have_data = 1;
         }
-        while (q->n_sent < q->max_send && q->n_queue >= q->s_queue)
+        while (q->n_sent < q->max_send && q->n_queue >= q->s_queue) {
             /* queue is active and full */
+            printf("sender %d waiting (queue full: %d/%d, sent %d/%d)\n", args->id,
+                   q->n_queue, q->s_queue, q->n_sent, q->max_send);
+            fflush(stdout);
             pthread_cond_wait(&q->not_full, &q->mutex);
+            printf("sender %d woke up\n", args->id);
+            fflush(stdout);
+        }
         if (q->n_sent < q->max_send && q->n_queue < q->s_queue) {
             /* put stuff on queue */
             int i = (q->i_queue + q->n_queue) % q->s_queue;
@@ -87,6 +95,8 @@ void *receiver(void *arg)
     int have_data = 0;
     float time, sum_time = 0.0, sum_time2 = 0.0; /* stats */
     struct timespec data, now;
+    printf("receiver %d starting\n", args->id);
+    fflush(stdout);
     pthread_mutex_lock(&q->mutex);
     while (q->n_sent < q->max_send || q->n_queue) {
         if (have_data) {
@@ -107,9 +117,15 @@ void *receiver(void *arg)
             pthread_mutex_lock(&q->mutex);
             have_data = 0;
         }
-        while (q->n_sent < q->max_send && !q->n_queue)
+        while (q->n_sent < q->max_send && !q->n_queue) {
             /* queue is active and empty */
+            printf("receiver %d waiting (queue empty: %d/%d, sent %d/%d)\n", args->id,
+                   q->n_queue, q->s_queue, q->n_sent, q->max_send);
+            fflush(stdout);
             pthread_cond_wait(&q->not_empty, &q->mutex);
+            printf("receiver %d woke up\n", args->id);
+            fflush(stdout);
+        }
         if (q->n_queue) {
             /* remove from queue */
             clock_gettime(CLOCK_MONOTONIC, &now);
@@ -162,9 +178,14 @@ int main(int argc, char *argv[])
 
     q.n_sent = 0;
     q.max_send = n_data;
+    printf("Initializing mutex and condition variables\n");
+    fflush(stdout);
     pthread_mutex_init(&q.mutex, NULL);
     pthread_cond_init(&q.not_empty, NULL);
     pthread_cond_init(&q.not_full, NULL);
+    printf("Creating threads: %d senders, %d receivers, queue size %d, data count %d\n",
+           n_senders, n_receivers, s_queue, n_data);
+    fflush(stdout);
 
     /* create receivers */
     receivers = (args_t *) malloc(n_receivers * sizeof(args_t));
@@ -183,10 +204,20 @@ int main(int argc, char *argv[])
     }
 
     /* wait for senders and receivers to end */
-    for (i = 0; i < n_receivers; i++)
+    printf("Waiting for threads to complete\n");
+    fflush(stdout);
+    for (i = 0; i < n_receivers; i++) {
+        printf("Joining receiver %d\n", i);
+        fflush(stdout);
         pthread_join(receivers[i].pid, &retval);
-    for (i = 0; i < n_senders; i++)
+    }
+    for (i = 0; i < n_senders; i++) {
+        printf("Joining sender %d\n", i);
+        fflush(stdout);
         pthread_join(senders[i].pid, &retval);
+    }
+    printf("All threads completed, cleaning up\n");
+    fflush(stdout);
 
     /* cleanup */
     pthread_cond_destroy(&q.not_empty);
