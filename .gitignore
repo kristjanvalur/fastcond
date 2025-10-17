@@ -1,3 +1,20 @@
+# Build directories
+build/
+build-*/
+out/
+cmake-build-*/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+install_manifest.txt
+compile_commands.json
+CPackConfig.cmake
+CPackSourceConfig.cmake
+Testing/
+
 # Prerequisites
 *.d
 
@@ -36,6 +53,14 @@
 *.x86_64
 *.hex
 
+# Test executables (in test directory)
+test/qtest_pt
+test/qtest_fc
+test/qtest_wcond
+test/strongtest_pt
+test/strongtest_fc
+test/strongtest_wcond
+
 # Debug files
 *.dSYM/
 *.su
@@ -50,3 +75,36 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# IDE and editor files
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backup files
+*.bak
+*.orig
+
+# Documentation generated files
+docs/_build/
+docs/html/
+docs/latex/
+
+# Valgrind output
+*.valgrind
+vgcore.*
+
+# Profiling data
+*.gcda
+*.gcno
+*.gcov
+gmon.out
+callgrind.out.*
+perf.data*
+
+# Sanitizer output
+*.san

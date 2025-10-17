@@ -85,8 +85,12 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
                  COMMAND strongtest_pt 100 5)
         add_test(NAME strongtest_fastcond_smoke 
                  COMMAND strongtest_fc 100 5)
-        add_test(NAME strongtest_weak_smoke 
-                 COMMAND strongtest_wcond 100 5)
+        
+        # NOTE: strongtest_weak is NOT tested because strongtest specifically
+        # validates strong semantics (no wakeup stealing). The weak variant
+        # allows wakeup stealing and will deadlock in this test scenario.
+        # This is expected behavior - weak variant should only be used when
+        # all waiting threads are interchangeable.
 
         # Verify output contains expected patterns
         set_tests_properties(qtest_pthread_smoke PROPERTIES

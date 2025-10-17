@@ -123,6 +123,12 @@ Test arguments:
 - **qtest**: `<data_count> <num_threads> <queue_size>`
 - **strongtest**: `<data_count> <queue_size>`
 
+**Note on strongtest with weak variant**: The `strongtest_wcond` test is intentionally 
+not run in the test suite because it will deadlock. This is expected behavior - strongtest 
+specifically validates that only already-waiting threads are woken up (no wakeup stealing), 
+which the weak condition variable cannot guarantee. The weak variant should only be used 
+when all waiting threads are functionally equivalent.
+
 ## Benchmarking
 
 ### Using CMake

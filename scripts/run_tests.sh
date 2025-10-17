@@ -111,9 +111,9 @@ echo ""
 echo -e "${BLUE}--- Strong Semantics Tests ---${NC}"
 run_test "strongtest (pthread)" "$STRONGTEST_PT $DATA_COUNT $QUEUE_SIZE"
 run_test "strongtest (fastcond strong)" "$STRONGTEST_FC $DATA_COUNT $QUEUE_SIZE"
-if [ -n "$STRONGTEST_WCOND" ]; then
-    run_test "strongtest (fastcond weak)" "$STRONGTEST_WCOND $DATA_COUNT $QUEUE_SIZE"
-fi
+# NOTE: strongtest with weak variant is skipped because it will deadlock.
+# strongtest specifically tests that only waiting threads get woken (no stealing),
+# which the weak variant cannot guarantee. This is expected behavior.
 echo ""
 
 # Summary

@@ -47,6 +47,8 @@ Default patch mode is `COND` (strong variant). Change via `PATCH=WCOND` for weak
 
 `qtest` uses separate not_empty/not_full conditions (producer-consumer). `strongtest` uses **single condition** for both threads—this specifically validates strong semantics (prevents wakeup stealing).
 
+**Important**: `strongtest` with weak variant (`strongtest_wcond`) will deadlock and should not be run. This is expected—the test validates that only waiting threads wake, which weak variant cannot guarantee.
+
 ## Drop-in Replacement Pattern
 
 `fastcond_patch.h` provides preprocessor macros to replace `pthread_cond_*`:
