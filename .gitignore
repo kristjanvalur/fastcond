@@ -85,6 +85,15 @@ dkms.conf
 *~
 .DS_Store
 
+# Python virtual environments and cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.uv/
+
 # Backup files
 *.bak
 *.orig

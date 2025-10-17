@@ -18,11 +18,11 @@ ctest --test-dir build --output-on-failure
 # or
 ./scripts/run_tests.sh
 
-# Run benchmarks
-./scripts/benchmark.sh
+# Run performance benchmarks
+./scripts/run_benchmarks.sh
 ```
 
-See [BUILD.md](BUILD.md) for detailed build instructions.
+See [BUILD.md](BUILD.md) for detailed build instructions and [docs/benchmarking.md](docs/benchmarking.md) for performance testing.
 
 ## Development
 
@@ -65,3 +65,14 @@ following restrictions:
 
  This could be used as a drop-in replacement in many multithreaded programs where
  latency is of prime importance.
+
+## Performance
+
+On multi-core systems, fastcond shows significant performance improvements over pthread:
+
+- **38% higher throughput** in multi-threaded producer-consumer scenarios
+- **26% lower latency** for message passing
+- Consistent improvements across different workloads
+
+See [docs/performance-analysis.md](docs/performance-analysis.md) for detailed benchmark results and analysis.
+
