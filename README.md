@@ -1,7 +1,9 @@
 # The Fastcond project
 
 [![CI](https://github.com/kristjanvalur/fastcond/actions/workflows/ci.yml/badge.svg)](https://github.com/kristjanvalur/fastcond/actions/workflows/ci.yml)
+[![Benchmarks](https://github.com/kristjanvalur/fastcond/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/kristjanvalur/fastcond/actions/workflows/benchmarks.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Performance](https://img.shields.io/badge/performance-38%25_faster-brightgreen)](https://kristjanvalur.github.io/fastcond/)
 
 This provides an alternate implementation of posix _condition variables_,
 based only on posix semaphores.
@@ -73,6 +75,8 @@ On multi-core systems, fastcond shows significant performance improvements over 
 - **38% higher throughput** in multi-threaded producer-consumer scenarios
 - **26% lower latency** for message passing
 - Consistent improvements across different workloads
+
+**📊 [View Interactive Performance Results](https://kristjanvalur.github.io/fastcond/)**
 
 See [docs/performance-analysis.md](docs/performance-analysis.md) for detailed benchmark results and analysis.
 

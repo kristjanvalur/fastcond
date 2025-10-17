@@ -77,6 +77,15 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Generate HTML performance page
+echo "Generating HTML performance page..."
+(cd "$SCRIPT_DIR" && uv run generate_html.py "$JSON_FILE" --output "$OUTPUT_DIR/index.html")
+
+if [ $? -ne 0 ]; then
+    echo "Error: HTML page generation failed"
+    exit 1
+fi
+
 echo ""
 echo "==================================="
 echo "Benchmark suite completed!"
@@ -85,6 +94,7 @@ echo ""
 echo "Results:"
 echo "  - JSON data: $JSON_FILE"
 echo "  - Markdown table: $OUTPUT_DIR/benchmark-results.md"
+echo "  - HTML performance page: $OUTPUT_DIR/index.html"
 echo "  - Throughput chart: $OUTPUT_DIR/throughput-comparison.png"
 echo "  - Latency chart: $OUTPUT_DIR/latency-comparison.png"
 echo ""

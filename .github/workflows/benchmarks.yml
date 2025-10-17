@@ -44,6 +44,11 @@ jobs:
     - name: Run benchmark suite
       run: BUILD_DIR=test ./scripts/run_benchmarks.sh
     
+    - name: Generate HTML performance page
+      run: |
+        cd scripts
+        uv run generate_html.py ../docs/benchmark-results.json --output ../docs/index.html
+    
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
       with:
@@ -51,6 +56,7 @@ jobs:
         path: |
           docs/benchmark-results.json
           docs/benchmark-results.md
+          docs/index.html
           docs/throughput-comparison.png
           docs/latency-comparison.png
         retention-days: 90
@@ -106,11 +112,11 @@ jobs:
         <head>
           <meta charset="utf-8">
           <title>fastcond Performance Benchmarks</title>
-          <meta http-equiv="refresh" content="0; url=benchmarks/${{ github.sha }}/benchmark-results.md">
+          <meta http-equiv="refresh" content="0; url=benchmarks/${{ github.sha }}/index.html">
         </head>
         <body>
           <p>Redirecting to latest benchmark results...</p>
-          <p>If not redirected, <a href="benchmarks/${{ github.sha }}/benchmark-results.md">click here</a>.</p>
+          <p>If not redirected, <a href="benchmarks/${{ github.sha }}/index.html">click here</a>.</p>
         </body>
         </html>
         EOF
