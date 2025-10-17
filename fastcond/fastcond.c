@@ -127,7 +127,7 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
 FASTCOND_API(int)
 fastcond_wcond_init(fastcond_wcond_t *restrict cond, const pthread_condattr_t *attr)
 {
-    (void)attr; /* Unused - condattr not supported */
+    (void) attr; /* Unused - condattr not supported */
     cond->waiting = 0;
     return SEM_INIT(cond->sem);
 }
