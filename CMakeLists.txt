@@ -74,6 +74,11 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     add_executable(simple_init_test test/simple_init_test.c)
     target_compile_definitions(simple_init_test PRIVATE FASTCOND_PATCH_COND)
     target_link_libraries(simple_init_test PRIVATE fastcond)
+    
+    # GCD direct test (macOS only)
+    if(APPLE)
+        add_executable(gcd_test test/gcd_test.c)
+    endif()
 
     # Create test executables
     add_test_variant(qtest test/qtest.c)
@@ -81,6 +86,12 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
 
     # Add CTest tests with appropriate arguments
     if(FASTCOND_BUILD_TESTS)
+        # GCD test (macOS only, runs first)
+        if(APPLE)
+            add_test(NAME gcd_test
+                     COMMAND gcd_test)
+        endif()
+        
         # Simple initialization test (runs first to isolate init issues)
         add_test(NAME simple_init_test
                  COMMAND simple_init_test)
