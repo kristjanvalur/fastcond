@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "fastcond.h"
 #ifdef TEST_WCOND
@@ -13,6 +14,13 @@
 #define FASTCOND_PATCH_COND
 #endif
 #include "fastcond_patch.h"
+
+/* Constructor runs before main() */
+__attribute__((constructor)) static void early_init(void)
+{
+    const char *msg = "qtest: constructor running (before main)\n";
+    write(STDERR_FILENO, msg, 42);
+}
 
 /*
  * This code tests parallelism by implementing a producer-consumer system
