@@ -5,7 +5,7 @@
 ### Local Usage
 ```bash
 # One-time setup
-uv sync
+cd scripts && uv sync && cd ..
 
 # Run benchmarks
 ./scripts/run_benchmarks.sh
@@ -55,8 +55,11 @@ scripts/
   ├── benchmark_json.py           # Parse output to JSON
   ├── visualize.py                # Create charts
   ├── run_benchmarks.sh          # Run full suite
-  └── setup_github_pages.sh      # One-time setup
-docs/
+  ├── setup_github_pages.sh      # One-time setup
+  ├── pyproject.toml             # Python dependencies
+  ├── uv.lock                    # Locked dependencies
+  └── .venv/                     # Virtual environment
+dev-docs/
   ├── benchmarking.md            # Local usage guide
   └── ci-benchmarks.md           # CI/CD complete guide
 ```
@@ -105,7 +108,8 @@ cd test && make qtest_fc
 
 ### Generate charts from existing JSON
 ```bash
-uv run scripts/visualize.py my-results.json --output-dir charts/
+cd scripts
+uv run visualize.py my-results.json --output-dir ../charts/
 ```
 
 ### Compare two benchmark runs
@@ -120,10 +124,11 @@ git checkout feature-branch
 ./scripts/run_benchmarks.sh
 
 # Compare (in Python)
+cd scripts
 uv run python -c "
 import json
 base = json.load(open('/tmp/baseline.json'))
-new = json.load(open('docs/benchmark-results.json'))
+new = json.load(open('../docs/benchmark-results.json'))
 # ... comparison logic
 "
 ```

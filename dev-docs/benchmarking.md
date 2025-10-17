@@ -20,11 +20,11 @@ The benchmarking system consists of:
 ### Install Dependencies
 
 ```bash
-cd /path/to/fastcond
+cd /path/to/fastcond/scripts
 uv sync
 ```
 
-This installs matplotlib and other dependencies in a local virtual environment.
+This installs matplotlib and other dependencies in a local virtual environment within the scripts directory.
 
 ### Run Benchmarks
 
@@ -43,16 +43,18 @@ This will:
 ### Generate JSON from Test Output
 
 ```bash
-uv run scripts/benchmark_json.py build > results.json
+cd scripts
+uv run benchmark_json.py ../build > results.json
 ```
 
 Arguments:
-- `build` - Build directory containing test executables
+- `../build` - Build directory containing test executables (relative to scripts/)
 
 ### Visualize Results
 
 ```bash
-uv run scripts/visualize.py results.json --output-dir docs
+cd scripts
+uv run visualize.py results.json --output-dir ../docs
 ```
 
 Options:
@@ -240,6 +242,7 @@ Managed by `uv` via `pyproject.toml`:
 
 To add more dependencies:
 ```bash
+cd scripts
 uv add <package-name>
 ```
 
