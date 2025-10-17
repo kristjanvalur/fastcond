@@ -187,5 +187,14 @@ int main(int argc, char *argv[])
         pthread_join(receivers[i].pid, &retval);
     for (i = 0; i < n_senders; i++)
         pthread_join(senders[i].pid, &retval);
+
+    /* cleanup */
+    pthread_cond_destroy(&q.not_empty);
+    pthread_cond_destroy(&q.not_full);
+    pthread_mutex_destroy(&q.mutex);
+    free(q.queue);
+    free(receivers);
+    free(senders);
+
     return 0;
 }

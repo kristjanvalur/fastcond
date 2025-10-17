@@ -14,6 +14,7 @@
 #define pthread_cond_t fastcond_wcond_t
 #define pthread_cond_init fastcond_wcond_init
 #define pthread_cond_fini fastcond_wcond_fini
+#define pthread_cond_destroy fastcond_wcond_fini
 #define pthread_cond_wait fastcond_wcond_wait
 #define pthread_cond_timedwait fastcond_wcond_timedwait
 #define pthread_cond_signal fastcond_wcond_signal
@@ -28,6 +29,7 @@
 #define pthread_cond_t fastcond_cond_t
 #define pthread_cond_init fastcond_cond_init
 #define pthread_cond_fini fastcond_cond_fini
+#define pthread_cond_destroy fastcond_cond_fini
 #define pthread_cond_wait fastcond_cond_wait
 #define pthread_cond_timedwait fastcond_cond_timedwait
 #define pthread_cond_signal fastcond_cond_signal
