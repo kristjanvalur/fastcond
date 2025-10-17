@@ -18,17 +18,9 @@ jobs:
         compiler: [gcc, clang]
         build_type: [Release, Debug]
         exclude:
-          # macOS doesn't have gcc, uses clang anyway
+          # macOS doesn't have gcc (uses Apple Clang)
           - os: macos-latest
             compiler: gcc
-          # macOS deprecated POSIX unnamed semaphores (sem_init, sem_timedwait)
-          # Skip macOS builds - this is primarily a Linux library
-          - os: macos-latest
-            compiler: clang
-            build_type: Debug
-          - os: macos-latest
-            compiler: clang
-            build_type: Release
     
     steps:
     - uses: actions/checkout@v4
@@ -68,13 +60,19 @@ jobs:
       run: ./scripts/benchmark.sh
 
   sanitizers:
-    name: Sanitizers (Ubuntu + Clang)
+    name: ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
     
     strategy:
       fail-fast: false
       matrix:
         sanitizer: [address, thread, undefined]
+        # AddressSanitizer (ASan): Detects memory errors like buffer overflows,
+        #   use-after-free, double-free, and memory leaks
+        # ThreadSanitizer (TSan): Detects data races and other threading issues
+        #   Critical for this library as it's designed for concurrent use
+        # UndefinedBehaviorSanitizer (UBSan): Detects undefined behavior like
+        #   integer overflow, null pointer dereference, misaligned access
     
     steps:
     - uses: actions/checkout@v4
