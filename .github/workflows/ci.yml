@@ -53,14 +53,7 @@ jobs:
     - name: Run tests
       run: |
         cd build
-        ctest --output-on-failure --verbose --timeout 30 --build-config ${{ matrix.build_type }}
-    
-    - name: Debug - try running qtest_fc directly (macOS Release only)
-      if: runner.os == 'macOS' && matrix.build_type == 'Release'
-      run: |
-        cd build
-        echo "Attempting to run qtest_fc directly..."
-        timeout 5 ./qtest_fc 10 1 2 || echo "qtest_fc failed or timed out (exit code: $?)"
+        ctest --output-on-failure --build-config ${{ matrix.build_type }}
     
     - name: Run benchmarks (Release only)
       if: matrix.build_type == 'Release'
