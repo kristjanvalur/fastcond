@@ -23,7 +23,7 @@ typedef struct _fastcond_wcond_t {
 #else
     sem_t sem;
 #endif
-    int waiting; /* to allow PyCOND_SIGNAL to be a no-op */
+    volatile int waiting; /* to allow PyCOND_SIGNAL to be a no-op */
 } fastcond_wcond_t;
 
 FASTCOND_API(int)
@@ -48,9 +48,9 @@ fastcond_wcond_broadcast(fastcond_wcond_t *cond);
 /* the _strong_ condition variable.  See fastcond.c for details */
 
 typedef struct _fastcond_cond_t {
-    fastcond_wcond_t wait; /* the inner weak condition variable */
-    int n_waiting;         /* number of threads in 'wait' */
-    int n_wakeup;          /* number of awoken threads in 'wait' that haven't exited yet. */
+    fastcond_wcond_t wait;  /* the inner weak condition variable */
+    volatile int n_waiting; /* number of threads in 'wait' */
+    volatile int n_wakeup;  /* number of awoken threads in 'wait' that haven't exited yet. */
 } fastcond_cond_t;
 
 FASTCOND_API(int)
