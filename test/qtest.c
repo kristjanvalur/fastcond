@@ -163,6 +163,11 @@ int main(int argc, char *argv[])
     args_t *senders, *receivers;
     void *retval;
 
+    /* Unbuffer stdout to ensure output appears immediately */
+    setbuf(stdout, NULL);
+    printf("qtest starting (argc=%d)\n", argc);
+    fflush(stdout);
+
     if (argc > 1)
         n_data = atoi(argv[1]);
     if (argc > 2)
