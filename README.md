@@ -1,5 +1,8 @@
 # The Fastcond project
 
+[![CI](https://github.com/kristjanvalur/fastcond/actions/workflows/ci.yml/badge.svg)](https://github.com/kristjanvalur/fastcond/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 This provides an alternate implementation of posix _condition variables_,
 based only on posix semaphores.
 
