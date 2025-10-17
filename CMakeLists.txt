@@ -33,6 +33,9 @@ target_link_libraries(fastcond
         Threads::Threads
 )
 
+# macOS-specific: GCD dispatch library is part of the system
+# No explicit linking needed as it's in libSystem
+
 # Compiler warnings
 target_compile_options(fastcond PRIVATE
     $<$<C_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>

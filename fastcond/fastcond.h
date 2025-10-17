@@ -4,14 +4,25 @@
 #define _FASTCOND_H_
 
 #include <pthread.h> /* for the pthread mutex that we use */
+
+/* Platform detection and semaphore selection */
+#if defined(__APPLE__) || defined(__MACH__)
+#include <dispatch/dispatch.h>
+#define FASTCOND_USE_GCD 1
+#else
 #include <semaphore.h>
+#endif
 
 #define FASTCOND_API(v) v
 
 /* The _weak_ condition variable.  See fastcond.c for details */
 
 typedef struct _fastcond_wcond_t {
+#ifdef FASTCOND_USE_GCD
+    dispatch_semaphore_t sem;
+#else
     sem_t sem;
+#endif
     int waiting; /* to allow PyCOND_SIGNAL to be a no-op */
 } fastcond_wcond_t;
 
@@ -24,11 +35,9 @@ fastcond_wcond_fini(fastcond_wcond_t *cond);
 FASTCOND_API(int)
 fastcond_wcond_wait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex);
 
-#ifndef FASTCOND_NO_TIMEDWAIT
 FASTCOND_API(int)
 fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex,
                          const struct timespec *restrict abstime);
-#endif
 
 FASTCOND_API(int)
 fastcond_wcond_signal(fastcond_wcond_t *cond);
@@ -53,11 +62,9 @@ fastcond_cond_fini(fastcond_cond_t *cond);
 FASTCOND_API(int)
 fastcond_cond_wait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex);
 
-#ifndef FASTCOND_NO_TIMEDWAIT
 FASTCOND_API(int)
 fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex,
                         const struct timespec *restrict abstime);
-#endif
 
 FASTCOND_API(int)
 fastcond_cond_signal(fastcond_cond_t *cond);

@@ -11,6 +11,12 @@ Both outperform `pthread_cond_t` on multicore systems, with strong variant showi
 
 ## Critical Architecture Patterns
 
+### Platform-Specific Semaphore Implementation
+- **Linux/POSIX**: Uses unnamed POSIX semaphores (`sem_t`) directly
+- **macOS**: Uses GCD dispatch semaphores (`dispatch_semaphore_t`) as POSIX unnamed semaphores are deprecated
+- Abstraction via `SEM_*` macros in fastcond.c for portability
+- `FASTCOND_USE_GCD` macro controls conditional compilation
+
 ### Layered Implementation
 - Strong condition variable **wraps** weak variant (`fastcond_cond_t` contains `fastcond_wcond_t wait`)
 - Weak variant directly wraps semaphores for signaling
@@ -66,10 +72,11 @@ Default patch mode is `COND` (strong variant). Change via `PATCH=WCOND` for weak
 
 ## Key Constraints
 
-1. **No cancellation points**: Unlike pthread, wait functions ignore cancellation
-2. **No condattr support**: Attributes parameter ignored (null check not enforced)
-3. **Spurious wakeups are features**: Strong variant intentionally generates them to preserve semantics
-4. **Thread equivalence matters**: Use weak variant only when all waiting threads are interchangeable
+1. **Platform compatibility**: macOS uses GCD semaphores, Linux uses POSIX semaphores
+2. **No cancellation points**: Unlike pthread, wait functions ignore cancellation
+3. **No condattr support**: Attributes parameter ignored (null check not enforced)
+4. **Spurious wakeups are features**: Strong variant intentionally generates them to preserve semantics
+5. **Thread equivalence matters**: Use weak variant only when all waiting threads are interchangeable
 
 ## File Organization
 
