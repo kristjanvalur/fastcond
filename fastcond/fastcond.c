@@ -165,7 +165,7 @@ fastcond_wcond_broadcast(
 /*  fastcond_cond_t code - the strong condition variable
 
     The above emulated condition variable, as explained, does make the full
-    promise of the Condition Variable protcol, that a 'signal' wakes up at least
+    promise of the Condition Variable protocol, that a 'signal' wakes up at least
     one of the waiting threads.  It will wake up a thread, but it may be one that
     hasn't yet started waiting.
     This can cause problems if not all of the potentially waiting threads are
@@ -174,11 +174,11 @@ fastcond_wcond_broadcast(
 
     And so, we aim to provide a `strong` condition variable.
     The approach taken here is to provide additional bookkeeping outside
-    the `weak` condition variable, keeping track of number of waiting threads
+    keeping track of number of waiting threads
     inside it, and the number of wakeups that are `pending`.
     That is, threads that have been signalled to wake up but haven't yet exited.
     If a new thread attempts to wait while there are pending wakeups, it
-    immediatelly returns without waiting, (but yields the cpu).  This prevents
+    immediately returns without waiting, (but yields the cpu).  This prevents
     it from `stealing` the wakeup from one of the other threads.
 
     To the caller, this will look like a spurious wakeup, something that

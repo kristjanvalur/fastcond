@@ -61,7 +61,7 @@ void *sender(void *arg)
 			have_data = 1;
 		}
 		while(q->n_sent < q->max_send && q->n_queue >= q->s_queue)
-			/* queueu is active and full */
+			/* queue is active and full */
 			pthread_cond_wait(&q->not_full, &q->mutex);
 		if (q->n_sent < q->max_send && q->n_queue < q->s_queue){
 			/* put stuff on queue */
@@ -105,7 +105,7 @@ void *receiver(void *arg)
 				now.tv_sec --;
 				now.tv_nsec += 1000000000;
 			}
-			/* comute stats */
+			/* compute stats */
 			time = (float)now.tv_sec + (float)now.tv_nsec * 1e-9f;
 			sum_time += time;
 			sum_time2 += time * time;
@@ -114,7 +114,7 @@ void *receiver(void *arg)
 			have_data = 0;
 		}
 		while(q->n_sent < q->max_send && !q->n_queue)
-			/* queueu is active and empty */
+			/* queue is active and empty */
 			pthread_cond_wait(&q->not_empty, &q->mutex);
 		if (q->n_queue){
 			/* remove from queue */

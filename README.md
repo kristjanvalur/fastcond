@@ -13,13 +13,13 @@ following restrictions:
  Two versions are provided, the _weak_ and the _strong_ condition variables.  This
  terminology is my own.
 
- - The _weak_ version relaxes one of the classic condition cariable promises, namely
- that _one of the treads already waiting_ gets awoken by a `pthread_cond_signal()`
+ - The _weak_ version relaxes one of the classic condition variable promises, namely
+ that _one of the threads already waiting_ gets awoken by a `pthread_cond_signal()`
  (or all of them in case of a `pthread_cond_broadcast()`), and instead, guarantees
  only that _a_ thread will wake up. I.e. it is possible that a thread which has not
  yet started to wait, will be the one woken up.
 
- - At the cost of some sligt added complexity, the _strong_ version will uphold the
+ - At the cost of some slight added complexity, the _strong_ version will uphold the
  aforementioned promise.
 
  Interestingly, tests on multicore machines show that the both versions outperform

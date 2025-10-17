@@ -56,7 +56,7 @@ void *sender(void *arg)
 			have_data = 1;
 		}
 		while(q->n_sent < q->max_send && q->n_data >= q->max_queue)
-			/* queuue is active and full, wake wait */
+			/* queue is active and full, wake wait */
 			pthread_cond_wait(&q->cond, &q->mutex);
 		if (q->n_sent < q->max_send){
 			q->n_data++;
@@ -91,7 +91,7 @@ void *receiver(void *arg)
 			have_data = 0;
 		}
 		while(q->n_sent < q->max_send && !q->n_data)
-			/* queueu is active and full */
+			/* queue is active and empty */
 			pthread_cond_wait(&q->cond, &q->mutex);
 		if (q->n_data){
 			q->n_data--;
