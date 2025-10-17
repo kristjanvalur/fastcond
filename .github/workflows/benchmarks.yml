@@ -31,7 +31,9 @@ jobs:
         sudo apt-get install -y build-essential cmake
     
     - name: Install Python dependencies
-      run: uv sync
+      run: |
+        cd scripts
+        uv sync
     
     - name: Build tests (Release mode for accurate benchmarks)
       run: |
@@ -138,6 +140,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake
+        cd scripts
         uv sync
     
     # Run benchmarks on PR branch
@@ -190,7 +193,8 @@ jobs:
                 print(f"{emoji} **{key}**: {change:+.1f}% ({pr_throughput:,.0f} vs {base_throughput:,.0f} items/sec)")
         PYEOF
         
-        uv run python compare.py > /tmp/comparison.md
+        cd scripts
+        uv run python ../compare.py > /tmp/comparison.md
         cat /tmp/comparison.md
     
     - name: Comment comparison

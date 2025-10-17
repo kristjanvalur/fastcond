@@ -10,6 +10,11 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="${BUILD_DIR:-$PROJECT_DIR/build}"
 OUTPUT_DIR="${OUTPUT_DIR:-$PROJECT_DIR/docs}"
 
+# Convert BUILD_DIR to absolute path if it's relative
+if [[ "$BUILD_DIR" != /* ]]; then
+    BUILD_DIR="$PROJECT_DIR/$BUILD_DIR"
+fi
+
 echo "==================================="
 echo "fastcond Performance Benchmark Suite"
 echo "==================================="
@@ -53,7 +58,7 @@ echo ""
 
 # Generate JSON results
 JSON_FILE="$OUTPUT_DIR/benchmark-results.json"
-uv run "$SCRIPT_DIR/benchmark_json.py" "$BUILD_DIR" > "$JSON_FILE"
+(cd "$SCRIPT_DIR" && uv run benchmark_json.py "$BUILD_DIR") > "$JSON_FILE"
 
 if [ $? -ne 0 ]; then
     echo "Error: Benchmark execution failed"
@@ -65,7 +70,7 @@ echo ""
 
 # Generate visualizations
 echo "Generating visualizations..."
-uv run "$SCRIPT_DIR/visualize.py" "$JSON_FILE" --output-dir "$OUTPUT_DIR"
+(cd "$SCRIPT_DIR" && uv run visualize.py "$JSON_FILE" --output-dir "$OUTPUT_DIR")
 
 if [ $? -ne 0 ]; then
     echo "Error: Visualization generation failed"

@@ -7,27 +7,27 @@ Generated from: `/home/kristjan/git/fastcond/docs/benchmark-results.json`
 ### Throughput Comparison
 | Implementation | Throughput (items/sec) | Speedup vs pthread |
 |---|---:|---:|
-| fastcond_strong | 640,088.81 | +45.5% |
-| pthread | 439,862.18 | baseline |
-| fastcond_weak | 388,728.81 | -11.6% |
+| fastcond_strong | 569,193.85 | +21.0% |
+| pthread | 470,415.12 | baseline |
+| fastcond_weak | 358,476.72 | -23.8% |
 
 ### Average Latency Comparison
 | Implementation | Avg Latency (μs) | Min (μs) | Max (μs) | Stdev (μs) |
 |---|---:|---:|---:|---:|
-| pthread | 10.91 | 0.05 | 141.03 | 15.98 |
-| fastcond_strong | 7.64 | 0.04 | 169.96 | 13.79 |
-| fastcond_weak | 11.14 | 0.05 | 158.92 | 17.24 |
+| pthread | 10.18 | 0.05 | 135.39 | 15.90 |
+| fastcond_strong | 9.05 | 0.05 | 134.90 | 14.15 |
+| fastcond_weak | 12.97 | 0.05 | 204.81 | 21.50 |
 
 ## STRONGTEST
 **Configuration:** Strong semantics test (10K items, queue size 5)
 ### Throughput Comparison
 | Implementation | Throughput (items/sec) | Speedup vs pthread |
 |---|---:|---:|
-| fastcond_strong | 1,139,642.05 | +2.4% |
-| pthread | 1,112,967.29 | baseline |
+| pthread | 1,178,049.17 | baseline |
+| fastcond_strong | 1,063,515.94 | -9.7% |
 
 ### Average Latency Comparison
 | Implementation | Avg Latency (μs) | Min (μs) | Max (μs) | Stdev (μs) |
 |---|---:|---:|---:|---:|
-| pthread | 3.02 | 0.04 | 1609.95 | 50.09 |
-| fastcond_strong | 2.66 | 0.04 | 1382.67 | 37.77 |
+| pthread | 2.15 | 0.05 | 1625.20 | 45.58 |
+| fastcond_strong | 2.74 | 0.03 | 1271.28 | 38.75 |
