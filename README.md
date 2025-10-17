@@ -5,9 +5,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Performance](https://img.shields.io/badge/performance-38%25_faster-brightgreen)](https://kristjanvalur.github.io/fastcond/)
 
-> **🚀 38% faster than pthread condition variables** — Because who doesn't want their threads to fly like the wind?
+> **🚀 38% faster than pthread condition variables** — Because one's threads deserve to be rather sprightly, don't they?
 
-Fast, reliable POSIX condition variable alternatives built with semaphores. When `pthread_cond_t` just isn't cutting it, fastcond delivers the performance your applications deserve.
+Fast, reliable POSIX condition variable alternatives built with semaphores. When `pthread_cond_t` simply won't do, fastcond delivers the performance your applications rather deserve.
 
 ## 📈 Performance That Speaks for Itself
 
@@ -57,42 +57,42 @@ following restrictions:
 
 ## The Weak vs Strong Showdown 🥊
 
-Two flavors of awesome, each with their own personality:
+Two flavours of excellence, each with their own character:
 
 ### 💪 **Strong Condition Variables** (`fastcond_cond_t`)
-*The perfectionist of the family*
-- **Strict POSIX semantics** — Only wakes threads that are already waiting (as they should!)
-- **Lower latency** — Surprisingly, being picky makes it faster
-- **Drop-in replacement** — Your pthread code will feel right at home
-- **The people's choice** — Most applications want this one
+*The meticulous one of the family*
+- **Strict POSIX semantics** — Only wakes threads that are already waiting (as is proper!)
+- **Lower latency** — Rather surprisingly, being particular makes it faster
+- **Drop-in replacement** — Your pthread code will feel quite at home
+- **The popular choice** — Most applications favour this one
 
 ### 🏃 **Weak Condition Variables** (`fastcond_wcond_t`) 
-*The rebel with a cause*
-- **Relaxed semantics** — Might wake a thread that just arrived to the party
-- **Still faster than pthread** — Because even our "weak" is strong
+*The cheeky variant*
+- **Relaxed semantics** — Might wake a thread that's just turned up
+- **Still faster than pthread** — Because even our "weak" is rather strong
 - **Use when** — All your waiting threads are equivalent and interchangeable
-- **For the adventurous** — When you know exactly what you're doing
+- **For the bold** — When you know precisely what you're about
 
-> **Plot twist:** Both versions consistently outperform boring old `pthread_cond_t` on multicore systems. The "strong" version actually has *lower* latency despite doing more work. Go figure! 🤷‍♂️
+> **Rather amusing twist:** Both versions consistently outperform dreary old `pthread_cond_t` on multicore systems. The "strong" version actually has *lower* latency despite doing more work. Quite remarkable, really! 🤷‍♂️
 
 ## Why Choose Fastcond? 
 
-Because life's too short for slow condition variables! 🐌→🚀
+Because life's rather too short for sluggish condition variables, wouldn't you say? 🐌→🚀
 
-**The Numbers Don't Lie:**
-- **38% higher throughput** — Your producer-consumer patterns will thank you
-- **26% lower latency** — Messages zip through like they're caffeinated  
-- **25% better tail latency** — Even your worst-case scenarios perform better
-- **Consistent wins** — Not just cherry-picked benchmarks, real improvements across workloads
+**The Numbers Tell the Tale:**
+- **38% higher throughput** — Your producer-consumer patterns will be positively chuffed
+- **26% lower latency** — Messages fairly zip through the system
+- **25% better tail latency** — Even your worst-case scenarios perform rather well
+- **Consistent improvements** — Not merely cherry-picked benchmarks, proper improvements across workloads
 
 **Platform Compatibility:**
-- ✅ **Linux** - Battle-tested and ready for production
-- ⚠️ **macOS** - Mostly there (missing `*_timedwait` due to platform limitations)
-- ❓ **Other POSIX** - Should work if you have proper semaphore support
+- ✅ **Linux** - Thoroughly tested and production-ready
+- ⚠️ **macOS** - Nearly there (missing `*_timedwait` due to platform limitations)
+- ❓ **Other POSIX** - Should work perfectly well if you have proper semaphore support
 
 **🎯 [Explore the Interactive Performance Dashboard →](https://kristjanvalur.github.io/fastcond/)**
 
-*Featuring live benchmarks, beautiful charts, and all the performance porn your engineer heart desires.*
+*Featuring live benchmarks, proper charts, and all the performance data your engineering soul could desire.*
 
 ## Documentation
 

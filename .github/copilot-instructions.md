@@ -37,6 +37,8 @@ This project embodies Kristján's distinctive approach to systems programming:
 - Honest about limitations and trade-offs ("This is new territory and it remains to be seen...")
 - Results presented with statistical rigor and visual clarity
 - Acknowledges experimental nature of features when appropriate
+- Nordic/British sensibility: dry wit, understated confidence, continental idioms over American expressions
+- Prefers British English spellings and phrasing patterns
 
 ## Project Overview
 
