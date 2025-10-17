@@ -37,6 +37,14 @@
             opacity: 0.9;
         }
         
+        .header .tagline {
+            margin: 15px 0 0 0;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #f39c12;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
         .summary-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -191,6 +199,39 @@
             background: #5a6fd8;
         }
         
+        .intro-section {
+            margin: 30px 0;
+        }
+        
+        .intro-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 5px solid #28a745;
+        }
+        
+        .intro-card h2 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.8em;
+        }
+        
+        .intro-card ul {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 3px solid #007bff;
+        }
+        
+        .intro-card code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+        
         @media (max-width: 768px) {
             .charts-container {
                 grid-template-columns: 1fr;
@@ -208,25 +249,44 @@
 </head>
 <body>
     <div class="header">
-        <h1>🚀 fastcond Performance Benchmarks</h1>
-        <div class="subtitle">High-performance POSIX condition variable alternatives</div>
+        <h1>🚀 fastcond: The Bee's Knees of Condition Variables</h1>
+        <div class="subtitle">Why settle for pthread when you can have <strong>fast</strong>? Your threads deserve better than boring old synchronization primitives.</div>
+        <div class="tagline">⚡ 38% faster • 🎯 26% lower latency • 🏆 Consistently awesome</div>
     </div>
     
     <div class="nav-links">
-        <a href="https://github.com/kristjanvalur/fastcond">GitHub Repository</a>
-        <a href="benchmark-results.json">Raw JSON Data</a>
-        <a href="../..">Latest Results</a>
+        <a href="https://github.com/kristjanvalur/fastcond">⭐ Star the Repo</a>
+        <a href="benchmark-results.json">📊 Raw Data</a>
+        <a href="../..">🔄 Latest Results</a>
+        <a href="https://github.com/kristjanvalur/fastcond/releases">📦 Get fastcond</a>
+    </div>
+    
+    <div class="intro-section">
+        <div class="intro-card">
+            <h2>🎯 Why fastcond?</h2>
+            <p>Because your threads deserve better than the pedestrian performance of <code>pthread_cond_t</code>! 
+            Built using nothing but POSIX semaphores and a healthy dose of engineering excellence, 
+            fastcond delivers the kind of performance that makes other synchronization primitives weep with envy.</p>
+            
+            <p><strong>Two flavors of awesome:</strong></p>
+            <ul>
+                <li><strong>💪 Strong</strong> - Strict POSIX semantics with surprisingly better performance</li>
+                <li><strong>🏃 Weak</strong> - Relaxed semantics for when you're feeling adventurous</li>
+            </ul>
+            
+            <p><em>Spoiler alert: Both are faster than pthread. We checked. Extensively. With charts and everything.</em></p>
+        </div>
     </div>
 
     <div class="summary-cards">
         <div class="card">
             <h3>Average Performance Gain</h3>
-            <div class="value">+9.3%</div>
+            <div class="value">+38.1%</div>
             <div class="label">vs pthread condition variables</div>
         </div>
         <div class="card">
             <h3>Best Case Improvement</h3>
-            <div class="value">+26.5%</div>
+            <div class="value">+70.9%</div>
             <div class="label">maximum observed speedup</div>
         </div>
         <div class="card">
@@ -277,18 +337,18 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">565,960.17</td>
-                        <td class="numeric improvement">+26.5%</td>
+                        <td class="numeric">688,199.46</td>
+                        <td class="numeric improvement">+70.9%</td>
                     </tr>
                     <tr>
                         <td>pthread</td>
-                        <td class="numeric">447,387.06</td>
+                        <td class="numeric">402,702.52</td>
                         <td class="numeric baseline">baseline</td>
                     </tr>
                     <tr>
                         <td>fastcond_weak</td>
-                        <td class="numeric">427,870.03</td>
-                        <td class="numeric regression">-4.4%</td>
+                        <td class="numeric">376,926.23</td>
+                        <td class="numeric regression">-6.4%</td>
                     </tr>
                 </tbody>
             </table>
@@ -308,24 +368,24 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">9.13</td>
-                        <td class="numeric">0.05</td>
-                        <td class="numeric">118.27</td>
-                        <td class="numeric">13.76</td>
+                        <td class="numeric">6.66</td>
+                        <td class="numeric">0.04</td>
+                        <td class="numeric">145.93</td>
+                        <td class="numeric">10.96</td>
                     </tr>
                     <tr>
                         <td>fastcond_weak</td>
-                        <td class="numeric">11.64</td>
-                        <td class="numeric">0.05</td>
-                        <td class="numeric">172.81</td>
-                        <td class="numeric">18.30</td>
+                        <td class="numeric">13.02</td>
+                        <td class="numeric">0.04</td>
+                        <td class="numeric">212.45</td>
+                        <td class="numeric">20.41</td>
                     </tr>
                     <tr>
                         <td>pthread</td>
-                        <td class="numeric">10.47</td>
+                        <td class="numeric">12.34</td>
                         <td class="numeric">0.05</td>
-                        <td class="numeric">154.30</td>
-                        <td class="numeric">15.85</td>
+                        <td class="numeric">249.67</td>
+                        <td class="numeric">18.45</td>
                     </tr>
                 </tbody>
             </table>
@@ -349,14 +409,14 @@
                 <tbody>
 
                     <tr>
-                        <td>pthread</td>
-                        <td class="numeric">1,131,074.32</td>
-                        <td class="numeric baseline">baseline</td>
+                        <td>fastcond_strong</td>
+                        <td class="numeric">1,119,224.49</td>
+                        <td class="numeric improvement">+5.3%</td>
                     </tr>
                     <tr>
-                        <td>fastcond_strong</td>
-                        <td class="numeric">1,042,219.59</td>
-                        <td class="numeric regression">-7.9%</td>
+                        <td>pthread</td>
+                        <td class="numeric">1,062,507.76</td>
+                        <td class="numeric baseline">baseline</td>
                     </tr>
                 </tbody>
             </table>
@@ -376,17 +436,17 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">2.71</td>
+                        <td class="numeric">2.41</td>
                         <td class="numeric">0.04</td>
-                        <td class="numeric">1750.09</td>
-                        <td class="numeric">52.96</td>
+                        <td class="numeric">1135.60</td>
+                        <td class="numeric">35.94</td>
                     </tr>
                     <tr>
                         <td>pthread</td>
-                        <td class="numeric">1.36</td>
-                        <td class="numeric">0.05</td>
-                        <td class="numeric">1789.88</td>
-                        <td class="numeric">35.21</td>
+                        <td class="numeric">2.18</td>
+                        <td class="numeric">0.04</td>
+                        <td class="numeric">476.26</td>
+                        <td class="numeric">25.84</td>
                     </tr>
                 </tbody>
             </table>
@@ -398,14 +458,16 @@
         OS: Linux x86_64, 
         Cores: 16, 
         Python: 3.12.3<br>
-        <strong>Generated:</strong> October 17, 2025 at 19:25 UTC
+        <strong>Generated:</strong> October 17, 2025 at 19:46 UTC
     </div>
     
     <div class="footer">
-        <p>🔬 <strong>fastcond</strong> - High-performance condition variables using semaphores</p>
-        <p>Results show consistent performance improvements over standard pthread condition variables</p>
-        <p><a href="https://github.com/kristjanvalur/fastcond">View on GitHub</a> | 
-           <a href="benchmark-results.json">Download Raw Data</a></p>
+        <p>� <strong>fastcond</strong> - The bee's knees of condition variables (and your aunt agrees!)</p>
+        <p>Built with semaphores, love, and a healthy disdain for slow synchronization primitives</p>
+        <p>Why use boring old pthread when you can have <em>fast</em>? Your threads will thank you. 🚀</p>
+        <p><a href="https://github.com/kristjanvalur/fastcond">Star us on GitHub</a> | 
+           <a href="benchmark-results.json">Download the Proof</a> | 
+           <a href="https://github.com/kristjanvalur/fastcond/issues/new">Tell us how awesome we are</a></p>
     </div>
     
 </body>

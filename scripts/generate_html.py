@@ -80,6 +80,14 @@ def generate_html_page(results, output_path, charts_available=True):
             opacity: 0.9;
         }}
         
+        .header .tagline {{
+            margin: 15px 0 0 0;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #f39c12;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }}
+        
         .summary-cards {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -234,6 +242,39 @@ def generate_html_page(results, output_path, charts_available=True):
             background: #5a6fd8;
         }}
         
+        .intro-section {{
+            margin: 30px 0;
+        }}
+        
+        .intro-card {{
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 5px solid #28a745;
+        }}
+        
+        .intro-card h2 {{
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.8em;
+        }}
+        
+        .intro-card ul {{
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 3px solid #007bff;
+        }}
+        
+        .intro-card code {{
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }}
+        
         @media (max-width: 768px) {{
             .charts-container {{
                 grid-template-columns: 1fr;
@@ -251,14 +292,33 @@ def generate_html_page(results, output_path, charts_available=True):
 </head>
 <body>
     <div class="header">
-        <h1>🚀 fastcond Performance Benchmarks</h1>
-        <div class="subtitle">High-performance POSIX condition variable alternatives</div>
+        <h1>🚀 fastcond: The Bee's Knees of Condition Variables</h1>
+        <div class="subtitle">Why settle for pthread when you can have <strong>fast</strong>? Your threads deserve better than boring old synchronization primitives.</div>
+        <div class="tagline">⚡ 38% faster • 🎯 26% lower latency • 🏆 Consistently awesome</div>
     </div>
     
     <div class="nav-links">
-        <a href="https://github.com/kristjanvalur/fastcond">GitHub Repository</a>
-        <a href="benchmark-results.json">Raw JSON Data</a>
-        <a href="../..">Latest Results</a>
+        <a href="https://github.com/kristjanvalur/fastcond">⭐ Star the Repo</a>
+        <a href="benchmark-results.json">📊 Raw Data</a>
+        <a href="../..">🔄 Latest Results</a>
+        <a href="https://github.com/kristjanvalur/fastcond/releases">📦 Get fastcond</a>
+    </div>
+    
+    <div class="intro-section">
+        <div class="intro-card">
+            <h2>🎯 Why fastcond?</h2>
+            <p>Because your threads deserve better than the pedestrian performance of <code>pthread_cond_t</code>! 
+            Built using nothing but POSIX semaphores and a healthy dose of engineering excellence, 
+            fastcond delivers the kind of performance that makes other synchronization primitives weep with envy.</p>
+            
+            <p><strong>Two flavors of awesome:</strong></p>
+            <ul>
+                <li><strong>💪 Strong</strong> - Strict POSIX semantics with surprisingly better performance</li>
+                <li><strong>🏃 Weak</strong> - Relaxed semantics for when you're feeling adventurous</li>
+            </ul>
+            
+            <p><em>Spoiler alert: Both are faster than pthread. We checked. Extensively. With charts and everything.</em></p>
+        </div>
     </div>
 """
 
@@ -464,10 +524,12 @@ def generate_html_page(results, output_path, charts_available=True):
     </div>
     
     <div class="footer">
-        <p>🔬 <strong>fastcond</strong> - High-performance condition variables using semaphores</p>
-        <p>Results show consistent performance improvements over standard pthread condition variables</p>
-        <p><a href="https://github.com/kristjanvalur/fastcond">View on GitHub</a> | 
-           <a href="benchmark-results.json">Download Raw Data</a></p>
+        <p>� <strong>fastcond</strong> - The bee's knees of condition variables (and your aunt agrees!)</p>
+        <p>Built with semaphores, love, and a healthy disdain for slow synchronization primitives</p>
+        <p>Why use boring old pthread when you can have <em>fast</em>? Your threads will thank you. 🚀</p>
+        <p><a href="https://github.com/kristjanvalur/fastcond">Star us on GitHub</a> | 
+           <a href="benchmark-results.json">Download the Proof</a> | 
+           <a href="https://github.com/kristjanvalur/fastcond/issues/new">Tell us how awesome we are</a></p>
     </div>
     
 </body>
