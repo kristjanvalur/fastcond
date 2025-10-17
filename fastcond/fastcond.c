@@ -264,8 +264,7 @@ fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restric
     cond->n_waiting++;
     err = fastcond_wcond_timedwait(&cond->wait, mutex, abstime);
     cond->n_waiting--;
-    /* Only decrement n_wakeup if we were actually woken (not timeout/error) */
-    if (err == 0 && cond->n_wakeup > 0)
+    if (cond->n_wakeup > 0)
         cond->n_wakeup--;
     return err;
 }
