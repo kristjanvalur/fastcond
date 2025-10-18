@@ -20,6 +20,9 @@ add_library(fastcond
     fastcond/fastcond.c
     fastcond/fastcond.h
     fastcond/fastcond_patch.h
+    fastcond/gil.c
+    fastcond/gil.h
+    fastcond/native_primitives.h
 )
 
 target_include_directories(fastcond
@@ -74,6 +77,46 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     add_test_variant(qtest test/qtest.c)
     add_test_variant(strongtest test/strongtest.c)
 
+    # GIL Test Suite - more complex variants with backend/fairness combinations
+    # GIL tests with fastcond backend (fair)
+    add_executable(gil_test_fc test/gil_test.c)
+    target_link_libraries(gil_test_fc PRIVATE fastcond ${MATH_LIBRARY})
+    
+    # GIL tests with native pthread backend (fair)
+    add_executable(gil_test_native test/gil_test.c)
+    target_compile_definitions(gil_test_native PRIVATE FASTCOND_GIL_USE_NATIVE_COND=1)
+    target_link_libraries(gil_test_native PRIVATE fastcond ${MATH_LIBRARY})
+    
+    # GIL tests with fastcond backend (unfair)
+    add_executable(gil_test_fc_unfair test/gil_test.c)
+    target_compile_definitions(gil_test_fc_unfair PRIVATE FASTCOND_GIL_DISABLE_FAIRNESS=1)
+    target_link_libraries(gil_test_fc_unfair PRIVATE fastcond ${MATH_LIBRARY})
+    
+    # GIL tests with native pthread backend (unfair)
+    add_executable(gil_test_native_unfair test/gil_test.c)
+    target_compile_definitions(gil_test_native_unfair PRIVATE 
+        FASTCOND_GIL_USE_NATIVE_COND=1 
+        FASTCOND_GIL_DISABLE_FAIRNESS=1)
+    target_link_libraries(gil_test_native_unfair PRIVATE fastcond ${MATH_LIBRARY})
+
+    # GIL Benchmarks
+    add_executable(gil_benchmark_fc test/gil_benchmark.c)
+    target_link_libraries(gil_benchmark_fc PRIVATE fastcond ${MATH_LIBRARY})
+    
+    add_executable(gil_benchmark_native test/gil_benchmark.c)
+    target_compile_definitions(gil_benchmark_native PRIVATE FASTCOND_GIL_USE_NATIVE_COND=1)
+    target_link_libraries(gil_benchmark_native PRIVATE fastcond ${MATH_LIBRARY})
+    
+    add_executable(gil_benchmark_fc_unfair test/gil_benchmark.c)
+    target_compile_definitions(gil_benchmark_fc_unfair PRIVATE FASTCOND_GIL_DISABLE_FAIRNESS=1)
+    target_link_libraries(gil_benchmark_fc_unfair PRIVATE fastcond ${MATH_LIBRARY})
+    
+    add_executable(gil_benchmark_native_unfair test/gil_benchmark.c)
+    target_compile_definitions(gil_benchmark_native_unfair PRIVATE 
+        FASTCOND_GIL_USE_NATIVE_COND=1 
+        FASTCOND_GIL_DISABLE_FAIRNESS=1)
+    target_link_libraries(gil_benchmark_native_unfair PRIVATE fastcond ${MATH_LIBRARY})
+
     # Add CTest tests with appropriate arguments
     if(FASTCOND_BUILD_TESTS)
         # Quick smoke tests (small data count for fast CI)
@@ -95,6 +138,14 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
         # This is expected behavior - weak variant should only be used when
         # all waiting threads are interchangeable.
 
+        # GIL correctness and fairness tests (smoke tests)
+        add_test(NAME gil_test_fastcond_smoke 
+                 COMMAND gil_test_fc 4 100 50 50)
+        add_test(NAME gil_test_native_smoke 
+                 COMMAND gil_test_native 4 100 50 50)
+        add_test(NAME gil_test_unfair_smoke 
+                 COMMAND gil_test_fc_unfair 4 100 50 50)
+
         # Verify output contains expected patterns
         set_tests_properties(qtest_pthread_smoke PROPERTIES
             PASS_REGULAR_EXPRESSION "sender.*sent|receiver.*got")
@@ -104,6 +155,14 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
             PASS_REGULAR_EXPRESSION "sender.*sent|receiver.*got")
         set_tests_properties(strongtest_fastcond_smoke PROPERTIES
             PASS_REGULAR_EXPRESSION "sender.*sent|receiver.*got")
+        
+        # GIL tests should pass mutual exclusion and complete successfully
+        set_tests_properties(gil_test_fastcond_smoke PROPERTIES
+            PASS_REGULAR_EXPRESSION "✅ Mutual exclusion: PASSED.*✅ Cleanup: PASSED")
+        set_tests_properties(gil_test_native_smoke PROPERTIES
+            PASS_REGULAR_EXPRESSION "✅ Mutual exclusion: PASSED.*✅ Cleanup: PASSED")
+        set_tests_properties(gil_test_unfair_smoke PROPERTIES
+            PASS_REGULAR_EXPRESSION "✅ Mutual exclusion: PASSED.*✅ Cleanup: PASSED")
     endif()
 
     # Benchmark targets (not run by default in ctest)
@@ -112,9 +171,20 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
         add_custom_target(benchmark
             COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Running benchmarks via scripts/benchmark.sh"
             COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/benchmark.sh
-            DEPENDS qtest_pt qtest_fc strongtest_pt strongtest_fc
+            DEPENDS qtest_pt qtest_fc strongtest_pt strongtest_fc 
+                    gil_benchmark_fc gil_benchmark_native
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Running performance benchmarks..."
+        )
+        
+        # GIL-specific benchmark target
+        add_custom_target(gil_benchmark
+            COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Running GIL benchmark comparison"
+            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_gil_comparison.sh
+            DEPENDS gil_test_fc gil_test_native gil_test_fc_unfair gil_test_native_unfair
+                    gil_benchmark_fc gil_benchmark_native gil_benchmark_fc_unfair gil_benchmark_native_unfair
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Running GIL comprehensive comparison tests..."
         )
     endif()
 endif()
@@ -134,6 +204,8 @@ install(TARGETS fastcond
 install(FILES
     fastcond/fastcond.h
     fastcond/fastcond_patch.h
+    fastcond/gil.h
+    fastcond/native_primitives.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fastcond
 )
 

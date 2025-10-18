@@ -1,5 +1,10 @@
 /* Copyright (c) 2017 Kristján Valur Jónsson */
 
+// Fairness mechanism control - matches definition in gil.c
+#ifndef FASTCOND_GIL_DISABLE_FAIRNESS
+#define FASTCOND_GIL_DISABLE_FAIRNESS 0
+#endif
+
 #include "gil.h"
 #include <math.h>
 #include <pthread.h>
