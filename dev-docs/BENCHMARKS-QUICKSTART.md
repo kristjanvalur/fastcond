@@ -88,6 +88,32 @@ dev-docs/
 ### PNG Charts
 - `throughput-comparison.png` - Bar chart
 - `latency-comparison.png` - Bar chart with error bars
+- `gil_fairness_comparison.png` - Fair vs unfair GIL analysis
+
+## 🎭 GIL Fairness Analysis
+
+### Quick GIL Test
+```bash
+# Fair GIL (recommended)
+cd test && ./gil_test_fc
+
+# Unfair GIL (demonstrates thread starvation)
+cd test && ./gil_test_fc_unfair
+```
+
+### Generate Fairness Charts
+```bash
+cd scripts
+uv run benchmark_json.py ../test > ../benchmark_results/gil_latest.json
+uv run visualize_gil_fairness.py ../benchmark_results/gil_latest.json --output-dir ../charts
+```
+
+### What You'll See
+- **Fair GIL**: Perfect thread distribution (coefficient of variation ≈ 0.0)
+- **Unfair GIL**: Severe thread starvation (some threads get 0 acquisitions!)
+- **Performance**: Fair GIL adds ~3-6% overhead for dramatically improved fairness
+
+The fairness visualization highlights why the anti-greedy mechanism matters in real applications.
 
 ## 🔗 Documentation
 
