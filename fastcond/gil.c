@@ -2,6 +2,13 @@
 #include "gil.h"
 #include <assert.h>
 
+// Fairness mechanism control: disable fairness to behave like a plain mutex
+// Define FASTCOND_GIL_DISABLE_FAIRNESS=1 to disable the fairness mechanism
+// When disabled, the GIL behaves like a regular mutex with greedy re-acquisition
+#ifndef FASTCOND_GIL_DISABLE_FAIRNESS
+#define FASTCOND_GIL_DISABLE_FAIRNESS 0
+#endif
+
 void fastcond_gil_init(struct fastcond_gil *gil)
 {
 #if FASTCOND_GIL_USE_NATIVE_COND
@@ -31,17 +38,26 @@ void fastcond_gil_destroy(struct fastcond_gil *gil)
 // Implement the GIL logic.  A Thread can acquire the gil if
 // A) the gil is not currently held and:
 //   1) no one is waiting or
-//   2) someone is waiting, but the last owner is not the current thread
+//   2) (fairness enabled) someone is waiting, but the last owner is not the current thread
+//   3) (fairness disabled) behaves like a regular mutex - any thread can acquire
 
 void fastcond_gil_acquire(struct fastcond_gil *gil)
 {
+#if !FASTCOND_GIL_DISABLE_FAIRNESS
     native_thread_t self = NATIVE_THREAD_SELF();
+#endif
     NATIVE_MUTEX_LOCK(gil->mutex);
 
     // Wait whilst:
     // - GIL is held, OR
-    // - Others are waiting AND we were the last owner (fairness)
+    // - (fairness enabled) Others are waiting AND we were the last owner
+#if FASTCOND_GIL_DISABLE_FAIRNESS
+    // Simplified condition: only wait if GIL is held (plain mutex behavior)
+    while (gil->held) {
+#else
+    // Full fairness condition: also check if we were the last owner
     while (gil->held || (gil->n_waiting > 0 && NATIVE_THREAD_EQUAL(gil->last_owner, self))) {
+#endif
         gil->n_waiting++;
 #if FASTCOND_GIL_USE_NATIVE_COND
         NATIVE_COND_WAIT(gil->cond, gil->mutex);
@@ -52,7 +68,9 @@ void fastcond_gil_acquire(struct fastcond_gil *gil)
     }
 
     assert(!gil->held);
+#if !FASTCOND_GIL_DISABLE_FAIRNESS
     gil->last_owner = self;
+#endif
     gil->held = 1;
     NATIVE_MUTEX_UNLOCK(gil->mutex);
 }
