@@ -208,9 +208,9 @@ gcc -I/usr/local/include/fastcond myapp.c -L/usr/local/lib -lfastcond -lpthread 
 Standard build should work out of the box. This is the primary supported platform.
 
 ### macOS
-**Not supported.** macOS has deprecated POSIX unnamed semaphores (`sem_init`, `sem_timedwait`), which are required by fastcond. 
+**Fully supported.** Uses GCD dispatch semaphores (`dispatch_semaphore_t`) internally as a workaround for deprecated POSIX unnamed semaphores (`sem_init`, `sem_timedwait`). All other primitives (mutexes, condition variables, thread IDs) use standard pthread APIs.
 
-Alternative on macOS: Use standard `pthread_cond_t` or Grand Central Dispatch semaphores.
+The performance characteristics on macOS may differ from Linux due to the GCD semaphore implementation, making cross-platform benchmarking particularly interesting.
 
 ### Windows (WSL/MinGW)
 May work with appropriate POSIX compatibility layer. Not regularly tested.
