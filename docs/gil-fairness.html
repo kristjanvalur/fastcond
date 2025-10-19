@@ -292,11 +292,11 @@
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Operations/sec</span>
-                    <span class="metric-value">5,361</span>
+                    <span class="metric-value">5,480</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Avg Latency</span>
-                    <span class="metric-value">186.5 μs</span>
+                    <span class="metric-value">182.5 μs</span>
                 </div>
             </div>
         </div>
@@ -312,8 +312,12 @@
                     <h4>Thread Acquisition Distribution</h4>
                     <div class="acquisition-bar">
 
-                        <div class="thread-segment thread-2" style="flex: 100.0">
-                            T2: 10000
+                        <div class="thread-segment thread-0" style="flex: 83.52000000000001">
+                            T0: 8352
+                        </div>
+
+                        <div class="thread-segment thread-2" style="flex: 16.48">
+                            T2: 1648
                         </div>
 
                     </div>
@@ -321,11 +325,11 @@
 
                 <div class="metric-row">
                     <span class="metric-label">Coefficient of Variation</span>
-                    <span class="metric-value metric-terrible">2.000</span>
+                    <span class="metric-value metric-terrible">1.591</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Fairness Score</span>
-                    <span class="metric-value metric-terrible">200.0</span>
+                    <span class="metric-value metric-terrible">159.1</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Thread Transitions</span>
@@ -337,11 +341,11 @@
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Operations/sec</span>
-                    <span class="metric-value">5,872</span>
+                    <span class="metric-value">5,969</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Avg Latency</span>
-                    <span class="metric-value">170.3 μs</span>
+                    <span class="metric-value">167.5 μs</span>
                 </div>
             </div>
         </div>
@@ -357,20 +361,20 @@
                     <h4>Thread Acquisition Distribution</h4>
                     <div class="acquisition-bar">
 
-                        <div class="thread-segment thread-0" style="flex: 23.93">
-                            T0: 2393
+                        <div class="thread-segment thread-0" style="flex: 25.0">
+                            T0: 2500
                         </div>
 
-                        <div class="thread-segment thread-1" style="flex: 31.94">
-                            T1: 3194
+                        <div class="thread-segment thread-1" style="flex: 25.0">
+                            T1: 2500
                         </div>
 
-                        <div class="thread-segment thread-2" style="flex: 14.979999999999999">
-                            T2: 1498
+                        <div class="thread-segment thread-2" style="flex: 25.0">
+                            T2: 2500
                         </div>
 
-                        <div class="thread-segment thread-3" style="flex: 29.15">
-                            T3: 2915
+                        <div class="thread-segment thread-3" style="flex: 25.0">
+                            T3: 2500
                         </div>
 
                     </div>
@@ -378,27 +382,27 @@
 
                 <div class="metric-row">
                     <span class="metric-label">Coefficient of Variation</span>
-                    <span class="metric-value metric-poor">0.298</span>
+                    <span class="metric-value metric-excellent">0.000</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Fairness Score</span>
-                    <span class="metric-value metric-poor">29.8</span>
+                    <span class="metric-value metric-excellent">0.0</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Thread Transitions</span>
-                    <span class="metric-value">0.3%</span>
+                    <span class="metric-value">100.0%</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Consecutive Re-acquisitions</span>
-                    <span class="metric-value">99.7%</span>
+                    <span class="metric-value">0.0%</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Operations/sec</span>
-                    <span class="metric-value">5,835</span>
+                    <span class="metric-value">5,490</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Avg Latency</span>
-                    <span class="metric-value">171.4 μs</span>
+                    <span class="metric-value">182.1 μs</span>
                 </div>
             </div>
         </div>
@@ -413,13 +417,13 @@
                 <h3>Fairness Impact</h3>
                 <p><strong>FAIR mode</strong> achieves perfect thread distribution (CV: 0.000) 
                 while <strong>UNFAIR</strong> and <strong>NAIVE</strong> modes show severe thread starvation 
-                (CV: 2.000 and 0.298 respectively).</p>
+                (CV: 1.591 and 0.000 respectively).</p>
             </div>
             
             <div class="insight-card">
                 <h3>Performance Cost</h3>
                 <p>The fairness mechanism adds minimal overhead: 
-                <strong>+9.5%</strong> 
+                <strong>+8.9%</strong> 
                 performance difference between UNFAIR and FAIR modes.</p>
             </div>
             
@@ -433,7 +437,7 @@
             <div class="insight-card">
                 <h3>Implementation Validation</h3>
                 <p>NAIVE and UNFAIR modes show nearly identical behavior 
-                (CV: 0.298 vs 2.000), 
+                (CV: 0.000 vs 1.591), 
                 validating that the condition variable machinery without fairness behaves like a simple mutex.</p>
             </div>
         </div>
@@ -449,7 +453,7 @@
         OS: Linux x86_64, 
         Cores: 16, 
         Python: 3.12.3<br>
-        <strong>Generated:</strong> October 19, 2025 at 12:30 UTC
+        <strong>Generated:</strong> October 19, 2025 at 12:52 UTC
     </div>
     
     <div class="footer">

@@ -116,73 +116,6 @@ def parse_strongtest_output(output):
     return results
 
 
-def parse_gil_output(output):
-    """Parse GIL test output and extract metrics."""
-    results = {
-        'fairness_stats': {},
-        'overall': {}
-    }
-    
-    # Parse thread acquisition counts
-    # Example:   Thread 0: 1250 acquisitions
-    thread_pattern = r'Thread (\d+): (\d+) acquisitions'
-    thread_acquisitions = []
-    
-    for match in re.finditer(thread_pattern, output):
-        thread_id, count = match.groups()
-        thread_acquisitions.append({
-            'thread_id': int(thread_id),
-            'acquisitions': int(count)
-        })
-    
-    results['fairness_stats']['thread_acquisitions'] = thread_acquisitions
-    
-    # Parse fairness metrics
-    # Coefficient of variation: 0.033
-    cv_match = re.search(r'Coefficient of variation: ([0-9.]+)', output)
-    if cv_match:
-        results['fairness_stats']['coefficient_of_variation'] = float(cv_match.group(1))
-    
-    # Thread transitions: 4999 out of 5000 acquisitions (100.0%)
-    transitions_match = re.search(r'Thread transitions: (\d+) out of (\d+) acquisitions \(([0-9.]+)%\)', output)
-    if transitions_match:
-        transitions, total_acq, pct = transitions_match.groups()
-        results['fairness_stats']['thread_transitions'] = int(transitions)
-        results['fairness_stats']['total_acquisitions'] = int(total_acq)
-        results['fairness_stats']['transition_percentage'] = float(pct)
-    
-    # Consecutive re-acquisitions: 0 (0.0%)
-    consec_match = re.search(r'Consecutive re-acquisitions: (\d+) \(([0-9.]+)%\)', output)
-    if consec_match:
-        consec_count, consec_pct = consec_match.groups()
-        results['fairness_stats']['consecutive_reacquisitions'] = int(consec_count)
-        results['fairness_stats']['consecutive_percentage'] = float(consec_pct)
-    
-    # Fairness score: 0.0 (lower is better)
-    score_match = re.search(r'Fairness score: ([0-9.]+)', output)
-    if score_match:
-        results['fairness_stats']['fairness_score'] = float(score_match.group(1))
-    
-    # Operations per second: 5539
-    ops_match = re.search(r'Operations per second: (\d+)', output)
-    if ops_match:
-        results['overall']['operations_per_sec'] = int(ops_match.group(1))
-    
-    # Average latency per operation: 180.5 μs
-    latency_match = re.search(r'Average latency per operation: ([0-9.]+) μs', output)
-    if latency_match:
-        results['overall']['avg_latency_us'] = float(latency_match.group(1))
-    
-    # Backend and fairness info
-    backend_match = re.search(r'Backend: ([^\n]+)', output)
-    if backend_match:
-        results['overall']['backend'] = backend_match.group(1).strip()
-    
-    fairness_enabled_match = re.search(r'Fairness: ([^\n]+)', output)
-    if fairness_enabled_match:
-        fairness_status = fairness_enabled_match.group(1).strip()
-        results['overall']['fairness_enabled'] = 'ENABLED' in fairness_status
-    
     return results
 
 
@@ -207,10 +140,8 @@ def run_benchmark(executable, args, test_name, implementation):
             parsed = parse_qtest_output(result.stdout)
         elif 'strongtest' in executable:
             parsed = parse_strongtest_output(result.stdout)
-        elif 'gil_test' in executable:
-            parsed = parse_gil_output(result.stdout)
         else:
-            return {'error': 'Unknown test type'}
+            return {'error': f'Unknown test type: {executable}'}
         
         # Add metadata
         result_dict = {
@@ -266,21 +197,16 @@ def main():
             'variants': ['pt', 'fc'],  # Don't run wcond (will deadlock)
             'args': ['10000', '5'],
             'description': 'Strong semantics test (10K items, queue size 5)'
-        },
-        {
-            'name': 'gil_test',
-            'variants': ['fc', 'fc_unfair', 'fc_naive'],  # Include all three modes for comparison
-            'args': [],  # Use default parameters (4 threads, 10K operations)
-            'description': 'Global Interpreter Lock fairness test (default: 4 threads, 10K operations)'
         }
+        # Note: GIL tests are run separately via run_gil_fairness_analysis.sh
+        # They have different JSON structure and are published to gil-fairness.html
     ]
     
     impl_names = {
         'pt': 'pthread',
         'fc': 'fastcond_strong',
-        'wcond': 'fastcond_weak',
-        'fc_unfair': 'fastcond_unfair',
-        'fc_naive': 'fastcond_naive'
+        'wcond': 'fastcond_weak'
+        # fc_unfair and fc_naive are handled by GIL-specific scripts
     }
     
     all_results = []
@@ -296,15 +222,6 @@ def main():
             impl_name = impl_names.get(variant, variant)
             result = run_benchmark(exe, benchmark['args'], benchmark['name'], impl_name)
             result['description'] = benchmark['description']
-            
-            # Add fairness-specific metadata for GIL tests
-            if benchmark['name'] == 'gil_test':
-                if variant == 'fc':
-                    result['fairness_mode'] = 'fair'
-                elif variant == 'fc_unfair':
-                    result['fairness_mode'] = 'unfair'
-                elif variant == 'fc_naive':
-                    result['fairness_mode'] = 'naive'
             
             all_results.append(result)
     

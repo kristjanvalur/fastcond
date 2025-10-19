@@ -2,7 +2,8 @@
   {
     "benchmark": "gil_test",
     "implementation": "fastcond_strong",
-    "timestamp": "2025-10-19T12:30:03.129492",
+    "fairness_mode": "fair",
+    "timestamp": "2025-10-19T12:52:36.701641",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -10,18 +11,12 @@
       "cores": 16
     },
     "config": {
-      "operations_per_sec": 5361,
-      "avg_latency_us": 186.5,
+      "operations_per_sec": 5480,
+      "avg_latency_us": 182.5,
       "backend": "fastcond",
       "fairness_enabled": true
     },
     "results": {
-      "overall": {
-        "operations_per_sec": 5361,
-        "avg_latency_us": 186.5,
-        "backend": "fastcond",
-        "fairness_enabled": true
-      },
       "fairness_stats": {
         "thread_acquisitions": [
           {
@@ -48,15 +43,20 @@
         "consecutive_reacquisitions": 0,
         "consecutive_percentage": 0.0,
         "fairness_score": 0.0
+      },
+      "overall": {
+        "operations_per_sec": 5480,
+        "avg_latency_us": 182.5,
+        "backend": "fastcond",
+        "fairness_enabled": true
       }
-    },
-    "description": "Global Interpreter Lock fairness test (default: 4 threads, 10K operations)",
-    "fairness_mode": "fair"
+    }
   },
   {
     "benchmark": "gil_test",
     "implementation": "fastcond_unfair",
-    "timestamp": "2025-10-19T12:30:04.834192",
+    "fairness_mode": "unfair",
+    "timestamp": "2025-10-19T12:52:38.379148",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -64,23 +64,17 @@
       "cores": 16
     },
     "config": {
-      "operations_per_sec": 5872,
-      "avg_latency_us": 170.3,
+      "operations_per_sec": 5969,
+      "avg_latency_us": 167.5,
       "backend": "fastcond",
       "fairness_enabled": false
     },
     "results": {
-      "overall": {
-        "operations_per_sec": 5872,
-        "avg_latency_us": 170.3,
-        "backend": "fastcond",
-        "fairness_enabled": false
-      },
       "fairness_stats": {
         "thread_acquisitions": [
           {
             "thread_id": 0,
-            "acquisitions": 0
+            "acquisitions": 8352
           },
           {
             "thread_id": 1,
@@ -88,29 +82,34 @@
           },
           {
             "thread_id": 2,
-            "acquisitions": 10000
+            "acquisitions": 1648
           },
           {
             "thread_id": 3,
             "acquisitions": 0
           }
         ],
-        "coefficient_of_variation": 2.0,
-        "thread_transitions": 0,
+        "coefficient_of_variation": 1.591,
+        "thread_transitions": 1,
         "total_acquisitions": 10000,
         "transition_percentage": 0.0,
-        "consecutive_reacquisitions": 9999,
+        "consecutive_reacquisitions": 9998,
         "consecutive_percentage": 100.0,
-        "fairness_score": 200.0
+        "fairness_score": 159.1
+      },
+      "overall": {
+        "operations_per_sec": 5969,
+        "avg_latency_us": 167.5,
+        "backend": "fastcond",
+        "fairness_enabled": false
       }
-    },
-    "description": "Global Interpreter Lock fairness test (default: 4 threads, 10K operations)",
-    "fairness_mode": "unfair"
+    }
   },
   {
     "benchmark": "gil_test",
     "implementation": "fastcond_naive",
-    "timestamp": "2025-10-19T12:30:06.549459",
+    "fairness_mode": "naive",
+    "timestamp": "2025-10-19T12:52:40.202948",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -118,47 +117,45 @@
       "cores": 16
     },
     "config": {
-      "operations_per_sec": 5835,
-      "avg_latency_us": 171.4,
-      "backend": "fastcond",
-      "fairness_enabled": false
+      "operations_per_sec": 5490,
+      "avg_latency_us": 182.1,
+      "backend": "Native pthread",
+      "fairness_enabled": true
     },
     "results": {
-      "overall": {
-        "operations_per_sec": 5835,
-        "avg_latency_us": 171.4,
-        "backend": "fastcond",
-        "fairness_enabled": false
-      },
       "fairness_stats": {
         "thread_acquisitions": [
           {
             "thread_id": 0,
-            "acquisitions": 2393
+            "acquisitions": 2500
           },
           {
             "thread_id": 1,
-            "acquisitions": 3194
+            "acquisitions": 2500
           },
           {
             "thread_id": 2,
-            "acquisitions": 1498
+            "acquisitions": 2500
           },
           {
             "thread_id": 3,
-            "acquisitions": 2915
+            "acquisitions": 2500
           }
         ],
-        "coefficient_of_variation": 0.298,
-        "thread_transitions": 27,
+        "coefficient_of_variation": 0.0,
+        "thread_transitions": 9999,
         "total_acquisitions": 10000,
-        "transition_percentage": 0.3,
-        "consecutive_reacquisitions": 9972,
-        "consecutive_percentage": 99.7,
-        "fairness_score": 29.8
+        "transition_percentage": 100.0,
+        "consecutive_reacquisitions": 0,
+        "consecutive_percentage": 0.0,
+        "fairness_score": 0.0
+      },
+      "overall": {
+        "operations_per_sec": 5490,
+        "avg_latency_us": 182.1,
+        "backend": "Native pthread",
+        "fairness_enabled": true
       }
-    },
-    "description": "Global Interpreter Lock fairness test (default: 4 threads, 10K operations)",
-    "fairness_mode": "naive"
+    }
   }
 ]

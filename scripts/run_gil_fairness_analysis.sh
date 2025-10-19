@@ -9,9 +9,9 @@ echo "=============================================="
 
 # Set up directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-DOCS_DIR="$PROJECT_DIR/docs"
-BUILD_DIR="${BUILD_DIR:-$PROJECT_DIR/build}"
+PROJECT_DIR="$(cd "$(dirname "$SCRIPT_DIR")" && pwd)"
+DOCS_DIR="${PROJECT_DIR}/docs"
+BUILD_DIR="${BUILD_DIR:-${PROJECT_DIR}/test}"  # Use test directory instead of build
 
 mkdir -p "$DOCS_DIR"
 
@@ -22,7 +22,7 @@ echo
 
 # Check if GIL tests are built
 echo "🔍 Checking GIL test availability..."
-required_tests=("gil_test_fc" "gil_test_fc_unfair" "gil_test_fc_naive")
+required_tests=("gil_test_fc" "gil_test_fc_unfair" "gil_test_native")
 missing_tests=()
 
 for test in "${required_tests[@]}"; do
@@ -34,8 +34,8 @@ done
 if [[ ${#missing_tests[@]} -gt 0 ]]; then
     echo "❌ Missing GIL tests: ${missing_tests[*]}"
     echo "   Building required tests..."
-    cd "$PROJECT_DIR"
-    cmake --build "$BUILD_DIR" --target "${missing_tests[@]}"
+    cd "$PROJECT_DIR/test"
+    make all
     echo "✅ GIL tests built successfully"
 fi
 
@@ -54,27 +54,8 @@ echo "   📊 Generating fairness benchmark data..."
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 GIL_RESULTS_FILE="$DOCS_DIR/gil-fairness-results.json"
 
-# Use the updated benchmark script that includes all three modes
-uv run benchmark_json.py "$BUILD_DIR" | python3 -c "
-import json
-import sys
-
-# Read the full benchmark data (already an array)
-data = json.load(sys.stdin)
-
-# Filter for only GIL tests
-gil_data = [result for result in data if result.get('benchmark') == 'gil_test']
-
-# Add generation metadata
-metadata = {
-    'generated_at': '$TIMESTAMP',
-    'generator': 'run_gil_fairness_analysis.sh',
-    'total_tests': len(gil_data)
-}
-
-# Output in the same format as benchmark_json.py expects
-print(json.dumps(gil_data, indent=2))
-" > "$GIL_RESULTS_FILE"
+# Use the dedicated GIL benchmark script
+uv run gil_benchmark_json.py "$BUILD_DIR" > "$GIL_RESULTS_FILE"
 
 # Validate that we got all three modes
 echo "   🔍 Validating benchmark results..."
