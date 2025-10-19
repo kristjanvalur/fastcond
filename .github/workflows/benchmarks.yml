@@ -166,6 +166,9 @@ jobs:
     # Checkout and run benchmarks on base branch
     - name: Checkout base branch
       run: |
+        # Stash any generated documentation files
+        git add docs/ || true
+        git stash || true
         git fetch origin ${{ github.base_ref }}
         git checkout origin/${{ github.base_ref }}
     
