@@ -15,12 +15,22 @@
 #include <unistd.h>
 
 /*
- * Comprehensive GIL correctness and fairness test
+ * Comprehensive GIL correctness and fairness test with Python-like behavior simulation
  *
  * This test validates:
  * 1. Mutual exclusion - only one thread holds GIL at a time
  * 2. Fairness statistics - measures how well the GIL prevents greedy re-acquisition
  * 3. Correctness under contention - multiple threads competing for GIL
+ * 4. Python-like execution pattern - cooperative yields with occasional I/O
+ *
+ * NEW PYTHON-LIKE BEHAVIOR PATTERN:
+ * - Threads initialize by acquiring GIL (like Python thread startup)
+ * - Most iterations use fastcond_gil_yield() for cooperative fairness
+ * - Occasionally (~10% probability) threads do I/O: release GIL + delay + reacquire
+ * - Threads finalize by releasing GIL (like Python thread shutdown)
+ *
+ * This better simulates real interpreter behavior where threads mostly yield
+ * for fairness but occasionally perform I/O operations that release the GIL.
  *
  * Fairness is measured statistically rather than as an absolute guarantee,
  * as scheduling and timing can affect fairness in practice.
@@ -48,6 +58,8 @@ struct test_context {
     int total_acquisitions_target; // Total acquisitions to perform across all threads
     int hold_time_us;              // Time to sleep while holding GIL
     int work_cycles;               // Additional CPU work while holding GIL
+    int release_delay_us;          // Time to sleep after releasing GIL (simulates I/O)
+    int release_delay_variance_us; // Random variance in release delay (±variance)
 
     // Global acquisition counter
     volatile int global_acquisitions_done;
@@ -116,23 +128,18 @@ void *worker_thread(void *arg)
     }
     pthread_mutex_unlock(&ctx->start_mutex);
 
+    // INITIALIZE: Acquire GIL at thread startup (Python-like behavior)
+    fastcond_gil_acquire(&ctx->gil);
+    
     int local_acquisitions = 0;
+    int yields_since_io = 0;
+    const int IO_PROBABILITY = 10; // Do I/O every ~10 yields on average
 
-    // Compete for acquisitions until global target is reached
+    // Python-like execution pattern: mostly yields with occasional I/O
     while (!ctx->stop_flag) {
-        // Check if we've reached the global target (atomic read)
+        // Check if we've reached the global target
         if (__sync_fetch_and_add(&ctx->global_acquisitions_done, 0) >=
             ctx->total_acquisitions_target) {
-            break;
-        }
-
-        // Acquire GIL
-        fastcond_gil_acquire(&ctx->gil);
-
-        // Double-check after acquiring (race condition possible) - use atomic read
-        if (__sync_fetch_and_add(&ctx->global_acquisitions_done, 0) >=
-            ctx->total_acquisitions_target) {
-            fastcond_gil_release(&ctx->gil);
             break;
         }
 
@@ -181,18 +188,48 @@ void *worker_thread(void *arg)
             ctx->last_holder_count = 1;
         }
 
-        // Do work while holding the GIL (including sleep)
+        // Do work while holding the GIL
         do_work_with_sleep(ctx->work_cycles, ctx->hold_time_us);
 
-        // Release GIL
+        // End critical section
         __sync_sub_and_fetch(&ctx->holder_count, 1);
-        fastcond_gil_release(&ctx->gil);
 
-        // Check if this was the last acquisition
+        // Check if we should stop before yielding/doing I/O
         if (acquisition_number >= ctx->total_acquisitions_target) {
             break;
         }
+
+        // CORE PYTHON-LIKE BEHAVIOR: Decide between yield vs I/O
+        yields_since_io++;
+        int should_do_io = (rand() % IO_PROBABILITY == 0) || yields_since_io >= IO_PROBABILITY;
+        
+        if (should_do_io) {
+            // SIMULATE I/O: Release GIL, do I/O work, then reacquire
+            fastcond_gil_release(&ctx->gil);
+            
+            // Simulate I/O operation with configured delay and variance
+            int delay = ctx->release_delay_us;
+            if (ctx->release_delay_variance_us > 0) {
+                int variance = (rand() % (2 * ctx->release_delay_variance_us + 1)) - ctx->release_delay_variance_us;
+                delay = ctx->release_delay_us + variance;
+            }
+            
+            // Only sleep if delay is positive (negative delay = immediate reacquisition)
+            if (delay > 0) {
+                usleep(delay);
+            }
+            
+            // Reacquire GIL after I/O
+            fastcond_gil_acquire(&ctx->gil);
+            yields_since_io = 0; // Reset counter
+        } else {
+            // REGULAR YIELD: Cooperative yielding for fairness
+            fastcond_gil_yield(&ctx->gil);
+        }
     }
+
+    // FINALIZE: Release GIL at thread shutdown (Python-like behavior)  
+    fastcond_gil_release(&ctx->gil);
 
     if (thread_idx >= 0) {
         ctx->thread_acquisitions[thread_idx] = local_acquisitions;
@@ -202,7 +239,7 @@ void *worker_thread(void *arg)
     return NULL;
 }
 
-static void print_fairness_statistics(struct test_context *ctx)
+static void print_fairness_statistics(struct test_context *ctx, int num_threads)
 {
     printf("\n=== Fairness Statistics ===\n");
 
@@ -290,6 +327,143 @@ static void print_fairness_statistics(struct test_context *ctx)
         }
         printf("  Thread transitions: %d out of %d acquisitions (%.1f%%)\n", transitions,
                ctx->sequence_index, 100.0 * transitions / (ctx->sequence_index - 1));
+
+        // Inter-acquisition wait depth analysis
+        printf("\n=== Inter-Acquisition Wait Depth Analysis ===\n");
+        printf("For each acquisition, count how many other threads acquired GIL since this thread's previous acquisition\n");
+        
+        // Track last acquisition index for each thread
+        int *last_acquisition_index = calloc(num_threads, sizeof(int));
+        int *wait_depths = malloc((ctx->sequence_index + num_threads) * sizeof(int)); // Extra space for terminal waits
+        int total_wait_depth_samples = 0;
+        long long total_wait_depth = 0;
+        long long total_wait_depth_squared = 0;
+        int max_wait_depth = 0;
+        
+        // Initialize: first acquisition for each thread has wait depth 0
+        for (int i = 0; i < num_threads; i++) {
+            last_acquisition_index[i] = -1;
+        }
+        
+        // Process each acquisition in sequence
+        for (int i = 0; i < ctx->sequence_index && i < ctx->total_acquisitions_target; i++) {
+            int thread_id = ctx->acquisition_sequence[i];
+            int wait_depth = 0;
+            
+            if (last_acquisition_index[thread_id] != -1) {
+                // Count acquisitions by other threads since this thread's last acquisition
+                wait_depth = i - last_acquisition_index[thread_id] - 1;
+                wait_depths[total_wait_depth_samples] = wait_depth;
+                total_wait_depth += wait_depth;
+                total_wait_depth_squared += (long long)wait_depth * wait_depth;
+                total_wait_depth_samples++;
+                
+                if (wait_depth > max_wait_depth) {
+                    max_wait_depth = wait_depth;
+                }
+            }
+            
+            last_acquisition_index[thread_id] = i;
+        }
+        
+        // CRITICAL FIX: Add terminal wait depths for each thread
+        // This captures the wait depth that starved threads would experience
+        printf("Adding terminal wait analysis for threads that didn't get final turns...\n");
+        for (int thread_id = 0; thread_id < num_threads; thread_id++) {
+            if (last_acquisition_index[thread_id] != -1) {
+                // Calculate wait depth from this thread's last acquisition to sequence end
+                int terminal_wait_depth = ctx->sequence_index - last_acquisition_index[thread_id] - 1;
+                if (terminal_wait_depth > 0) {
+                    wait_depths[total_wait_depth_samples] = terminal_wait_depth;
+                    total_wait_depth += terminal_wait_depth;
+                    total_wait_depth_squared += (long long)terminal_wait_depth * terminal_wait_depth;
+                    total_wait_depth_samples++;
+                    
+                    if (terminal_wait_depth > max_wait_depth) {
+                        max_wait_depth = terminal_wait_depth;
+                    }
+                    printf("  Thread %d: terminal wait depth = %d (from position %d to end %d)\n",
+                           thread_id, terminal_wait_depth, last_acquisition_index[thread_id], ctx->sequence_index - 1);
+                }
+            } else {
+                // Thread never acquired GIL - would wait through entire sequence
+                if (ctx->sequence_index > 0) {
+                    int full_wait_depth = ctx->sequence_index;
+                    wait_depths[total_wait_depth_samples] = full_wait_depth;
+                    total_wait_depth += full_wait_depth;
+                    total_wait_depth_squared += (long long)full_wait_depth * full_wait_depth;
+                    total_wait_depth_samples++;
+                    
+                    if (full_wait_depth > max_wait_depth) {
+                        max_wait_depth = full_wait_depth;
+                    }
+                    printf("  Thread %d: never acquired GIL, full wait depth = %d\n", thread_id, full_wait_depth);
+                }
+            }
+        }
+        
+        if (total_wait_depth_samples > 0) {
+            double mean_wait_depth = (double)total_wait_depth / total_wait_depth_samples;
+            double variance = (double)total_wait_depth_squared / total_wait_depth_samples - mean_wait_depth * mean_wait_depth;
+            double std_dev = sqrt(variance > 0 ? variance : 0);
+            
+            printf("Wait depth statistics:\n");
+            printf("  Samples: %d acquisitions (excluding first per thread)\n", total_wait_depth_samples);
+            printf("  Mean wait depth: %.2f acquisitions\n", mean_wait_depth);
+            printf("  Standard deviation: %.2f\n", std_dev);
+            printf("  Max wait depth: %d acquisitions\n", max_wait_depth);
+            printf("  Expected for fair scheduler: %.1f (n-1 where n=%d threads)\n", 
+                   (double)(num_threads - 1), num_threads);
+            
+            // Distribution analysis
+            printf("\nWait depth distribution:\n");
+            int *histogram = calloc(max_wait_depth + 1, sizeof(int));
+            for (int i = 0; i < total_wait_depth_samples; i++) {
+                histogram[wait_depths[i]]++;
+            }
+            
+            // Show distribution for first 10 values or all if fewer
+            int show_max = (max_wait_depth > 9) ? 9 : max_wait_depth;
+            for (int i = 0; i <= show_max; i++) {
+                double percentage = 100.0 * histogram[i] / total_wait_depth_samples;
+                printf("  %d other acquisitions: %d samples (%.1f%%)\n", i, histogram[i], percentage);
+            }
+            if (max_wait_depth > 9) {
+                printf("  ... (showing first 10 buckets)\n");
+            }
+            
+            // Theoretical analysis
+            printf("\nTheoretical analysis:\n");
+            if (std_dev < 0.1) {
+                double expected_fair = (double)(num_threads - 1);
+                if (mean_wait_depth > expected_fair - 0.1 && mean_wait_depth < expected_fair + 0.1) {
+                    printf("  Pattern: Deterministic round-robin (all values = n-1)\n");
+                    printf("  Assessment: Perfect round-robin scheduling\n");
+                } else if (mean_wait_depth < 1.0) {
+                    printf("  Pattern: Deterministic greedy (all values near 0)\n");
+                    printf("  Assessment: Thread starvation - same thread re-acquiring\n");
+                } else {
+                    printf("  Pattern: Deterministic (all values identical = %.1f)\n", mean_wait_depth);
+                    printf("  Assessment: Regular but non-round-robin pattern\n");
+                }
+            } else if (mean_wait_depth > num_threads - 1 + 2 * std_dev) {
+                printf("  Pattern: Heavy-tailed distribution\n"); 
+                printf("  Assessment: Some threads experience long waits (unfair)\n");
+            } else if (std_dev > mean_wait_depth * 0.8) {
+                printf("  Pattern: High variance relative to mean\n");
+                printf("  Assessment: Random/unpredictable scheduling\n");
+            } else {
+                printf("  Pattern: Low variance around expected value\n");
+                printf("  Assessment: Well-controlled fair scheduling\n");
+            }
+            
+            free(histogram);
+        } else {
+            printf("  No wait depth data available (insufficient acquisitions)\n");
+        }
+        
+        free(last_acquisition_index);
+        free(wait_depths);
     }
 
     printf("\nFairness metrics:\n");
@@ -313,7 +487,7 @@ static void print_fairness_statistics(struct test_context *ctx)
     }
 }
 
-int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int work_cycles)
+int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int work_cycles, int release_delay_us, int release_delay_variance_us)
 {
     struct test_context ctx;
     pthread_t threads[MAX_THREADS];
@@ -329,7 +503,11 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     printf("Fairness: %s\n", FASTCOND_GIL_DISABLE_FAIRNESS ? "DISABLED (plain mutex)" : "ENABLED");
     printf("Configuration: %d threads competing for %d total acquisitions\n", num_threads,
            total_acquisitions);
-    printf("Hold time: %d μs, Work cycles: %d\n", hold_time_us, work_cycles);
+    printf("Hold time: %d μs, Work cycles: %d, Release delay: %d±%d μs", hold_time_us, work_cycles, release_delay_us, release_delay_variance_us);
+    if (release_delay_us < 0) {
+        printf(" (mostly instant, occasional I/O)");
+    }
+    printf("\n");
 
     // Initialize test context
     memset(&ctx, 0, sizeof(ctx));
@@ -341,6 +519,8 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     ctx.total_acquisitions_target = total_acquisitions;
     ctx.hold_time_us = hold_time_us;
     ctx.work_cycles = work_cycles;
+    ctx.release_delay_us = release_delay_us;
+    ctx.release_delay_variance_us = release_delay_variance_us;
     ctx.active_threads = num_threads;
 
     // Allocate acquisition sequence tracking array
@@ -410,7 +590,7 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     }
 
     // Print fairness statistics
-    print_fairness_statistics(&ctx);
+    print_fairness_statistics(&ctx, num_threads);
 
     // Performance metrics
     printf("\n=== Performance Metrics ===\n");
@@ -428,12 +608,44 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     return (ctx.max_holder_violation > 1) ? 1 : 0;
 }
 
+// Simple test to verify fastcond_gil_yield() functionality
+void test_gil_yield()
+{
+    struct fastcond_gil gil;
+    printf("\n=== GIL Yield API Test ===\n");
+    
+    fastcond_gil_init(&gil);
+    
+    // Test basic yield functionality
+    printf("Testing fastcond_gil_yield()...\n");
+    
+    // Acquire GIL
+    fastcond_gil_acquire(&gil);
+    printf("  ✅ GIL acquired successfully\n");
+    
+    // Yield should release and reacquire
+    fastcond_gil_yield(&gil);
+    printf("  ✅ GIL yielded and reacquired successfully\n");
+    
+    // Release GIL
+    fastcond_gil_release(&gil);
+    printf("  ✅ GIL released successfully\n");
+    
+    // Cleanup
+    fastcond_gil_destroy(&gil);
+    printf("  ✅ GIL destroyed successfully\n");
+    
+    printf("GIL yield API test completed successfully!\n");
+}
+
 int main(int argc, char *argv[])
 {
     int num_threads = 8; // Increased for better statistical power (was 4)
     int total_acquisitions = DEFAULT_ITERATIONS;
     int hold_time_us = 100; // 100 microseconds default hold time
     int work_cycles = DEFAULT_WORK_CYCLES;
+    int release_delay_us = 1000; // 1ms default release delay (simulates I/O)
+    int release_delay_variance_us = 0; // No variance by default
 
     // Parse command line arguments
     if (argc > 1) {
@@ -464,10 +676,27 @@ int main(int argc, char *argv[])
             return 1;
         }
     }
+    if (argc > 5) {
+        release_delay_us = atoi(argv[5]);
+        // Allow negative delays to simulate Python GIL timer behavior
+    }
+    if (argc > 6) {
+        release_delay_variance_us = atoi(argv[6]);
+        if (release_delay_variance_us < 0) {
+            fprintf(stderr, "Invalid release delay variance\n");
+            return 1;
+        }
+    }
 
     printf("fastcond GIL Test Suite\n");
-    printf("Usage: %s [num_threads] [total_acquisitions] [hold_time_us] [work_cycles]\n\n",
+    printf("Usage: %s [num_threads] [total_acquisitions] [hold_time_us] [work_cycles] [release_delay_us] [release_delay_variance_us]\n\n",
            argv[0]);
 
-    return run_gil_test(num_threads, total_acquisitions, hold_time_us, work_cycles);
+    // Run yield API test first
+    test_gil_yield();
+
+    // Initialize random seed for release delay variance
+    srand(time(NULL));
+
+    return run_gil_test(num_threads, total_acquisitions, hold_time_us, work_cycles, release_delay_us, release_delay_variance_us);
 }
