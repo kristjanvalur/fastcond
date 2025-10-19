@@ -82,7 +82,7 @@ gil_benchmark_native_unfair: gil_benchmark.c gil_native_unfair.o
 	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_USE_NATIVE_COND=1 -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -o $@ $^ $(LDLIBS)
 
 
-ALL=qtest_pt qtest_fc qtest_wcond strongtest_pt strongtest_fc gil_test_fc gil_test_native gil_test_fc_unfair gil_test_native_unfair gil_benchmark_fc gil_benchmark_native gil_benchmark_fc_unfair gil_benchmark_native_unfair
+ALL=qtest_pt qtest_fc qtest_wcond strongtest_pt strongtest_fc gil_test_fc gil_test_native gil_test_fc_unfair gil_test_fc_naive gil_test_native_unfair gil_benchmark_fc gil_benchmark_native gil_benchmark_fc_unfair gil_benchmark_native_unfair
 
 .PHONY: all
 all: $(ALL)
