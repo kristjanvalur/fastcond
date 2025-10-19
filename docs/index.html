@@ -299,12 +299,12 @@
     <div class="summary-cards">
         <div class="card">
             <h3>Average Performance Gain</h3>
-            <div class="value">+21.2%</div>
+            <div class="value">+3.2%</div>
             <div class="label">vs pthread condition variables</div>
         </div>
         <div class="card">
             <h3>Best Case Improvement</h3>
-            <div class="value">+41.4%</div>
+            <div class="value">+16.0%</div>
             <div class="label">maximum observed speedup</div>
         </div>
         <div class="card">
@@ -355,18 +355,18 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">572,089.71</td>
-                        <td class="numeric improvement">+41.4%</td>
-                    </tr>
-                    <tr>
-                        <td>fastcond_weak</td>
-                        <td class="numeric">408,514.69</td>
-                        <td class="numeric ">+1.0%</td>
+                        <td class="numeric">477,031.03</td>
+                        <td class="numeric improvement">+16.0%</td>
                     </tr>
                     <tr>
                         <td>pthread</td>
-                        <td class="numeric">404,549.79</td>
+                        <td class="numeric">411,163.42</td>
                         <td class="numeric baseline">baseline</td>
+                    </tr>
+                    <tr>
+                        <td>fastcond_weak</td>
+                        <td class="numeric">292,670.52</td>
+                        <td class="numeric regression">-28.8%</td>
                     </tr>
                 </tbody>
             </table>
@@ -386,24 +386,24 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">8.75</td>
+                        <td class="numeric">10.75</td>
                         <td class="numeric">0.05</td>
-                        <td class="numeric">186.13</td>
-                        <td class="numeric">15.47</td>
+                        <td class="numeric">196.24</td>
+                        <td class="numeric">19.68</td>
                     </tr>
                     <tr>
                         <td>fastcond_weak</td>
-                        <td class="numeric">12.60</td>
+                        <td class="numeric">17.01</td>
                         <td class="numeric">0.05</td>
-                        <td class="numeric">214.83</td>
-                        <td class="numeric">19.40</td>
+                        <td class="numeric">220.17</td>
+                        <td class="numeric">31.41</td>
                     </tr>
                     <tr>
                         <td>pthread</td>
-                        <td class="numeric">11.61</td>
+                        <td class="numeric">10.85</td>
                         <td class="numeric">0.05</td>
-                        <td class="numeric">130.88</td>
-                        <td class="numeric">16.83</td>
+                        <td class="numeric">169.67</td>
+                        <td class="numeric">15.55</td>
                     </tr>
                 </tbody>
             </table>
@@ -427,14 +427,14 @@
                 <tbody>
 
                     <tr>
-                        <td>fastcond_strong</td>
-                        <td class="numeric">1,125,094.03</td>
-                        <td class="numeric ">+1.0%</td>
+                        <td>pthread</td>
+                        <td class="numeric">1,147,179.19</td>
+                        <td class="numeric baseline">baseline</td>
                     </tr>
                     <tr>
-                        <td>pthread</td>
-                        <td class="numeric">1,114,241.01</td>
-                        <td class="numeric baseline">baseline</td>
+                        <td>fastcond_strong</td>
+                        <td class="numeric">1,037,941.43</td>
+                        <td class="numeric regression">-9.5%</td>
                     </tr>
                 </tbody>
             </table>
@@ -454,17 +454,17 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">2.66</td>
-                        <td class="numeric">0.04</td>
-                        <td class="numeric">1423.60</td>
-                        <td class="numeric">45.75</td>
+                        <td class="numeric">2.04</td>
+                        <td class="numeric">0.03</td>
+                        <td class="numeric">1697.95</td>
+                        <td class="numeric">36.36</td>
                     </tr>
                     <tr>
                         <td>pthread</td>
-                        <td class="numeric">2.20</td>
-                        <td class="numeric">0.04</td>
-                        <td class="numeric">1646.25</td>
-                        <td class="numeric">39.92</td>
+                        <td class="numeric">2.06</td>
+                        <td class="numeric">0.05</td>
+                        <td class="numeric">1653.53</td>
+                        <td class="numeric">36.50</td>
                     </tr>
                 </tbody>
             </table>
@@ -476,7 +476,7 @@
         OS: Linux x86_64, 
         Cores: 16, 
         Python: 3.12.3<br>
-        <strong>Generated:</strong> October 19, 2025 at 12:50 UTC
+        <strong>Generated:</strong> October 19, 2025 at 13:15 UTC
     </div>
     
     <div class="footer">

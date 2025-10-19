@@ -292,11 +292,11 @@
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">GIL Acquire/Release Cycles/sec</span>
-                    <span class="metric-value">5,540</span>
+                    <span class="metric-value">5,536</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Avg Latency per Cycle</span>
-                    <span class="metric-value">180.5 μs</span>
+                    <span class="metric-value">180.6 μs</span>
                 </div>
             </div>
         </div>
@@ -312,8 +312,8 @@
                     <h4>Thread Acquisition Distribution</h4>
                     <div class="acquisition-bar">
 
-                        <div class="thread-segment thread-0" style="flex: 100.0">
-                            T0: 10000
+                        <div class="thread-segment thread-3" style="flex: 100.0">
+                            T3: 10000
                         </div>
 
                     </div>
@@ -337,11 +337,11 @@
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">GIL Acquire/Release Cycles/sec</span>
-                    <span class="metric-value">5,984</span>
+                    <span class="metric-value">5,995</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Avg Latency per Cycle</span>
-                    <span class="metric-value">167.1 μs</span>
+                    <span class="metric-value">166.8 μs</span>
                 </div>
             </div>
         </div>
@@ -357,20 +357,20 @@
                     <h4>Thread Acquisition Distribution</h4>
                     <div class="acquisition-bar">
 
-                        <div class="thread-segment thread-0" style="flex: 10.97">
-                            T0: 1097
+                        <div class="thread-segment thread-0" style="flex: 22.75">
+                            T0: 2275
                         </div>
 
-                        <div class="thread-segment thread-1" style="flex: 21.51">
-                            T1: 2151
+                        <div class="thread-segment thread-1" style="flex: 26.66">
+                            T1: 2666
                         </div>
 
-                        <div class="thread-segment thread-2" style="flex: 40.510000000000005">
-                            T2: 4051
+                        <div class="thread-segment thread-2" style="flex: 22.53">
+                            T2: 2253
                         </div>
 
-                        <div class="thread-segment thread-3" style="flex: 27.01">
-                            T3: 2701
+                        <div class="thread-segment thread-3" style="flex: 28.060000000000002">
+                            T3: 2806
                         </div>
 
                     </div>
@@ -378,27 +378,27 @@
 
                 <div class="metric-row">
                     <span class="metric-label">Coefficient of Variation</span>
-                    <span class="metric-value metric-poor">0.492</span>
+                    <span class="metric-value metric-poor">0.111</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Fairness Score</span>
-                    <span class="metric-value metric-poor">49.2</span>
+                    <span class="metric-value metric-poor">11.1</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Thread Transitions</span>
-                    <span class="metric-value">0.2%</span>
+                    <span class="metric-value">0.3%</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Consecutive Re-acquisitions</span>
-                    <span class="metric-value">99.8%</span>
+                    <span class="metric-value">99.7%</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">GIL Acquire/Release Cycles/sec</span>
-                    <span class="metric-value">5,892</span>
+                    <span class="metric-value">5,972</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Avg Latency per Cycle</span>
-                    <span class="metric-value">169.7 μs</span>
+                    <span class="metric-value">167.5 μs</span>
                 </div>
             </div>
         </div>
@@ -413,13 +413,13 @@
                 <h3>Fairness Impact</h3>
                 <p><strong>FAIR mode</strong> achieves perfect thread distribution (CV: 0.000) 
                 while <strong>UNFAIR</strong> and <strong>NAIVE</strong> modes show severe thread starvation 
-                (CV: 2.000 and 0.492 respectively).</p>
+                (CV: 2.000 and 0.111 respectively).</p>
             </div>
             
             <div class="insight-card">
                 <h3>Performance Cost</h3>
                 <p>The fairness mechanism adds minimal overhead: 
-                <strong>+8.0%</strong> 
+                <strong>+8.3%</strong> 
                 higher throughput in UNFAIR mode vs FAIR mode.</p>
                 <p><em>Note: This measures total GIL acquire/release cycles per second across all threads. 
                 The fairness mechanism reduces overall contention throughput but ensures equal access.</em></p>
@@ -442,7 +442,7 @@
             <div class="insight-card">
                 <h3>Implementation Validation</h3>
                 <p>NAIVE and UNFAIR modes show nearly identical behavior 
-                (CV: 0.492 vs 2.000), 
+                (CV: 0.111 vs 2.000), 
                 validating that the condition variable machinery without fairness behaves like a simple mutex.</p>
             </div>
         </div>
@@ -458,7 +458,7 @@
         OS: Linux x86_64, 
         Cores: 16, 
         Python: 3.12.3<br>
-        <strong>Generated:</strong> October 19, 2025 at 13:05 UTC
+        <strong>Generated:</strong> October 19, 2025 at 13:20 UTC
     </div>
     
     <div class="footer">
