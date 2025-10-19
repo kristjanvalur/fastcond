@@ -9,9 +9,14 @@ echo "=============================================="
 
 # Set up directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-DOCS_DIR="$PROJECT_DIR/docs"
-BUILD_DIR="${BUILD_DIR:-$PROJECT_DIR/build}"
+PROJECT_DIR="$(cd "$(dirname "$SCRIPT_DIR")" && pwd)"
+DOCS_DIR="${PROJECT_DIR}/docs"
+BUILD_DIR="${BUILD_DIR:-${PROJECT_DIR}/test}"  # Use test directory instead of build
+
+# Convert BUILD_DIR to absolute path if it's relative
+if [[ "$BUILD_DIR" != /* ]]; then
+    BUILD_DIR="$PROJECT_DIR/$BUILD_DIR"
+fi
 
 mkdir -p "$DOCS_DIR"
 
@@ -34,9 +39,32 @@ done
 if [[ ${#missing_tests[@]} -gt 0 ]]; then
     echo "❌ Missing GIL tests: ${missing_tests[*]}"
     echo "   Building required tests..."
-    cd "$PROJECT_DIR"
-    cmake --build "$BUILD_DIR" --target "${missing_tests[@]}"
-    echo "✅ GIL tests built successfully"
+    cd "$PROJECT_DIR/test"
+    
+    # Build with the same flags as CI for consistency
+    if make clean && make all CFLAGS="-O3 -DNDEBUG"; then
+        echo "✅ GIL tests built successfully"
+        
+        # Re-check that all required tests now exist
+        still_missing=()
+        for test in "${required_tests[@]}"; do
+            if [[ ! -f "$BUILD_DIR/$test" ]]; then
+                still_missing+=("$test")
+            fi
+        done
+        
+        if [[ ${#still_missing[@]} -gt 0 ]]; then
+            echo "❌ Build completed but tests still missing: ${still_missing[*]}"
+            echo "   Build directory: $BUILD_DIR"
+            echo "   Available files:"
+            ls -la "$BUILD_DIR" | grep -E "(gil_test|gil_benchmark)" || echo "   No GIL executables found"
+            exit 1
+        fi
+    else
+        echo "❌ Failed to build GIL tests"
+        echo "   This may indicate missing dependencies or compilation errors"
+        exit 1
+    fi
 fi
 
 # Run GIL fairness benchmarks
@@ -54,27 +82,8 @@ echo "   📊 Generating fairness benchmark data..."
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 GIL_RESULTS_FILE="$DOCS_DIR/gil-fairness-results.json"
 
-# Use the updated benchmark script that includes all three modes
-uv run benchmark_json.py "$BUILD_DIR" | python3 -c "
-import json
-import sys
-
-# Read the full benchmark data (already an array)
-data = json.load(sys.stdin)
-
-# Filter for only GIL tests
-gil_data = [result for result in data if result.get('benchmark') == 'gil_test']
-
-# Add generation metadata
-metadata = {
-    'generated_at': '$TIMESTAMP',
-    'generator': 'run_gil_fairness_analysis.sh',
-    'total_tests': len(gil_data)
-}
-
-# Output in the same format as benchmark_json.py expects
-print(json.dumps(gil_data, indent=2))
-" > "$GIL_RESULTS_FILE"
+# Use the dedicated GIL benchmark script
+uv run gil_benchmark_json.py "$BUILD_DIR" > "$GIL_RESULTS_FILE"
 
 # Validate that we got all three modes
 echo "   🔍 Validating benchmark results..."
@@ -142,13 +151,26 @@ for result in data:
 # Calculate key insights
 if 'fair' in modes and 'unfair' in modes:
     perf_diff = ((modes['unfair']['ops_per_sec'] / modes['fair']['ops_per_sec']) - 1) * 100
-    fairness_improvement = modes['unfair']['cv'] / modes['fair']['cv'] if modes['fair']['cv'] > 0 else float('inf')
+    
+    # Calculate fairness improvement more meaningfully
+    fair_cv = modes['fair']['cv']
+    unfair_cv = modes['unfair']['cv']
+    
+    if fair_cv == 0 and unfair_cv == 0:
+        fairness_description = \"Both perfectly fair\"
+    elif fair_cv == 0:
+        fairness_description = f\"Perfect fairness vs {unfair_cv:.3f} CV (∞x improvement)\"
+    elif unfair_cv == 0:
+        fairness_description = f\"Unfair became perfectly fair ({fair_cv:.3f} → 0)\"
+    else:
+        fairness_ratio = unfair_cv / fair_cv
+        fairness_description = f\"{fairness_ratio:.1f}x fairness improvement\"
     
     print(f\"Fair CV: {modes['fair']['cv']:.3f}\")
     print(f\"Unfair CV: {modes['unfair']['cv']:.3f}\")
     print(f\"Naive CV: {modes.get('naive', {}).get('cv', 'N/A')}\")
     print(f\"Performance cost of fairness: {perf_diff:.1f}%\")
-    print(f\"Fairness improvement ratio: {fairness_improvement:.1f}x\")
+    print(f\"Fairness improvement: {fairness_description}\")
 ")
 
 echo "$SUMMARY"

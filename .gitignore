@@ -54,13 +54,16 @@ Testing/
 *.hex
 
 # Test executables (in test directory)
-test/qtest_pt
-test/qtest_fc
-test/qtest_wcond
-test/strongtest_pt
-test/strongtest_fc
-test/strongtest_wcond
+test/qtest_*
+test/strongtest_*
 test/gil_test_*
+test/gil_benchmark_*
+
+# Alternative: ignore all executables in test/ (more comprehensive)
+# test/*
+# !test/*.c
+# !test/*.h
+# !test/Makefile
 
 # Debug files
 *.dSYM/
@@ -104,9 +107,11 @@ docs/_build/
 docs/html/
 docs/latex/
 
-# Benchmark results and generated charts (docs/ published content is kept)
+# Generated benchmark artifacts in other locations
 benchmark_results/
 charts/
+
+# Note: Generated files in docs/ are handled by docs/.gitignore
 
 # Valgrind output
 *.valgrind
