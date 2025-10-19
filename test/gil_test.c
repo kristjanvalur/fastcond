@@ -108,25 +108,27 @@ void *worker_thread(void *arg) {
     }
     pthread_mutex_unlock(&ctx->start_mutex);
     
-    // Additional synchronization - wait for explicit start signal
+    // Wait for explicit start signal using condition variable
+    pthread_mutex_lock(&ctx->start_mutex);
     while (!ctx->start_flag && !ctx->stop_flag) {
-        usleep(100);
+        pthread_cond_wait(&ctx->start_cond, &ctx->start_mutex);
     }
+    pthread_mutex_unlock(&ctx->start_mutex);
     
     int local_acquisitions = 0;
     
     // Compete for acquisitions until global target is reached
     while (!ctx->stop_flag) {
-        // Check if we've reached the global target
-        if (ctx->global_acquisitions_done >= ctx->total_acquisitions_target) {
+        // Check if we've reached the global target (atomic read)
+        if (__sync_fetch_and_add(&ctx->global_acquisitions_done, 0) >= ctx->total_acquisitions_target) {
             break;
         }
         
         // Acquire GIL
         fastcond_gil_acquire(&ctx->gil);
         
-        // Double-check after acquiring (race condition possible)
-        if (ctx->global_acquisitions_done >= ctx->total_acquisitions_target) {
+        // Double-check after acquiring (race condition possible) - use atomic read
+        if (__sync_fetch_and_add(&ctx->global_acquisitions_done, 0) >= ctx->total_acquisitions_target) {
             fastcond_gil_release(&ctx->gil);
             break;
         }
