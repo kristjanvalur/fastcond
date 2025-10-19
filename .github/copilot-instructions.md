@@ -126,6 +126,49 @@ Default patch mode is `COND` (strong variant). Change via `PATCH=WCOND` for weak
 - `test/qtest.c`: Multi-condition producer-consumer test (latency measurement)
 - `test/strongtest.c`: Single-condition test validating strong semantics
 
+## Pre-Commit Workflow
+
+**CRITICAL**: Always run linters and formatters before committing. This reflects Kristján's commitment to professional code quality:
+
+### C Code Quality Check:
+```bash
+# From project root - check all C files for formatting violations
+find . -name "*.c" -o -name "*.h" | grep -v build | xargs clang-format --dry-run -Werror
+
+# Auto-format if needed (use with caution, review changes):
+find . -name "*.c" -o -name "*.h" | grep -v build | xargs clang-format -i
+```
+
+### Python Code Quality Check:
+```bash
+# Run Ruff linting and formatting on all Python scripts
+cd scripts/
+ruff check .          # Lint for issues
+ruff format --check . # Check formatting
+ruff format .         # Auto-format if needed
+```
+
+### Complete Pre-Commit Validation:
+```bash
+# 1. Code formatting
+find . -name "*.c" -o -name "*.h" | grep -v build | xargs clang-format --dry-run -Werror
+cd scripts/ && ruff check . && ruff format --check . && cd ..
+
+# 2. Build all test variants
+cd test/ && make clean && make all
+
+# 3. Run basic functionality tests
+./qtest_fc 1000 4 10
+./strongtest_fc 1000 5
+./gil_test_fc 4 1000
+
+# 4. ThreadSanitizer check (critical for race conditions)
+make clean && make CC="clang -fsanitize=thread -g" all
+./qtest_fc 100 4 5  # Smaller test for TSan
+```
+
+**Never commit without running these checks** - CI will catch violations, but local validation prevents wasted cycles and maintains professional standards.
+
 ## Code Review Checklist
 
 When modifying core logic (reflecting Kristján's meticulous standards):

@@ -430,7 +430,7 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
 
 int main(int argc, char *argv[])
 {
-    int num_threads = 8;  // Increased for better statistical power (was 4)
+    int num_threads = 8; // Increased for better statistical power (was 4)
     int total_acquisitions = DEFAULT_ITERATIONS;
     int hold_time_us = 100; // 100 microseconds default hold time
     int work_cycles = DEFAULT_WORK_CYCLES;
