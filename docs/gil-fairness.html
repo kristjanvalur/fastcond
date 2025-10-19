@@ -291,12 +291,12 @@
                     <span class="metric-value">0.0%</span>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label">Operations/sec</span>
-                    <span class="metric-value">5,480</span>
+                    <span class="metric-label">GIL Acquire/Release Cycles/sec</span>
+                    <span class="metric-value">5,540</span>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label">Avg Latency</span>
-                    <span class="metric-value">182.5 μs</span>
+                    <span class="metric-label">Avg Latency per Cycle</span>
+                    <span class="metric-value">180.5 μs</span>
                 </div>
             </div>
         </div>
@@ -312,12 +312,8 @@
                     <h4>Thread Acquisition Distribution</h4>
                     <div class="acquisition-bar">
 
-                        <div class="thread-segment thread-0" style="flex: 83.52000000000001">
-                            T0: 8352
-                        </div>
-
-                        <div class="thread-segment thread-2" style="flex: 16.48">
-                            T2: 1648
+                        <div class="thread-segment thread-0" style="flex: 100.0">
+                            T0: 10000
                         </div>
 
                     </div>
@@ -325,11 +321,11 @@
 
                 <div class="metric-row">
                     <span class="metric-label">Coefficient of Variation</span>
-                    <span class="metric-value metric-terrible">1.591</span>
+                    <span class="metric-value metric-terrible">2.000</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Fairness Score</span>
-                    <span class="metric-value metric-terrible">159.1</span>
+                    <span class="metric-value metric-terrible">200.0</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Thread Transitions</span>
@@ -340,12 +336,12 @@
                     <span class="metric-value">100.0%</span>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label">Operations/sec</span>
-                    <span class="metric-value">5,969</span>
+                    <span class="metric-label">GIL Acquire/Release Cycles/sec</span>
+                    <span class="metric-value">5,984</span>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label">Avg Latency</span>
-                    <span class="metric-value">167.5 μs</span>
+                    <span class="metric-label">Avg Latency per Cycle</span>
+                    <span class="metric-value">167.1 μs</span>
                 </div>
             </div>
         </div>
@@ -361,20 +357,20 @@
                     <h4>Thread Acquisition Distribution</h4>
                     <div class="acquisition-bar">
 
-                        <div class="thread-segment thread-0" style="flex: 25.0">
-                            T0: 2500
+                        <div class="thread-segment thread-0" style="flex: 10.97">
+                            T0: 1097
                         </div>
 
-                        <div class="thread-segment thread-1" style="flex: 25.0">
-                            T1: 2500
+                        <div class="thread-segment thread-1" style="flex: 21.51">
+                            T1: 2151
                         </div>
 
-                        <div class="thread-segment thread-2" style="flex: 25.0">
-                            T2: 2500
+                        <div class="thread-segment thread-2" style="flex: 40.510000000000005">
+                            T2: 4051
                         </div>
 
-                        <div class="thread-segment thread-3" style="flex: 25.0">
-                            T3: 2500
+                        <div class="thread-segment thread-3" style="flex: 27.01">
+                            T3: 2701
                         </div>
 
                     </div>
@@ -382,27 +378,27 @@
 
                 <div class="metric-row">
                     <span class="metric-label">Coefficient of Variation</span>
-                    <span class="metric-value metric-excellent">0.000</span>
+                    <span class="metric-value metric-poor">0.492</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Fairness Score</span>
-                    <span class="metric-value metric-excellent">0.0</span>
+                    <span class="metric-value metric-poor">49.2</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Thread Transitions</span>
-                    <span class="metric-value">100.0%</span>
+                    <span class="metric-value">0.2%</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Consecutive Re-acquisitions</span>
-                    <span class="metric-value">0.0%</span>
+                    <span class="metric-value">99.8%</span>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label">Operations/sec</span>
-                    <span class="metric-value">5,490</span>
+                    <span class="metric-label">GIL Acquire/Release Cycles/sec</span>
+                    <span class="metric-value">5,892</span>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label">Avg Latency</span>
-                    <span class="metric-value">182.1 μs</span>
+                    <span class="metric-label">Avg Latency per Cycle</span>
+                    <span class="metric-value">169.7 μs</span>
                 </div>
             </div>
         </div>
@@ -417,14 +413,23 @@
                 <h3>Fairness Impact</h3>
                 <p><strong>FAIR mode</strong> achieves perfect thread distribution (CV: 0.000) 
                 while <strong>UNFAIR</strong> and <strong>NAIVE</strong> modes show severe thread starvation 
-                (CV: 1.591 and 0.000 respectively).</p>
+                (CV: 2.000 and 0.492 respectively).</p>
             </div>
             
             <div class="insight-card">
                 <h3>Performance Cost</h3>
                 <p>The fairness mechanism adds minimal overhead: 
-                <strong>+8.9%</strong> 
-                performance difference between UNFAIR and FAIR modes.</p>
+                <strong>+8.0%</strong> 
+                higher throughput in UNFAIR mode vs FAIR mode.</p>
+                <p><em>Note: This measures total GIL acquire/release cycles per second across all threads. 
+                The fairness mechanism reduces overall contention throughput but ensures equal access.</em></p>
+            </div>
+            
+            <div class="insight-card">
+                <h3>Measurement Methodology</h3>
+                <p><strong>GIL Cycles/sec:</strong> Total number of acquire→release operations completed per second by all threads combined.</p>
+                <p><strong>Coefficient of Variation:</strong> Standard deviation ÷ mean of GIL acquisitions per thread. CV=0 means perfectly equal distribution.</p>
+                <p><strong>Thread Transitions:</strong> Percentage of times the GIL switched between different threads vs re-acquisition by the same thread.</p>
             </div>
             
             <div class="insight-card">
@@ -437,7 +442,7 @@
             <div class="insight-card">
                 <h3>Implementation Validation</h3>
                 <p>NAIVE and UNFAIR modes show nearly identical behavior 
-                (CV: 0.000 vs 1.591), 
+                (CV: 0.492 vs 2.000), 
                 validating that the condition variable machinery without fairness behaves like a simple mutex.</p>
             </div>
         </div>
@@ -453,7 +458,7 @@
         OS: Linux x86_64, 
         Cores: 16, 
         Python: 3.12.3<br>
-        <strong>Generated:</strong> October 19, 2025 at 12:52 UTC
+        <strong>Generated:</strong> October 19, 2025 at 13:05 UTC
     </div>
     
     <div class="footer">

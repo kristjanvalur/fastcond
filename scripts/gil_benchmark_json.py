@@ -151,7 +151,7 @@ def main():
             'fairness_mode': 'unfair'
         },
         {
-            'executable': 'gil_test_native',
+            'executable': 'gil_test_fc_naive',
             'implementation': 'fastcond_naive',
             'fairness_mode': 'naive'
         }

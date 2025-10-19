@@ -24,6 +24,10 @@ gil_native.o: ../fastcond/gil.c
 gil_unfair.o: ../fastcond/gil.c
 	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -c -o $@ $^
 
+# Naive variant (mutex-only, no condition variables)
+gil_naive.o: ../fastcond/gil.c
+	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_MODE_NAIVE=1 -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -c -o $@ $^
+
 gil_native_unfair.o: ../fastcond/gil.c
 	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_USE_NATIVE_COND=1 -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -c -o $@ $^
 
@@ -52,6 +56,10 @@ gil_test_native: gil_test.c gil_native.o
 # GIL tests with fastcond backend (unfair)
 gil_test_fc_unfair: gil_test.c gil_unfair.o fastcond.o
 	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -o $@ $^ $(LDLIBS)
+
+# GIL tests with naive mutex-only implementation
+gil_test_fc_naive: gil_test.c gil_naive.o fastcond.o
+	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_MODE_NAIVE=1 -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -o $@ $^ $(LDLIBS)
 
 # GIL tests with native pthread backend (unfair)
 gil_test_native_unfair: gil_test.c gil_native_unfair.o

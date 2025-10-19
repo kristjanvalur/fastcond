@@ -114,13 +114,16 @@ def create_fairness_comparison_chart(fair_data, unfair_data, output_dir):
                 f'{unfair_val:.3f}', ha='center', va='bottom', fontsize=9)
     
     # 3. Performance comparison
-    perf_metrics = ['Operations/sec', 'Avg Latency (μs)']
+    perf_metrics = ['GIL Cycles/sec', 'Avg Latency (μs)']
     fair_perf = [fair_data['operations_per_sec'], fair_data['avg_latency_us']]
     unfair_perf = [unfair_data['operations_per_sec'], unfair_data['avg_latency_us']]
     
-    # Normalize to percentages for comparison
-    fair_perf_norm = [100, (fair_data['avg_latency_us'] / unfair_data['avg_latency_us']) * 100]
-    unfair_perf_norm = [(unfair_data['operations_per_sec'] / fair_data['operations_per_sec']) * 100, 100]
+    # Normalize to percentages for comparison (with safety checks)
+    latency_norm = (fair_data['avg_latency_us'] / unfair_data['avg_latency_us']) * 100 if unfair_data['avg_latency_us'] > 0 else 100
+    ops_norm = (unfair_data['operations_per_sec'] / fair_data['operations_per_sec']) * 100 if fair_data['operations_per_sec'] > 0 else 100
+    
+    fair_perf_norm = [100, latency_norm]
+    unfair_perf_norm = [ops_norm, 100]
     
     x = np.arange(len(perf_metrics))
     
@@ -159,7 +162,7 @@ def create_fairness_comparison_chart(fair_data, unfair_data, output_dir):
     • Fairness Score: {fair_data['fairness_score']:.3f} (fair) vs {unfair_data['fairness_score']:.3f} (unfair)
     
     Performance Impact:
-    • Operations/sec: {fair_data['operations_per_sec']:,} (fair) vs {unfair_data['operations_per_sec']:,} (unfair)
+    • GIL Acquire/Release Cycles/sec: {fair_data['operations_per_sec']:,} (fair) vs {unfair_data['operations_per_sec']:,} (unfair)
     • Latency: {fair_data['avg_latency_us']:.1f}μs (fair) vs {unfair_data['avg_latency_us']:.1f}μs (unfair)
     
     Key Insight:

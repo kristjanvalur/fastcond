@@ -22,7 +22,7 @@ echo
 
 # Check if GIL tests are built
 echo "🔍 Checking GIL test availability..."
-required_tests=("gil_test_fc" "gil_test_fc_unfair" "gil_test_native")
+required_tests=("gil_test_fc" "gil_test_fc_unfair" "gil_test_fc_naive")
 missing_tests=()
 
 for test in "${required_tests[@]}"; do
@@ -123,13 +123,26 @@ for result in data:
 # Calculate key insights
 if 'fair' in modes and 'unfair' in modes:
     perf_diff = ((modes['unfair']['ops_per_sec'] / modes['fair']['ops_per_sec']) - 1) * 100
-    fairness_improvement = modes['unfair']['cv'] / modes['fair']['cv'] if modes['fair']['cv'] > 0 else float('inf')
+    
+    # Calculate fairness improvement more meaningfully
+    fair_cv = modes['fair']['cv']
+    unfair_cv = modes['unfair']['cv']
+    
+    if fair_cv == 0 and unfair_cv == 0:
+        fairness_description = \"Both perfectly fair\"
+    elif fair_cv == 0:
+        fairness_description = f\"Perfect fairness vs {unfair_cv:.3f} CV (∞x improvement)\"
+    elif unfair_cv == 0:
+        fairness_description = f\"Unfair became perfectly fair ({fair_cv:.3f} → 0)\"
+    else:
+        fairness_ratio = unfair_cv / fair_cv
+        fairness_description = f\"{fairness_ratio:.1f}x fairness improvement\"
     
     print(f\"Fair CV: {modes['fair']['cv']:.3f}\")
     print(f\"Unfair CV: {modes['unfair']['cv']:.3f}\")
     print(f\"Naive CV: {modes.get('naive', {}).get('cv', 'N/A')}\")
     print(f\"Performance cost of fairness: {perf_diff:.1f}%\")
-    print(f\"Fairness improvement ratio: {fairness_improvement:.1f}x\")
+    print(f\"Fairness improvement: {fairness_description}\")
 ")
 
 echo "$SUMMARY"

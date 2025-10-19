@@ -399,11 +399,11 @@ def generate_gil_fairness_html(modes, output_path):
                     <span class="metric-value">{mode_data['consecutive_percentage']:.1f}%</span>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label">Operations/sec</span>
+                    <span class="metric-label">GIL Acquire/Release Cycles/sec</span>
                     <span class="metric-value">{mode_data['operations_per_sec']:,}</span>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label">Avg Latency</span>
+                    <span class="metric-label">Avg Latency per Cycle</span>
                     <span class="metric-value">{mode_data['avg_latency_us']:.1f} μs</span>
                 </div>
             </div>
@@ -431,8 +431,17 @@ def generate_gil_fairness_html(modes, output_path):
             <div class="insight-card">
                 <h3>Performance Cost</h3>
                 <p>The fairness mechanism adds minimal overhead: 
-                <strong>{((unfair['operations_per_sec'] / fair['operations_per_sec'] - 1) * 100):+.1f}%</strong> 
-                performance difference between UNFAIR and FAIR modes.</p>
+                <strong>{((unfair['operations_per_sec'] / fair['operations_per_sec'] - 1) * 100 if fair['operations_per_sec'] > 0 else 0):+.1f}%</strong> 
+                higher throughput in UNFAIR mode vs FAIR mode.</p>
+                <p><em>Note: This measures total GIL acquire/release cycles per second across all threads. 
+                The fairness mechanism reduces overall contention throughput but ensures equal access.</em></p>
+            </div>
+            
+            <div class="insight-card">
+                <h3>Measurement Methodology</h3>
+                <p><strong>GIL Cycles/sec:</strong> Total number of acquire→release operations completed per second by all threads combined.</p>
+                <p><strong>Coefficient of Variation:</strong> Standard deviation ÷ mean of GIL acquisitions per thread. CV=0 means perfectly equal distribution.</p>
+                <p><strong>Thread Transitions:</strong> Percentage of times the GIL switched between different threads vs re-acquisition by the same thread.</p>
             </div>
             
             <div class="insight-card">
