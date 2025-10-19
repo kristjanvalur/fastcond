@@ -156,17 +156,12 @@ jobs:
         uv sync
     
     # Run benchmarks on PR branch
-    - name: Build and benchmark base
+    - name: Build and benchmark PR
       run: |
-        cd test && make clean && make all CFLAGS="-O3 -DNDEBUG" || echo "Base branch build failed"
+        cd test && make clean && make all CFLAGS="-O3 -DNDEBUG"
         cd ..
-        if BUILD_DIR=test ./scripts/run_benchmarks.sh; then
-          mv docs/benchmark-results.json /tmp/base-results.json
-          echo "Base branch benchmarks completed successfully"
-        else
-          echo "Base branch benchmarks failed - will skip comparison"
-          echo "[]" > /tmp/base-results.json
-        fi
+        BUILD_DIR=test ./scripts/run_benchmarks.sh
+        mv docs/benchmark-results.json /tmp/pr-results.json
     
     # Checkout and run benchmarks on base branch
     - name: Checkout base branch
