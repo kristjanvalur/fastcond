@@ -269,7 +269,7 @@ def main():
         },
         {
             'name': 'gil_test',
-            'variants': ['fc', 'fc_unfair'],  # Focus on fair vs unfair comparison
+            'variants': ['fc', 'fc_unfair', 'fc_naive'],  # Include all three modes for comparison
             'args': [],  # Use default parameters (4 threads, 10K operations)
             'description': 'Global Interpreter Lock fairness test (default: 4 threads, 10K operations)'
         }
@@ -279,7 +279,8 @@ def main():
         'pt': 'pthread',
         'fc': 'fastcond_strong',
         'wcond': 'fastcond_weak',
-        'fc_unfair': 'fastcond_unfair'
+        'fc_unfair': 'fastcond_unfair',
+        'fc_naive': 'fastcond_naive'
     }
     
     all_results = []
@@ -298,7 +299,12 @@ def main():
             
             # Add fairness-specific metadata for GIL tests
             if benchmark['name'] == 'gil_test':
-                result['fairness_mode'] = 'fair' if variant == 'fc' else 'unfair'
+                if variant == 'fc':
+                    result['fairness_mode'] = 'fair'
+                elif variant == 'fc_unfair':
+                    result['fairness_mode'] = 'unfair'
+                elif variant == 'fc_naive':
+                    result['fairness_mode'] = 'naive'
             
             all_results.append(result)
     

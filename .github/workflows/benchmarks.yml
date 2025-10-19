@@ -49,6 +49,9 @@ jobs:
         cd scripts
         uv run generate_html.py ../docs/benchmark-results.json --output ../docs/index.html
     
+    - name: Run GIL fairness analysis
+      run: BUILD_DIR=test ./scripts/run_gil_fairness_analysis.sh
+    
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
       with:
@@ -59,6 +62,9 @@ jobs:
           docs/index.html
           docs/throughput-comparison.png
           docs/latency-comparison.png
+          docs/gil-fairness-results.json
+          docs/gil-fairness.html
+          docs/gil_fairness_comparison.png
         retention-days: 90
     
     - name: Comment PR with results

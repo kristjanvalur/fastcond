@@ -2,21 +2,37 @@
 #include "gil.h"
 #include <assert.h>
 
-// Fairness mechanism control: disable fairness to behave like a plain mutex
-// Define FASTCOND_GIL_DISABLE_FAIRNESS=1 to disable the fairness mechanism
-// When disabled, the GIL behaves like a regular mutex with greedy re-acquisition
+// GIL implementation mode control
+// Three modes available for experimental comparison:
+//   NAIVE: Simple mutex acquire/release - no condition variables or fairness
+//   UNFAIR: Uses condition variables but disables fairness mechanism  
+//   FAIR: Full implementation with anti-greedy fairness mechanism (default)
+
+#ifndef FASTCOND_GIL_MODE_NAIVE
+#define FASTCOND_GIL_MODE_NAIVE 0
+#endif
+
 #ifndef FASTCOND_GIL_DISABLE_FAIRNESS
 #define FASTCOND_GIL_DISABLE_FAIRNESS 0
 #endif
 
+// Validate mode configuration - naive mode overrides fairness settings
+#if FASTCOND_GIL_MODE_NAIVE && !FASTCOND_GIL_DISABLE_FAIRNESS
+#error "NAIVE mode requires fairness to be disabled (set FASTCOND_GIL_DISABLE_FAIRNESS=1)"
+#endif
+
 void fastcond_gil_init(struct fastcond_gil *gil)
 {
+    // Always initialize condition variables (even if NAIVE mode won't use them)
 #if FASTCOND_GIL_USE_NATIVE_COND
     NATIVE_COND_INIT(gil->cond);
 #else
     fastcond_cond_init(&gil->cond, NULL);
 #endif
+
     NATIVE_MUTEX_INIT(gil->mutex);
+    
+    // Always initialize tracking variables (minimal overhead)
     gil->held = 0;
     gil->n_waiting = 0;
     // we can initialize this to self, fairness check will not
@@ -27,6 +43,7 @@ void fastcond_gil_init(struct fastcond_gil *gil)
 
 void fastcond_gil_destroy(struct fastcond_gil *gil)
 {
+    // Always destroy condition variables (even if NAIVE mode didn't use them)
 #if FASTCOND_GIL_USE_NATIVE_COND
     NATIVE_COND_DESTROY(gil->cond);
 #else
@@ -43,19 +60,24 @@ void fastcond_gil_destroy(struct fastcond_gil *gil)
 
 void fastcond_gil_acquire(struct fastcond_gil *gil)
 {
-#if !FASTCOND_GIL_DISABLE_FAIRNESS
+#if FASTCOND_GIL_MODE_NAIVE
+    // NAIVE mode: Simple mutex lock - no condition variables or state tracking
+    // This provides the absolute minimal baseline for comparison
+    NATIVE_MUTEX_LOCK(gil->mutex);
+    // In naive mode, mutex lock provides all synchronization
+    // No state tracking, no condition variables
+#else
+    // UNFAIR and FAIR modes: Identical except for the while condition
+    // Always get thread ID for state tracking (even in UNFAIR mode)
     native_thread_t self = NATIVE_THREAD_SELF();
-#endif
     NATIVE_MUTEX_LOCK(gil->mutex);
 
-    // Wait whilst:
-    // - GIL is held, OR
-    // - (fairness enabled) Others are waiting AND we were the last owner
+    // The ONLY difference between FAIR and UNFAIR modes:
 #if FASTCOND_GIL_DISABLE_FAIRNESS
-    // Simplified condition: only wait if GIL is held (plain mutex behavior)
+    // UNFAIR mode: only wait if GIL is held (ignores fairness condition)
     while (gil->held) {
 #else
-    // Full fairness condition: also check if we were the last owner
+    // FAIR mode: also prevent re-acquisition when others are waiting
     while (gil->held || (gil->n_waiting > 0 && NATIVE_THREAD_EQUAL(gil->last_owner, self))) {
 #endif
         gil->n_waiting++;
@@ -68,15 +90,20 @@ void fastcond_gil_acquire(struct fastcond_gil *gil)
     }
 
     assert(!gil->held);
-#if !FASTCOND_GIL_DISABLE_FAIRNESS
+    // Always update state tracking (even in UNFAIR mode)
     gil->last_owner = self;
-#endif
     gil->held = 1;
     NATIVE_MUTEX_UNLOCK(gil->mutex);
+#endif
 }
 
 void fastcond_gil_release(struct fastcond_gil *gil)
 {
+#if FASTCOND_GIL_MODE_NAIVE
+    // NAIVE mode: Simple mutex unlock - no state tracking or signaling
+    NATIVE_MUTEX_UNLOCK(gil->mutex);
+#else
+    // UNFAIR and FAIR modes: Identical behavior
     NATIVE_MUTEX_LOCK(gil->mutex);
     assert(gil->held);
 
@@ -89,4 +116,5 @@ void fastcond_gil_release(struct fastcond_gil *gil)
     }
     gil->held = 0;
     NATIVE_MUTEX_UNLOCK(gil->mutex);
+#endif
 }

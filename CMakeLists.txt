@@ -88,8 +88,10 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     target_link_libraries(gil_test_native PRIVATE fastcond ${MATH_LIBRARY})
     
     # GIL tests with fastcond backend (unfair)
-    add_executable(gil_test_fc_unfair test/gil_test.c)
+    # NOTE: We compile the GIL source directly to get proper conditional compilation  
+    add_executable(gil_test_fc_unfair test/gil_test.c fastcond/gil.c)
     target_compile_definitions(gil_test_fc_unfair PRIVATE FASTCOND_GIL_DISABLE_FAIRNESS=1)
+    target_include_directories(gil_test_fc_unfair PRIVATE fastcond)
     target_link_libraries(gil_test_fc_unfair PRIVATE fastcond ${MATH_LIBRARY})
     
     # GIL tests with native pthread backend (unfair)
@@ -98,6 +100,24 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
         FASTCOND_GIL_USE_NATIVE_COND=1 
         FASTCOND_GIL_DISABLE_FAIRNESS=1)
     target_link_libraries(gil_test_native_unfair PRIVATE fastcond ${MATH_LIBRARY})
+
+    # GIL tests with naive mode (simple mutex - no condition variables)
+    # These are for experimental comparison with unfair mode
+    # NOTE: We compile the GIL source directly to get proper conditional compilation
+    add_executable(gil_test_fc_naive test/gil_test.c fastcond/gil.c)
+    target_compile_definitions(gil_test_fc_naive PRIVATE 
+        FASTCOND_GIL_MODE_NAIVE=1 
+        FASTCOND_GIL_DISABLE_FAIRNESS=1)
+    target_include_directories(gil_test_fc_naive PRIVATE fastcond)
+    target_link_libraries(gil_test_fc_naive PRIVATE fastcond ${MATH_LIBRARY})
+    
+    add_executable(gil_test_native_naive test/gil_test.c fastcond/gil.c)
+    target_compile_definitions(gil_test_native_naive PRIVATE 
+        FASTCOND_GIL_USE_NATIVE_COND=1 
+        FASTCOND_GIL_MODE_NAIVE=1 
+        FASTCOND_GIL_DISABLE_FAIRNESS=1)
+    target_include_directories(gil_test_native_naive PRIVATE fastcond)
+    target_link_libraries(gil_test_native_naive PRIVATE fastcond ${MATH_LIBRARY})
 
     # GIL Benchmarks
     add_executable(gil_benchmark_fc test/gil_benchmark.c)
@@ -145,6 +165,12 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
                  COMMAND gil_test_native 4 100 50 50)
         add_test(NAME gil_test_unfair_smoke 
                  COMMAND gil_test_fc_unfair 4 100 50 50)
+        
+        # NAIVE mode tests (experimental - for comparing with unfair mode)
+        add_test(NAME gil_test_naive_fastcond_smoke 
+                 COMMAND gil_test_fc_naive 4 100 50 50)
+        add_test(NAME gil_test_naive_native_smoke 
+                 COMMAND gil_test_native_naive 4 100 50 50)
 
         # Verify output contains expected patterns
         set_tests_properties(qtest_pthread_smoke PROPERTIES

@@ -313,6 +313,7 @@ def generate_html_page(results, output_path, charts_available=True):
     
     <div class="nav-links">
         <a href="https://github.com/kristjanvalur/fastcond">⭐ Star the Repo</a>
+        <a href="gil-fairness.html">🎭 GIL Fairness Analysis</a>
         <a href="benchmark-results.json">📊 Raw Data</a>
         <a href="../..">🔄 Latest Results</a>
         <a href="https://github.com/kristjanvalur/fastcond/releases">📦 Get fastcond</a>

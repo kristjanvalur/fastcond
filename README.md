@@ -19,6 +19,8 @@ Fast, reliable POSIX condition variable alternatives forged during Iceland's lon
 
 **🎯 [See Live Performance Dashboard →](https://kristjanvalur.github.io/fastcond/)**
 
+**🎭 [Explore GIL Fairness Analysis →](https://kristjanvalur.github.io/fastcond/gil-fairness.html)**
+
 ## Quick Start
 
 ```bash
