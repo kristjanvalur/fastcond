@@ -104,9 +104,11 @@ docs/_build/
 docs/html/
 docs/latex/
 
-# Benchmark results and generated charts (docs/ published content is kept)
+# Generated benchmark artifacts in other locations
 benchmark_results/
 charts/
+
+# Note: Generated files in docs/ are handled by docs/.gitignore
 
 # Valgrind output
 *.valgrind

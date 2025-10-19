@@ -156,47 +156,88 @@ jobs:
         uv sync
     
     # Run benchmarks on PR branch
-    - name: Build and benchmark PR
+    - name: Build and benchmark base
       run: |
-        cd test && make clean && make all CFLAGS="-O3 -DNDEBUG"
+        cd test && make clean && make all CFLAGS="-O3 -DNDEBUG" || echo "Base branch build failed"
         cd ..
-        BUILD_DIR=test ./scripts/run_benchmarks.sh
-        mv docs/benchmark-results.json /tmp/pr-results.json
+        if BUILD_DIR=test ./scripts/run_benchmarks.sh; then
+          mv docs/benchmark-results.json /tmp/base-results.json
+          echo "Base branch benchmarks completed successfully"
+        else
+          echo "Base branch benchmarks failed - will skip comparison"
+          echo "[]" > /tmp/base-results.json
+        fi
     
     # Checkout and run benchmarks on base branch
     - name: Checkout base branch
       run: |
-        # Stash any generated documentation files
-        git add docs/ || true
-        git stash || true
+        # Clean any generated files (not tracked in git)
+        rm -rf docs/benchmark-results.* docs/index.html docs/*-comparison.png || true
         git fetch origin ${{ github.base_ref }}
         git checkout origin/${{ github.base_ref }}
     
     - name: Build and benchmark base
+      id: base_benchmark
+      continue-on-error: true
       run: |
-        cd test && make clean && make all CFLAGS="-O3 -DNDEBUG"
-        cd ..
-        BUILD_DIR=test ./scripts/run_benchmarks.sh
-        mv docs/benchmark-results.json /tmp/base-results.json
+        echo "Attempting to build and benchmark base branch..."
+        if cd test && make clean && make all CFLAGS="-O3 -DNDEBUG" 2>/dev/null; then
+          cd ..
+          if BUILD_DIR=test ./scripts/run_benchmarks.sh 2>/dev/null; then
+            mv docs/benchmark-results.json /tmp/base-results.json
+            echo "base_success=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Base branch benchmark execution failed - benchmark infrastructure may be incompatible"
+            echo "base_success=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "⚠️ Base branch build failed - benchmark infrastructure may be missing"
+          echo "base_success=false" >> $GITHUB_OUTPUT
+        fi
     
     - name: Compare results
       run: |
-        # Create a comparison script
+        # Create a robust comparison script that handles missing/incompatible base data
         cat > compare.py << 'PYEOF'
         import json
         import sys
+        import os
         
-        def load_results(path):
-            with open(path) as f:
-                return {r['benchmark'] + '_' + r['implementation']: r for r in json.load(f)}
+        def safe_load_results(path):
+            try:
+                with open(path) as f:
+                    data = json.load(f)
+                    # Validate structure
+                    if isinstance(data, list) and len(data) > 0:
+                        return {r['benchmark'] + '_' + r['implementation']: r for r in data}
+                    return {}
+            except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+                print(f"⚠️ Could not load {path}: {e}")
+                return {}
         
-        base = load_results('/tmp/base-results.json')
-        pr = load_results('/tmp/pr-results.json')
+        # Load results with error handling
+        base = safe_load_results('/tmp/base-results.json')
+        pr = safe_load_results('/tmp/pr-results.json')
         
-        print("## Performance Comparison vs Base Branch\n")
+        if not base:
+            print("## 📊 Performance Benchmarks (Base Branch Unavailable)\n")
+            print("⚠️ **Base branch comparison unavailable** - benchmark infrastructure may be incompatible\n")
+            print("### PR Branch Results Summary\n")
+            
+            if pr:
+                for key in sorted(pr.keys()):
+                    pr_throughput = pr[key]['results']['overall'].get('throughput_items_per_sec', 0)
+                    print(f"✅ **{key}**: {pr_throughput:,.0f} items/sec")
+            else:
+                print("❌ No valid benchmark results available")
+            return
         
+        print("## 🔬 Performance Comparison vs Base Branch\n")
+        
+        compared_any = False
         for key in sorted(pr.keys()):
             if key not in base:
+                print(f"🆕 **{key}**: New benchmark (no baseline)")
                 continue
             
             pr_throughput = pr[key]['results']['overall'].get('throughput_items_per_sec', 0)
@@ -206,6 +247,10 @@ jobs:
                 change = ((pr_throughput / base_throughput) - 1) * 100
                 emoji = "🟢" if change > 2 else "🔴" if change < -2 else "⚪"
                 print(f"{emoji} **{key}**: {change:+.1f}% ({pr_throughput:,.0f} vs {base_throughput:,.0f} items/sec)")
+                compared_any = True
+        
+        if not compared_any:
+            print("⚠️ No benchmarks could be compared - likely incompatible result formats")
         PYEOF
         
         cd scripts

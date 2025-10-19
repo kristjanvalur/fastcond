@@ -80,7 +80,7 @@ def create_comparison_table(results):
         
         for result in bench_results:
             impl = result['implementation']
-            threads = result['results']['per_thread']
+            threads = result['results'].get('per_thread', [])
             
             if not threads:
                 continue
@@ -192,7 +192,7 @@ def create_latency_chart(results, output_path):
         
         for result in sorted(bench_results, key=lambda x: x['implementation']):
             impl = result['implementation']
-            threads = result['results']['per_thread']
+            threads = result['results'].get('per_thread', [])
             
             if not threads:
                 continue
