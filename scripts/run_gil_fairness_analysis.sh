@@ -13,6 +13,11 @@ PROJECT_DIR="$(cd "$(dirname "$SCRIPT_DIR")" && pwd)"
 DOCS_DIR="${PROJECT_DIR}/docs"
 BUILD_DIR="${BUILD_DIR:-${PROJECT_DIR}/test}"  # Use test directory instead of build
 
+# Convert BUILD_DIR to absolute path if it's relative
+if [[ "$BUILD_DIR" != /* ]]; then
+    BUILD_DIR="$PROJECT_DIR/$BUILD_DIR"
+fi
+
 mkdir -p "$DOCS_DIR"
 
 echo "📁 Project directory: $PROJECT_DIR"
@@ -35,8 +40,31 @@ if [[ ${#missing_tests[@]} -gt 0 ]]; then
     echo "❌ Missing GIL tests: ${missing_tests[*]}"
     echo "   Building required tests..."
     cd "$PROJECT_DIR/test"
-    make all
-    echo "✅ GIL tests built successfully"
+    
+    # Build with the same flags as CI for consistency
+    if make clean && make all CFLAGS="-O3 -DNDEBUG"; then
+        echo "✅ GIL tests built successfully"
+        
+        # Re-check that all required tests now exist
+        still_missing=()
+        for test in "${required_tests[@]}"; do
+            if [[ ! -f "$BUILD_DIR/$test" ]]; then
+                still_missing+=("$test")
+            fi
+        done
+        
+        if [[ ${#still_missing[@]} -gt 0 ]]; then
+            echo "❌ Build completed but tests still missing: ${still_missing[*]}"
+            echo "   Build directory: $BUILD_DIR"
+            echo "   Available files:"
+            ls -la "$BUILD_DIR" | grep -E "(gil_test|gil_benchmark)" || echo "   No GIL executables found"
+            exit 1
+        fi
+    else
+        echo "❌ Failed to build GIL tests"
+        echo "   This may indicate missing dependencies or compilation errors"
+        exit 1
+    fi
 fi
 
 # Run GIL fairness benchmarks

@@ -50,7 +50,11 @@ jobs:
         uv run generate_html.py ../docs/benchmark-results.json --output ../docs/index.html
     
     - name: Run GIL fairness analysis
-      run: BUILD_DIR=test ./scripts/run_gil_fairness_analysis.sh
+      run: |
+        # Ensure GIL test executables are available
+        cd test && ls -la gil_test_* || echo "No GIL tests found"
+        cd ..
+        BUILD_DIR=test ./scripts/run_gil_fairness_analysis.sh
     
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
