@@ -12,13 +12,21 @@
 #define FASTCOND_GIL_MODE_NAIVE 0
 #endif
 
-#ifndef FASTCOND_GIL_DISABLE_FAIRNESS
-#define FASTCOND_GIL_DISABLE_FAIRNESS 0
+// Control fairness behavior separately for yield() and acquire()
+// yield() should generally be fair to give other threads a chance
+#ifndef FASTCOND_GIL_YIELD_FAIR
+#define FASTCOND_GIL_YIELD_FAIR 1
+#endif
+
+// acquire() can be greedy for performance - when enabled, acquire() doesn't check fairness
+#ifndef FASTCOND_GIL_ACQUIRE_GREEDY
+#define FASTCOND_GIL_ACQUIRE_GREEDY 1
 #endif
 
 // Validate mode configuration - naive mode overrides fairness settings
-#if FASTCOND_GIL_MODE_NAIVE && !FASTCOND_GIL_DISABLE_FAIRNESS
-#error "NAIVE mode requires fairness to be disabled (set FASTCOND_GIL_DISABLE_FAIRNESS=1)"
+#if FASTCOND_GIL_MODE_NAIVE && (FASTCOND_GIL_YIELD_FAIR || !FASTCOND_GIL_ACQUIRE_GREEDY)
+#error                                                                                             \
+    "NAIVE mode requires unfair behavior (set FASTCOND_GIL_YIELD_FAIR=0 and FASTCOND_GIL_ACQUIRE_GREEDY=1)"
 #endif
 
 void fastcond_gil_init(struct fastcond_gil *gil)
@@ -72,9 +80,9 @@ void fastcond_gil_acquire(struct fastcond_gil *gil)
     native_thread_t self = NATIVE_THREAD_SELF();
     NATIVE_MUTEX_LOCK(gil->mutex);
 
-    // The ONLY difference between FAIR and UNFAIR modes:
-#if FASTCOND_GIL_DISABLE_FAIRNESS
-    // UNFAIR mode: only wait if GIL is held (ignores fairness condition)
+    // Fairness control: use ACQUIRE_GREEDY setting
+#if FASTCOND_GIL_ACQUIRE_GREEDY
+    // GREEDY mode: only wait if GIL is held (ignores fairness condition)
     while (gil->held) {
 #else
     // FAIR mode: also prevent re-acquisition when others are waiting
@@ -115,6 +123,80 @@ void fastcond_gil_release(struct fastcond_gil *gil)
 #endif
     }
     gil->held = 0;
+    NATIVE_MUTEX_UNLOCK(gil->mutex);
+#endif
+}
+
+// Yield the GIL to allow other threads to run.
+// This is equivalent to release() followed immediately by acquire(),
+// but provides a cleaner API for the common case of voluntarily yielding
+// CPU time while maintaining lock ownership. Useful for:
+// - Long-running computations that want to be cooperative
+// - Implementing periodic yields in interpreter loops
+// - Reducing latency spikes in real-time applications
+//
+// IMPLEMENTATION VARIANTS:
+// - NAIVE mode: Simple mutex unlock + lock (no optimization possible)
+// - FAIR/UNFAIR modes: Optimized to eliminate redundant mutex unlock/lock
+//   pair between release and acquire phases, reducing mutex operations by 50%
+
+void fastcond_gil_yield(struct fastcond_gil *gil)
+{
+#if FASTCOND_GIL_MODE_NAIVE
+    // NAIVE mode: Simple release + acquire with mutex operations
+    // No optimization possible since we just have a plain mutex
+    NATIVE_MUTEX_UNLOCK(gil->mutex);
+    NATIVE_MUTEX_LOCK(gil->mutex);
+#else
+    // OPTIMIZED IMPLEMENTATION: Combine release + acquire with shared mutex lock
+
+    // Get thread ID for fairness checking (same as acquire)
+    native_thread_t self = NATIVE_THREAD_SELF();
+
+    // Single mutex lock for entire yield operation
+    NATIVE_MUTEX_LOCK(gil->mutex);
+
+    // RELEASE PHASE: Same logic as fastcond_gil_release() but no mutex unlock
+    assert(gil->held);
+
+    if (gil->n_waiting > 0) {
+#if FASTCOND_GIL_USE_NATIVE_COND
+        NATIVE_COND_SIGNAL(gil->cond);
+#else
+        fastcond_cond_signal(&gil->cond);
+#endif
+    }
+    gil->held = 0;
+
+    // YIELD POINT: Other threads can now compete for the GIL
+    // We remain in the mutex-protected critical section but give up GIL ownership
+
+    // ACQUIRE PHASE: Same logic as fastcond_gil_acquire() but no mutex lock
+    // The critical difference: we already hold the mutex from the release phase
+    // NOTE: yield() uses its own fairness setting, independent of acquire()
+
+#if !FASTCOND_GIL_YIELD_FAIR
+    // Unfair yield: only wait if GIL is held (ignores fairness condition)
+    while (gil->held) {
+#else
+    // Fair yield: also prevent re-acquisition when others are waiting (default)
+    while (gil->held || (gil->n_waiting > 0 && NATIVE_THREAD_EQUAL(gil->last_owner, self))) {
+#endif
+        gil->n_waiting++;
+#if FASTCOND_GIL_USE_NATIVE_COND
+        NATIVE_COND_WAIT(gil->cond, gil->mutex);
+#else
+        fastcond_cond_wait(&gil->cond, &gil->mutex);
+#endif
+        gil->n_waiting--;
+    }
+
+    assert(!gil->held);
+    // Update state tracking for new acquisition
+    gil->last_owner = self;
+    gil->held = 1;
+
+    // Single mutex unlock for entire yield operation
     NATIVE_MUTEX_UNLOCK(gil->mutex);
 #endif
 }

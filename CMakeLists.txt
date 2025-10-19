@@ -90,7 +90,9 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     # GIL tests with fastcond backend (unfair)
     # NOTE: We compile the GIL source directly to get proper conditional compilation  
     add_executable(gil_test_fc_unfair test/gil_test.c fastcond/gil.c)
-    target_compile_definitions(gil_test_fc_unfair PRIVATE FASTCOND_GIL_DISABLE_FAIRNESS=1)
+    target_compile_definitions(gil_test_fc_unfair PRIVATE 
+        FASTCOND_GIL_YIELD_FAIR=0 
+        FASTCOND_GIL_ACQUIRE_GREEDY=1)
     target_include_directories(gil_test_fc_unfair PRIVATE fastcond)
     target_link_libraries(gil_test_fc_unfair PRIVATE fastcond ${MATH_LIBRARY})
     
@@ -98,7 +100,8 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     add_executable(gil_test_native_unfair test/gil_test.c)
     target_compile_definitions(gil_test_native_unfair PRIVATE 
         FASTCOND_GIL_USE_NATIVE_COND=1 
-        FASTCOND_GIL_DISABLE_FAIRNESS=1)
+        FASTCOND_GIL_YIELD_FAIR=0 
+        FASTCOND_GIL_ACQUIRE_GREEDY=1)
     target_link_libraries(gil_test_native_unfair PRIVATE fastcond ${MATH_LIBRARY})
 
     # GIL tests with naive mode (simple mutex - no condition variables)
@@ -107,7 +110,8 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     add_executable(gil_test_fc_naive test/gil_test.c fastcond/gil.c)
     target_compile_definitions(gil_test_fc_naive PRIVATE 
         FASTCOND_GIL_MODE_NAIVE=1 
-        FASTCOND_GIL_DISABLE_FAIRNESS=1)
+        FASTCOND_GIL_YIELD_FAIR=0 
+        FASTCOND_GIL_ACQUIRE_GREEDY=1)
     target_include_directories(gil_test_fc_naive PRIVATE fastcond)
     target_link_libraries(gil_test_fc_naive PRIVATE fastcond ${MATH_LIBRARY})
     
@@ -115,7 +119,8 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     target_compile_definitions(gil_test_native_naive PRIVATE 
         FASTCOND_GIL_USE_NATIVE_COND=1 
         FASTCOND_GIL_MODE_NAIVE=1 
-        FASTCOND_GIL_DISABLE_FAIRNESS=1)
+        FASTCOND_GIL_YIELD_FAIR=0 
+        FASTCOND_GIL_ACQUIRE_GREEDY=1)
     target_include_directories(gil_test_native_naive PRIVATE fastcond)
     target_link_libraries(gil_test_native_naive PRIVATE fastcond ${MATH_LIBRARY})
 
@@ -128,13 +133,16 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     target_link_libraries(gil_benchmark_native PRIVATE fastcond ${MATH_LIBRARY})
     
     add_executable(gil_benchmark_fc_unfair test/gil_benchmark.c)
-    target_compile_definitions(gil_benchmark_fc_unfair PRIVATE FASTCOND_GIL_DISABLE_FAIRNESS=1)
+    target_compile_definitions(gil_benchmark_fc_unfair PRIVATE 
+        FASTCOND_GIL_YIELD_FAIR=0 
+        FASTCOND_GIL_ACQUIRE_GREEDY=1)
     target_link_libraries(gil_benchmark_fc_unfair PRIVATE fastcond ${MATH_LIBRARY})
     
     add_executable(gil_benchmark_native_unfair test/gil_benchmark.c)
     target_compile_definitions(gil_benchmark_native_unfair PRIVATE 
         FASTCOND_GIL_USE_NATIVE_COND=1 
-        FASTCOND_GIL_DISABLE_FAIRNESS=1)
+        FASTCOND_GIL_YIELD_FAIR=0 
+        FASTCOND_GIL_ACQUIRE_GREEDY=1)
     target_link_libraries(gil_benchmark_native_unfair PRIVATE fastcond ${MATH_LIBRARY})
 
     # Add CTest tests with appropriate arguments

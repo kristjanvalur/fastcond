@@ -22,14 +22,14 @@ gil_native.o: ../fastcond/gil.c
 
 # Unfair variants (fairness disabled)
 gil_unfair.o: ../fastcond/gil.c
-	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -c -o $@ $^
+	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_YIELD_FAIR=0 -DFASTCOND_GIL_ACQUIRE_GREEDY=1 -c -o $@ $^
 
 # Naive variant (mutex-only, no condition variables)
 gil_naive.o: ../fastcond/gil.c
-	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_MODE_NAIVE=1 -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -c -o $@ $^
+	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_MODE_NAIVE=1 -DFASTCOND_GIL_YIELD_FAIR=0 -DFASTCOND_GIL_ACQUIRE_GREEDY=1 -c -o $@ $^
 
 gil_native_unfair.o: ../fastcond/gil.c
-	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_USE_NATIVE_COND=1 -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -c -o $@ $^
+	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_USE_NATIVE_COND=1 -DFASTCOND_GIL_YIELD_FAIR=0 -DFASTCOND_GIL_ACQUIRE_GREEDY=1 -c -o $@ $^
 
 qtest_pt: qtest.c fastcond.o
 	$(CC) $(INCLUDES) $(CFLAGS) -o $@ $^ $(LDLIBS)
@@ -55,15 +55,15 @@ gil_test_native: gil_test.c gil_native.o
 
 # GIL tests with fastcond backend (unfair)
 gil_test_fc_unfair: gil_test.c gil_unfair.o fastcond.o
-	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -o $@ $^ $(LDLIBS)
+	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_YIELD_FAIR=0 -DFASTCOND_GIL_ACQUIRE_GREEDY=1 -o $@ $^ $(LDLIBS)
 
 # GIL tests with naive mutex-only implementation
 gil_test_fc_naive: gil_test.c gil_naive.o fastcond.o
-	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_MODE_NAIVE=1 -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -o $@ $^ $(LDLIBS)
+	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_MODE_NAIVE=1 -DFASTCOND_GIL_YIELD_FAIR=0 -DFASTCOND_GIL_ACQUIRE_GREEDY=1 -o $@ $^ $(LDLIBS)
 
 # GIL tests with native pthread backend (unfair)
 gil_test_native_unfair: gil_test.c gil_native_unfair.o
-	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_USE_NATIVE_COND=1 -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -o $@ $^ $(LDLIBS)
+	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_USE_NATIVE_COND=1 -DFASTCOND_GIL_YIELD_FAIR=0 -DFASTCOND_GIL_ACQUIRE_GREEDY=1 -o $@ $^ $(LDLIBS)
 
 # GIL benchmarks with fastcond backend
 gil_benchmark_fc: gil_benchmark.c gil.o fastcond.o
@@ -75,11 +75,11 @@ gil_benchmark_native: gil_benchmark.c gil_native.o
 
 # GIL benchmarks with fastcond backend (unfair)
 gil_benchmark_fc_unfair: gil_benchmark.c gil_unfair.o fastcond.o
-	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -o $@ $^ $(LDLIBS)
+	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_YIELD_FAIR=0 -DFASTCOND_GIL_ACQUIRE_GREEDY=1 -o $@ $^ $(LDLIBS)
 
 # GIL benchmarks with native pthread backend (unfair)
 gil_benchmark_native_unfair: gil_benchmark.c gil_native_unfair.o
-	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_USE_NATIVE_COND=1 -DFASTCOND_GIL_DISABLE_FAIRNESS=1 -o $@ $^ $(LDLIBS)
+	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_USE_NATIVE_COND=1 -DFASTCOND_GIL_YIELD_FAIR=0 -DFASTCOND_GIL_ACQUIRE_GREEDY=1 -o $@ $^ $(LDLIBS)
 
 
 ALL=qtest_pt qtest_fc qtest_wcond strongtest_pt strongtest_fc gil_test_fc gil_test_native gil_test_fc_unfair gil_test_fc_naive gil_test_native_unfair gil_benchmark_fc gil_benchmark_native gil_benchmark_fc_unfair gil_benchmark_native_unfair
