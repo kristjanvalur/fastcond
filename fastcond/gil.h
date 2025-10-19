@@ -15,7 +15,7 @@
 //   yield() will block if other threads are waiting, ensuring cooperative scheduling.
 //   When disabled, yield() becomes greedy and may immediately reacquire the GIL.
 //
-// FASTCOND_GIL_ACQUIRE_GREEDY (default: 1) 
+// FASTCOND_GIL_ACQUIRE_GREEDY (default: 1)
 //   Controls whether fastcond_gil_acquire() ignores fairness for performance.
 //   When enabled (default), acquire() becomes greedy and doesn't check for waiting
 //   threads. When disabled, acquire() respects fairness like traditional GIL behavior.
@@ -56,4 +56,5 @@ void fastcond_gil_init(struct fastcond_gil *gil);
 void fastcond_gil_destroy(struct fastcond_gil *gil);
 void fastcond_gil_acquire(struct fastcond_gil *gil);
 void fastcond_gil_release(struct fastcond_gil *gil);
-void fastcond_gil_yield(struct fastcond_gil *gil);  // Release and immediately reacquire (cooperative yielding)
+void fastcond_gil_yield(
+    struct fastcond_gil *gil); // Release and immediately reacquire (cooperative yielding)
