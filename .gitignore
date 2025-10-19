@@ -60,6 +60,7 @@ test/qtest_wcond
 test/strongtest_pt
 test/strongtest_fc
 test/strongtest_wcond
+test/gil_test_*
 
 # Debug files
 *.dSYM/
@@ -102,6 +103,10 @@ __pycache__/
 docs/_build/
 docs/html/
 docs/latex/
+
+# Benchmark results and generated charts (docs/ published content is kept)
+benchmark_results/
+charts/
 
 # Valgrind output
 *.valgrind
