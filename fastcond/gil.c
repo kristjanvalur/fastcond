@@ -5,7 +5,7 @@
 // GIL implementation mode control
 // Three modes available for experimental comparison:
 //   NAIVE: Simple mutex acquire/release - no condition variables or fairness
-//   UNFAIR: Uses condition variables but disables fairness mechanism  
+//   UNFAIR: Uses condition variables but disables fairness mechanism
 //   FAIR: Full implementation with anti-greedy fairness mechanism (default)
 
 #ifndef FASTCOND_GIL_MODE_NAIVE
@@ -31,7 +31,7 @@ void fastcond_gil_init(struct fastcond_gil *gil)
 #endif
 
     NATIVE_MUTEX_INIT(gil->mutex);
-    
+
     // Always initialize tracking variables (minimal overhead)
     gil->held = 0;
     gil->n_waiting = 0;
