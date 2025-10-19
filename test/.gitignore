@@ -1,0 +1,17 @@
+# All generated test executables are ignored
+# This includes:
+# - qtest_* (producer-consumer benchmarks)
+# - strongtest_* (single condition tests)  
+# - gil_test_* (GIL fairness tests)
+# - gil_benchmark_* (GIL performance benchmarks)
+
+# Ignore all executables (binaries without extension)
+qtest_*
+strongtest_*
+gil_test_*
+gil_benchmark_*
+
+# Keep source files and build configuration
+!*.c
+!*.h
+!Makefile
