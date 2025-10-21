@@ -9,6 +9,10 @@ on:
   schedule:
     # Run weekly on Monday at 00:00 UTC to track performance over time
     - cron: '0 0 * * 1'
+  # Also trigger when PRs are merged to master
+  pull_request_target:
+    branches: [ master, main ]
+    types: [ closed ]
 
 jobs:
   benchmark:
@@ -103,7 +107,9 @@ jobs:
           });
     
     - name: Deploy results to GitHub Pages (master only)
-      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      if: |
+        (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
+        (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -112,7 +118,9 @@ jobs:
         keep_files: true
     
     - name: Update latest benchmark link
-      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      if: |
+        (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
+        (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
       run: |
         # Create an index page for the latest results
         mkdir -p gh-pages
@@ -132,7 +140,9 @@ jobs:
         EOF
     
     - name: Deploy index to GitHub Pages
-      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      if: |
+        (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
+        (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
