@@ -48,11 +48,6 @@ jobs:
     - name: Run benchmark suite
       run: BUILD_DIR=test ./scripts/run_benchmarks.sh
     
-    - name: Generate HTML performance page
-      run: |
-        cd scripts
-        uv run generate_html.py ../docs/benchmark-results.json --output ../docs/index.html
-    
     - name: Run GIL fairness analysis
       run: |
         # Ensure GIL test executables are available
