@@ -151,7 +151,7 @@ jobs:
             body: body
           });
     
-    - name: Deploy to GitHub Pages (master only)
+    - name: Prepare files for GitHub Pages deployment
       if: |
         (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
         (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
@@ -166,38 +166,34 @@ jobs:
         echo "  benchmark-results.json exists: $(test -f docs/benchmark-results.json && echo 'YES' || echo 'NO')"
         echo "📋 Detailed file listing with sizes:"
         find docs/ -type f -exec ls -lh {} \; 2>/dev/null || echo "No files found in docs/"
-        echo "🏗️ Deploying to GitHub Pages..."
-      
-    - name: Deploy files to GitHub Pages
-      if: |
-        (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
-        (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
-      run: |
-        echo "🔧 Pre-deployment diagnostics:"
-        echo "📁 Current working directory: $(pwd)"
-        echo "📂 Contents of ./docs (what will be deployed):"
-        ls -la ./docs/
-        echo "📊 File count in docs/: $(find ./docs -type f | wc -l)"
-        echo "📈 Generated content verification:"
-        for file in index.html gil-fairness.html benchmark-results.json gil-fairness-results.json *.png; do
-          if [ -f "docs/$file" ]; then
-            echo "  ✅ docs/$file ($(stat -c%s docs/$file) bytes)"
-          else
-            echo "  ❌ docs/$file (missing)"
-          fi
-        done
         
-    - name: Execute GitHub Pages deployment
+        echo ""
+        echo "🔧 Creating deployment staging area (ignoring .gitignore)..."
+        # Create a temporary staging area for deployment
+        mkdir -p docs-deploy
+        
+        # Copy all files from docs/ to docs-deploy/, including gitignored files
+        cp -r docs/* docs-deploy/ 2>/dev/null || true
+        
+        echo "📁 Deployment staging area contents:"
+        ls -la docs-deploy/
+        echo "📏 File count in deployment area: $(find docs-deploy/ -type f | wc -l)"
+        echo "💾 Total deployment size: $(du -sh docs-deploy/ | cut -f1)"
+      
+    - name: Deploy to GitHub Pages
       if: |
         (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
         (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs
-        keep_files: false  # Replace all content with latest results
-        allow_empty_commit: true  # Force deployment even if content appears unchanged
-        force_orphan: true  # Clean slate deployment
+        publish_dir: ./docs-deploy       # Use staging area that bypasses .gitignore
+        keep_files: false               # Always replace entire content
+        allow_empty_commit: true        # Force deployment even if content appears unchanged
+        force_orphan: true              # Force orphan gh-pages branch (clean history)
+        publish_branch: gh-pages        # Target branch
+        enable_jekyll: false            # Disable Jekyll processing
+        exclude_assets: '.github'       # Don't include .github folder in deployment
 
   compare-baseline:
     name: Compare with Baseline
