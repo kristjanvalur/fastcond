@@ -152,6 +152,8 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs
         keep_files: false  # Replace all content with latest results
+        allow_empty_commit: true  # Force deployment even if content appears unchanged
+        force_orphan: true  # Clean slate deployment
 
   compare-baseline:
     name: Compare with Baseline
