@@ -69,6 +69,29 @@ jobs:
         ls -la docs/
         echo "📊 All generated files summary:"
         find docs/ -name "*.json" -o -name "*.html" -o -name "*.png" | xargs ls -la 2>/dev/null || echo "No generated files found"
+        
+    - name: Final diagnostics before deployment
+      run: |
+        echo "🎯 FINAL GENERATION SUMMARY"
+        echo "========================================="
+        echo "📁 Working directory: $(pwd)"
+        echo "📊 Complete docs/ directory listing:"
+        ls -la docs/
+        echo ""
+        echo "📈 Expected files check:"
+        expected_files=("index.html" "gil-fairness.html" "benchmark-results.json" "benchmark-results.md" "gil-fairness-results.json" "throughput-comparison.png" "latency-comparison.png" "gil_fairness_comparison.png")
+        for file in "${expected_files[@]}"; do
+          if [ -f "docs/$file" ]; then
+            size=$(stat -c%s "docs/$file" 2>/dev/null || echo "unknown")
+            echo "  ✅ $file ($size bytes)"
+          else
+            echo "  ❌ $file (MISSING)"
+          fi
+        done
+        echo ""
+        echo "📂 Total file count: $(find docs/ -type f | wc -l)"
+        echo "💾 Total size: $(du -sh docs/ | cut -f1)"
+        echo "========================================="
     
     - name: Upload benchmark results
       run: |
@@ -141,9 +164,30 @@ jobs:
         echo "  index.html exists: $(test -f docs/index.html && echo 'YES' || echo 'NO')"
         echo "  gil-fairness.html exists: $(test -f docs/gil-fairness.html && echo 'YES' || echo 'NO')"
         echo "  benchmark-results.json exists: $(test -f docs/benchmark-results.json && echo 'YES' || echo 'NO')"
+        echo "📋 Detailed file listing with sizes:"
+        find docs/ -type f -exec ls -lh {} \; 2>/dev/null || echo "No files found in docs/"
         echo "🏗️ Deploying to GitHub Pages..."
       
     - name: Deploy files to GitHub Pages
+      if: |
+        (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
+        (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
+      run: |
+        echo "🔧 Pre-deployment diagnostics:"
+        echo "📁 Current working directory: $(pwd)"
+        echo "📂 Contents of ./docs (what will be deployed):"
+        ls -la ./docs/
+        echo "📊 File count in docs/: $(find ./docs -type f | wc -l)"
+        echo "📈 Generated content verification:"
+        for file in index.html gil-fairness.html benchmark-results.json gil-fairness-results.json *.png; do
+          if [ -f "docs/$file" ]; then
+            echo "  ✅ docs/$file ($(stat -c%s docs/$file) bytes)"
+          else
+            echo "  ❌ docs/$file (missing)"
+          fi
+        done
+        
+    - name: Execute GitHub Pages deployment
       if: |
         (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
         (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
