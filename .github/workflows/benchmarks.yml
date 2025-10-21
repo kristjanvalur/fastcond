@@ -106,7 +106,7 @@ jobs:
             body: body
           });
     
-    - name: Deploy results to GitHub Pages (master only)
+    - name: Deploy to GitHub Pages (master only)
       if: |
         (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
         (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
@@ -114,40 +114,7 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs
-        destination_dir: benchmarks/${{ github.sha }}
-        keep_files: true
-    
-    - name: Update latest benchmark link
-      if: |
-        (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
-        (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
-      run: |
-        # Create an index page for the latest results
-        mkdir -p gh-pages
-        cat > gh-pages/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>fastcond Performance Benchmarks</title>
-          <meta http-equiv="refresh" content="0; url=benchmarks/${{ github.sha }}/index.html">
-        </head>
-        <body>
-          <p>Redirecting to latest benchmark results...</p>
-          <p>If not redirected, <a href="benchmarks/${{ github.sha }}/index.html">click here</a>.</p>
-        </body>
-        </html>
-        EOF
-    
-    - name: Deploy index to GitHub Pages
-      if: |
-        (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
-        (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./gh-pages
-        keep_files: true
+        keep_files: false  # Replace all content with latest results
 
   compare-baseline:
     name: Compare with Baseline
