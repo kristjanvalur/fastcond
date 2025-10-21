@@ -16,12 +16,24 @@ from datetime import datetime
 
 def load_json(filepath):
     """Load benchmark results from JSON file."""
+    print(f"📊 Loading benchmark data from: {filepath}")
+    import os
+    if not os.path.exists(filepath):
+        print(f"❌ ERROR: Input file does not exist: {filepath}")
+        raise FileNotFoundError(f"Input file not found: {filepath}")
+    
+    print(f"📁 File size: {os.path.getsize(filepath)} bytes")
     with open(filepath, "r") as f:
-        return json.load(f)
+        data = json.load(f)
+    print(f"✅ Loaded {len(data)} benchmark results")
+    return data
 
 
 def generate_html_page(results, output_path, charts_available=True):
     """Generate a comprehensive HTML performance page."""
+    print(f"🌐 Generating HTML page: {output_path}")
+    print(f"📊 Processing {len(results)} benchmark results")
+    print(f"📈 Charts available: {charts_available}")
 
     # Group by benchmark type
     by_benchmark = {}
@@ -569,6 +581,12 @@ def generate_html_page(results, output_path, charts_available=True):
 
     with open(output_path, "w") as f:
         f.write(html_content)
+    
+    import os
+    print(f"✅ HTML page generated successfully")
+    print(f"📁 Output file: {output_path}")
+    print(f"📊 File size: {os.path.getsize(output_path)} bytes")
+    print(f"🌐 Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 
 def main():
@@ -582,13 +600,24 @@ def main():
     )
 
     args = parser.parse_args()
+    
+    print(f"🚀 Starting HTML generation...")
+    print(f"📊 Input file: {args.json_file}")
+    print(f"🌐 Output file: {args.output}")
+    print(f"📈 Include charts: {not args.no_charts}")
 
     # Load data
     results = load_json(args.json_file)
 
     # Generate HTML page
     generate_html_page(results, args.output, charts_available=not args.no_charts)
-    print(f"HTML performance page generated: {args.output}")
+    print(f"🎉 HTML performance page generation completed!")
+    
+    import os
+    if os.path.exists(args.output):
+        print(f"✅ Verification: Output file exists and is {os.path.getsize(args.output)} bytes")
+    else:
+        print(f"❌ ERROR: Output file was not created: {args.output}")
 
 
 if __name__ == "__main__":

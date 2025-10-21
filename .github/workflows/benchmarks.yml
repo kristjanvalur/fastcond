@@ -46,16 +46,43 @@ jobs:
         make all CFLAGS="-O3 -DNDEBUG"
     
     - name: Run benchmark suite
-      run: BUILD_DIR=test ./scripts/run_benchmarks.sh
+      run: |
+        echo "🔍 Before benchmark generation - docs/ contents:"
+        ls -la docs/ || echo "docs/ directory not found"
+        echo "🚀 Running benchmark suite..."
+        BUILD_DIR=test ./scripts/run_benchmarks.sh
+        echo "✅ After benchmark generation - docs/ contents:"
+        ls -la docs/
+        echo "📊 Generated files details:"
+        find docs/ -name "*.json" -o -name "*.html" -o -name "*.png" | xargs ls -la 2>/dev/null || echo "No generated files found"
     
     - name: Run GIL fairness analysis
       run: |
+        echo "🔍 Before GIL analysis - docs/ contents:"
+        ls -la docs/
         # Ensure GIL test executables are available
         cd test && ls -la gil_test_* || echo "No GIL tests found"
         cd ..
+        echo "🎭 Running GIL fairness analysis..."
         BUILD_DIR=test ./scripts/run_gil_fairness_analysis.sh
+        echo "✅ After GIL analysis - docs/ contents:"
+        ls -la docs/
+        echo "📊 All generated files summary:"
+        find docs/ -name "*.json" -o -name "*.html" -o -name "*.png" | xargs ls -la 2>/dev/null || echo "No generated files found"
     
     - name: Upload benchmark results
+      run: |
+        echo "📦 Preparing artifacts for upload..."
+        echo "📊 Files to be uploaded:"
+        for file in docs/benchmark-results.json docs/benchmark-results.md docs/index.html docs/throughput-comparison.png docs/latency-comparison.png docs/gil-fairness-results.json docs/gil-fairness.html docs/gil_fairness_comparison.png; do
+          if [ -f "$file" ]; then
+            echo "  ✅ $file ($(ls -lh "$file" | awk '{print $5}'))"
+          else
+            echo "  ❌ $file (missing)"
+          fi
+        done
+        
+    - name: Store benchmark artifacts
       uses: actions/upload-artifact@v4
       with:
         name: benchmark-results-${{ github.sha }}
@@ -102,6 +129,21 @@ jobs:
           });
     
     - name: Deploy to GitHub Pages (master only)
+      if: |
+        (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
+        (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)
+      run: |
+        echo "🚀 Preparing GitHub Pages deployment..."
+        echo "📁 Current working directory: $(pwd)"
+        echo "📊 docs/ directory contents before deployment:"
+        ls -la docs/
+        echo "🔍 Generated files verification:"
+        echo "  index.html exists: $(test -f docs/index.html && echo 'YES' || echo 'NO')"
+        echo "  gil-fairness.html exists: $(test -f docs/gil-fairness.html && echo 'YES' || echo 'NO')"
+        echo "  benchmark-results.json exists: $(test -f docs/benchmark-results.json && echo 'YES' || echo 'NO')"
+        echo "🏗️ Deploying to GitHub Pages..."
+      
+    - name: Deploy files to GitHub Pages
       if: |
         (github.ref == 'refs/heads/master' && github.event_name == 'push') ||
         (github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true)

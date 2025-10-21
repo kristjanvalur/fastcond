@@ -25,8 +25,17 @@ except ImportError:
 
 def load_json(filepath):
     """Load benchmark results from JSON file."""
+    print(f"📊 Loading visualization data from: {filepath}")
+    import os
+    if not os.path.exists(filepath):
+        print(f"❌ ERROR: Input file does not exist: {filepath}")
+        raise FileNotFoundError(f"Input file not found: {filepath}")
+    
+    print(f"📁 File size: {os.path.getsize(filepath)} bytes")
     with open(filepath, "r") as f:
-        return json.load(f)
+        data = json.load(f)
+    print(f"✅ Loaded {len(data)} visualization data points")
+    return data
 
 
 def create_comparison_table(results):
@@ -184,7 +193,11 @@ def create_throughput_chart(results, output_path):
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    print(f"Chart saved to {output_path}")
+    import os
+    if os.path.exists(output_path):
+        print(f"📈 Throughput chart saved: {output_path} ({os.path.getsize(output_path)} bytes)")
+    else:
+        print(f"❌ ERROR: Failed to save throughput chart: {output_path}")
 
 
 def create_latency_chart(results, output_path):
@@ -262,7 +275,11 @@ def create_latency_chart(results, output_path):
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    print(f"Chart saved to {output_path}")
+    import os
+    if os.path.exists(output_path):
+        print(f"📊 Latency chart saved: {output_path} ({os.path.getsize(output_path)} bytes)")
+    else:
+        print(f"❌ ERROR: Failed to save latency chart: {output_path}")
 
 
 def main():

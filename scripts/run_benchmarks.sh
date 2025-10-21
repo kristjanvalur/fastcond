@@ -79,12 +79,22 @@ fi
 
 # Generate HTML performance page
 echo "Generating HTML performance page..."
+echo "📁 Output directory: $OUTPUT_DIR"
+echo "📊 Input JSON file: $JSON_FILE"
+echo "🌐 Target HTML file: $OUTPUT_DIR/index.html"
+echo "📂 Current working directory: $(pwd)"
+echo "📋 Files in output directory before HTML generation:"
+ls -la "$OUTPUT_DIR" 2>/dev/null || echo "Output directory not accessible"
 (cd "$SCRIPT_DIR" && uv run generate_html.py "$JSON_FILE" --output "$OUTPUT_DIR/index.html")
 
 if [ $? -ne 0 ]; then
-    echo "Error: HTML page generation failed"
+    echo "❌ Error: HTML page generation failed"
     exit 1
 fi
+
+echo "✅ HTML generation completed"
+echo "📋 Files in output directory after HTML generation:"
+ls -la "$OUTPUT_DIR"
 
 echo ""
 echo "==================================="
