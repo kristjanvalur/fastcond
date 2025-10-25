@@ -585,7 +585,7 @@ def generate_html_page(results, output_path, charts_available=True):
 
     import os
 
-    print(f"✅ HTML page generated successfully")
+    print("✅ HTML page generated successfully")
     print(f"📁 Output file: {output_path}")
     print(f"📊 File size: {os.path.getsize(output_path)} bytes")
     print(f"🌐 Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -603,7 +603,7 @@ def main():
 
     args = parser.parse_args()
 
-    print(f"🚀 Starting HTML generation...")
+    print("🚀 Starting HTML generation...")
     print(f"📊 Input file: {args.json_file}")
     print(f"🌐 Output file: {args.output}")
     print(f"📈 Include charts: {not args.no_charts}")
@@ -613,7 +613,7 @@ def main():
 
     # Generate HTML page
     generate_html_page(results, args.output, charts_available=not args.no_charts)
-    print(f"🎉 HTML performance page generation completed!")
+    print("🎉 HTML performance page generation completed!")
 
     import os
 

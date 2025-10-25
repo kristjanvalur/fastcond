@@ -56,22 +56,24 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
         set(MATH_LIBRARY "")
     endif()
 
-    # Helper function to create test variants
-    function(add_test_variant TEST_NAME SOURCE_FILE)
-        # Pthread version (baseline)
-        add_executable(${TEST_NAME}_pt ${SOURCE_FILE})
-        target_link_libraries(${TEST_NAME}_pt PRIVATE fastcond ${MATH_LIBRARY})
-        
-        # Fastcond weak version
-        add_executable(${TEST_NAME}_wcond ${SOURCE_FILE})
-        target_compile_definitions(${TEST_NAME}_wcond PRIVATE FASTCOND_PATCH_WCOND)
-        target_link_libraries(${TEST_NAME}_wcond PRIVATE fastcond ${MATH_LIBRARY})
-        
-        # Fastcond strong version (default)
-        add_executable(${TEST_NAME}_fc ${SOURCE_FILE})
-        target_compile_definitions(${TEST_NAME}_fc PRIVATE FASTCOND_PATCH_COND)
-        target_link_libraries(${TEST_NAME}_fc PRIVATE fastcond ${MATH_LIBRARY})
-    endfunction()
+    # Helper function to create test variants (POSIX only - requires pthread)
+    if(NOT WIN32)
+        function(add_test_variant TEST_NAME SOURCE_FILE)
+            # Pthread version (baseline)
+            add_executable(${TEST_NAME}_pt ${SOURCE_FILE})
+            target_link_libraries(${TEST_NAME}_pt PRIVATE fastcond ${MATH_LIBRARY})
+            
+            # Fastcond weak version
+            add_executable(${TEST_NAME}_wcond ${SOURCE_FILE})
+            target_compile_definitions(${TEST_NAME}_wcond PRIVATE FASTCOND_PATCH_WCOND)
+            target_link_libraries(${TEST_NAME}_wcond PRIVATE fastcond ${MATH_LIBRARY})
+            
+            # Fastcond strong version (default)
+            add_executable(${TEST_NAME}_fc ${SOURCE_FILE})
+            target_compile_definitions(${TEST_NAME}_fc PRIVATE FASTCOND_PATCH_COND)
+            target_link_libraries(${TEST_NAME}_fc PRIVATE fastcond ${MATH_LIBRARY})
+        endfunction()
+    endif()
 
     # qtest and strongtest are POSIX-only (require pthread for baseline comparison)
     if(NOT WIN32)
