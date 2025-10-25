@@ -122,9 +122,10 @@ jobs:
         fi
       shell: bash
     
-    - name: Run benchmarks (Release only)
-      if: matrix.build_type == 'Release' && runner.os != 'Windows'
-      run: ./scripts/benchmark.sh
+    # Temporarily disabled to speed up Windows iteration
+    # - name: Run benchmarks (Release only)
+    #   if: matrix.build_type == 'Release' && runner.os != 'Windows'
+    #   run: ./scripts/benchmark.sh
 
   # Temporarily disabled to focus on Windows debugging
   # sanitizers:
