@@ -49,13 +49,18 @@ int main(void) {
     
     printf("Main: Locking mutex...\n");
     NATIVE_MUTEX_LOCK(&mutex);
-    printf("Main: Mutex locked (thread should have released it), incrementing counter...\n");
-    thread_in_critical_section++;
+    printf("Main: Mutex locked (thread should have released it)\n");
     
+    /* Thread incremented to 1 and is waiting. If we successfully got the mutex,
+     * counter should still be 1 (thread released mutex during wait). */
     if (thread_in_critical_section != 1) {
-        printf("ERROR: Thread did not release mutex during wait! Count=%d\n", thread_in_critical_section);
+        printf("ERROR: Unexpected counter value! Count=%d (expected 1)\n", 
+               thread_in_critical_section);
+        printf("  This suggests thread never reached wait, or mutex is broken\n");
         return 1;
     }
+    
+    printf("Main: Good! Counter is 1, thread released mutex properly\n");
     
     printf("Main: Signaling condition...\n");
     ready = 1;
