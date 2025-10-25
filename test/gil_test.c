@@ -624,29 +624,36 @@ void test_gil_yield()
 {
     struct fastcond_gil gil;
     printf("\n=== GIL Yield API Test ===\n");
+    fflush(stdout);
 
     fastcond_gil_init(&gil);
 
     // Test basic yield functionality
     printf("Testing fastcond_gil_yield()...\n");
+    fflush(stdout);
 
     // Acquire GIL
     fastcond_gil_acquire(&gil);
     printf("  ✅ GIL acquired successfully\n");
+    fflush(stdout);
 
     // Yield should release and reacquire
     fastcond_gil_yield(&gil);
     printf("  ✅ GIL yielded and reacquired successfully\n");
+    fflush(stdout);
 
     // Release GIL
     fastcond_gil_release(&gil);
     printf("  ✅ GIL released successfully\n");
+    fflush(stdout);
 
     // Cleanup
     fastcond_gil_destroy(&gil);
     printf("  ✅ GIL destroyed successfully\n");
+    fflush(stdout);
 
     printf("GIL yield API test completed successfully!\n");
+    fflush(stdout);
 }
 
 int main(int argc, char *argv[])
@@ -703,6 +710,7 @@ int main(int argc, char *argv[])
     printf("Usage: %s [num_threads] [total_acquisitions] [hold_time_us] [work_cycles] "
            "[release_delay_us] [release_delay_variance_us]\n\n",
            argv[0]);
+    fflush(stdout);  /* Ensure output appears on Windows */
 
     // Run yield API test first
     test_gil_yield();

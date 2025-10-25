@@ -103,14 +103,12 @@ jobs:
           ./${{ matrix.build_type }}/test_gil_exclusion_fc.exe
           echo ""
           
-          # Skipping complex gil_test - hangs on Windows (investigating)
-          # The minimal test_gil_exclusion passes, proving GIL mutual exclusion works
-          # echo "=== Running GIL tests on Windows with native CONDITION_VARIABLE ==="
-          # ./${{ matrix.build_type }}/gil_test_native.exe 4 1000
-          # echo ""
-          # echo "=== Running GIL tests with fastcond ==="
-          # ./${{ matrix.build_type }}/gil_test_fc.exe 4 1000
-          # echo ""
+          echo "=== Running GIL tests on Windows with native CONDITION_VARIABLE ==="
+          ./${{ matrix.build_type }}/gil_test_native.exe 4 1000
+          echo ""
+          echo "=== Running GIL tests with fastcond ==="
+          ./${{ matrix.build_type }}/gil_test_fc.exe 4 1000
+          echo ""
           
           echo "=== Running qtest/strongtest ==="
           ./${{ matrix.build_type }}/qtest_fc.exe 10000 4 10
@@ -122,10 +120,7 @@ jobs:
         fi
       shell: bash
     
-    # Temporarily disabled to speed up Windows iteration
-    # - name: Run benchmarks (Release only)
-    #   if: matrix.build_type == 'Release' && runner.os != 'Windows'
-    #   run: ./scripts/benchmark.sh
+
 
   # Temporarily disabled to focus on Windows debugging
   # sanitizers:

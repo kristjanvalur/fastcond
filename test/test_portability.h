@@ -217,7 +217,18 @@ static inline int test_clock_gettime(test_timespec_t *ts)
 #if TEST_USE_WINDOWS
 static inline void test_usleep(unsigned int usec)
 {
-    Sleep(usec / 1000);  /* Sleep takes milliseconds */
+    /* Windows Sleep() takes milliseconds, with minimum resolution of 1ms
+     * For sub-millisecond delays, use Sleep(0) to yield time slice
+     * For >= 1ms, round up to ensure at least the requested delay
+     */
+    if (usec == 0) {
+        return;  /* No sleep requested */
+    } else if (usec < 1000) {
+        Sleep(0);  /* Yield CPU for sub-millisecond delays */
+    } else {
+        /* Convert microseconds to milliseconds, rounding up */
+        Sleep((usec + 999) / 1000);
+    }
 }
 #define usleep test_usleep
 #else
