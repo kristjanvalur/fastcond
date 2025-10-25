@@ -16,13 +16,28 @@
                               FASTCOND_VERSION_MINOR * 100 + \
                               FASTCOND_VERSION_PATCH)
 
-#include <pthread.h> /* for the pthread mutex that we use */
-
-/* Platform detection and semaphore selection */
-#if defined(__APPLE__) || defined(__MACH__)
+/* Platform detection and synchronization primitive selection */
+#if defined(_WIN32) || defined(_WIN64)
+/* Windows platform */
+#define FASTCOND_USE_WINDOWS 1
+#include <windows.h>
+/* Windows doesn't have pthread by default, but fastcond can still be used
+ * with Windows synchronization primitives (CriticalSection, etc.)
+ * If you're using pthread-win32, this will work alongside it.
+ */
+#ifndef _PTHREAD_H
+/* Provide minimal typedefs if pthread.h not included */
+typedef void* pthread_mutex_t;
+typedef void* pthread_condattr_t;
+#endif
+#elif defined(__APPLE__) || defined(__MACH__)
+/* macOS platform - use GCD dispatch semaphores */
+#include <pthread.h>
 #include <dispatch/dispatch.h>
 #define FASTCOND_USE_GCD 1
 #else
+/* POSIX platforms (Linux, BSD, etc.) */
+#include <pthread.h>
 #include <semaphore.h>
 #endif
 
@@ -31,7 +46,9 @@
 /* The _weak_ condition variable.  See fastcond.c for details */
 
 typedef struct _fastcond_wcond_t {
-#ifdef FASTCOND_USE_GCD
+#ifdef FASTCOND_USE_WINDOWS
+    HANDLE sem;  /* Windows semaphore handle */
+#elif defined(FASTCOND_USE_GCD)
     dispatch_semaphore_t sem;
 #else
     sem_t sem;

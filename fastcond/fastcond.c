@@ -4,10 +4,61 @@
 
 #include <assert.h>
 #include <errno.h>
+
+/* Include sched.h for sched_yield() on POSIX platforms */
+#ifndef FASTCOND_USE_WINDOWS
 #include <sched.h>
+#endif
 
 /* Platform-specific semaphore wrapper macros for cleaner code */
-#ifdef FASTCOND_USE_GCD
+#ifdef FASTCOND_USE_WINDOWS
+/* Windows Semaphore Objects
+ * CreateSemaphore creates a semaphore with initial count 0, max count LONG_MAX
+ * WaitForSingleObject waits for semaphore to be signaled (count > 0)
+ * ReleaseSemaphore increments semaphore count, waking waiting threads
+ */
+#define SEM_INIT(sem) (((sem) = CreateSemaphoreW(NULL, 0, LONG_MAX, NULL)) ? 0 : ENOMEM)
+#define SEM_DESTROY(sem) (CloseHandle(sem) ? 0 : EINVAL)
+#define SEM_WAIT(sem) (WaitForSingleObject((sem), INFINITE) == WAIT_OBJECT_0 ? 0 : EINVAL)
+#define SEM_TIMEDWAIT(sem, abstime) _sem_timedwait_windows((sem), (abstime))
+#define SEM_POST(sem) (ReleaseSemaphore((sem), 1, NULL) ? 0 : EINVAL)
+
+/* Helper function to convert absolute timespec to relative timeout and wait */
+static int _sem_timedwait_windows(HANDLE sem, const struct timespec *abstime)
+{
+    DWORD timeout_ms;
+
+    if (!abstime) {
+        /* NULL means infinite wait */
+        return (WaitForSingleObject(sem, INFINITE) == WAIT_OBJECT_0) ? 0 : EINVAL;
+    }
+
+    /* Convert absolute timespec to relative timeout in milliseconds */
+    struct timespec now;
+    timespec_get(&now, TIME_UTC);  /* C11 standard, widely supported */
+
+    long long ns_diff =
+        (abstime->tv_sec - now.tv_sec) * 1000000000LL + (abstime->tv_nsec - now.tv_nsec);
+
+    if (ns_diff <= 0) {
+        /* Already timed out */
+        timeout_ms = 0;
+    } else {
+        /* Convert nanoseconds to milliseconds, rounding up */
+        timeout_ms = (DWORD)((ns_diff + 999999) / 1000000);
+    }
+
+    DWORD result = WaitForSingleObject(sem, timeout_ms);
+    if (result == WAIT_OBJECT_0) {
+        return 0;  /* Success */
+    } else if (result == WAIT_TIMEOUT) {
+        return ETIMEDOUT;
+    } else {
+        return EINVAL;  /* Error */
+    }
+}
+
+#elif defined(FASTCOND_USE_GCD)
 /* GCD semaphores for macOS
  * dispatch_semaphore_wait returns 0 on success (semaphore decremented)
  * dispatch_semaphore_wait returns non-zero on timeout
@@ -55,6 +106,13 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
 #define SEM_TIMEDWAIT(sem, abstime)                                                                \
     ((abstime) ? (sem_timedwait(&(sem), (abstime)) ? errno : 0) : SEM_WAIT(sem))
 #define SEM_POST(sem) (sem_post(&(sem)) ? errno : 0)
+#endif
+
+/* Platform-specific thread yield */
+#ifdef FASTCOND_USE_WINDOWS
+#define YIELD() Sleep(0)  /* Windows: Sleep(0) yields to other ready threads */
+#else
+#define YIELD() sched_yield()  /* POSIX: sched_yield() */
 #endif
 
 /*  The fastcond_wcond_t code - weak condition variable (see below for `weak`)
@@ -258,7 +316,7 @@ fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restric
         err = pthread_mutex_unlock(mutex);
         if (err)
             return err;
-        sched_yield();
+        YIELD();
         return pthread_mutex_lock(mutex);
     }
     cond->n_waiting++;
