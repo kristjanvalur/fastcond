@@ -111,6 +111,9 @@ docs/latex/
 benchmark_results/
 charts/
 
+# Timestamped benchmark result directories (from workflow runs)
+benchmark-results-*/
+
 # Note: Generated files in docs/ are handled by docs/.gitignore
 
 # Valgrind output

@@ -1,0 +1,280 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3
+
+permissions:
+  contents: write  # Required for creating releases
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for changelog generation
+
+    - name: Validate version tag
+      id: version
+      run: |
+        TAG=${GITHUB_REF#refs/tags/}
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+        echo "📦 Creating release for $TAG"
+        
+        # Validate semantic versioning format
+        if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+          echo "❌ Invalid version tag format: $TAG"
+          echo "Expected format: v1.2.3 or v1.2.3-beta.1"
+          exit 1
+        fi
+
+    - name: Create source distribution archives
+      id: dist
+      run: |
+        VERSION=${{ steps.version.outputs.version }}
+        TAG=${{ steps.version.outputs.tag }}
+        DIST_NAME="fastcond-${VERSION}"
+        
+        echo "🏗️  Creating distribution archives for ${DIST_NAME}..."
+        
+        # Create distribution directory with library files
+        mkdir -p "${DIST_NAME}"
+        
+        # Copy essential library files
+        cp fastcond/fastcond.h "${DIST_NAME}/"
+        cp fastcond/fastcond.c "${DIST_NAME}/"
+        cp fastcond/fastcond_patch.h "${DIST_NAME}/"
+        cp License.md "${DIST_NAME}/"
+        cp README.md "${DIST_NAME}/"
+        
+        # Create integration instructions
+        cat > "${DIST_NAME}/INTEGRATION.md" << 'EOF'
+        # fastcond Integration Guide
+        
+        ## Quick Start
+        
+        To integrate fastcond into your project:
+        
+        1. Copy the library files to your source tree:
+           ```
+           cp fastcond.h fastcond.c fastcond_patch.h /path/to/your/project/
+           ```
+        
+        2. Add `fastcond.c` to your build system
+        
+        3. Include the header in your code:
+           ```c
+           #include "fastcond.h"
+           ```
+        
+        ## Drop-in pthread Replacement
+        
+        For existing code using `pthread_cond_t`, use the patch header:
+        
+        ```c
+        #define FASTCOND_PATCH_COND    // For strong semantics (default)
+        // OR
+        #define FASTCOND_PATCH_WCOND   // For weak semantics (higher performance)
+        
+        #include "fastcond_patch.h"    // Before any pthread includes
+        ```
+        
+        This automatically replaces `pthread_cond_*` calls with `fastcond_*`.
+        
+        ## Semantics Choice
+        
+        - **Strong** (`fastcond_cond_t`): Full POSIX semantics, only wakes threads already waiting
+        - **Weak** (`fastcond_wcond_t`): May wake threads not yet waiting, maximum performance
+        
+        See README.md for detailed explanation and benchmarks.
+        
+        ## License
+        
+        MIT License - see License.md
+        EOF
+        
+        # Create tar.gz archive
+        tar -czf "${DIST_NAME}.tar.gz" "${DIST_NAME}"
+        echo "✅ Created ${DIST_NAME}.tar.gz ($(du -h ${DIST_NAME}.tar.gz | cut -f1))"
+        
+        # Create zip archive for Windows users
+        zip -r -q "${DIST_NAME}.zip" "${DIST_NAME}"
+        echo "✅ Created ${DIST_NAME}.zip ($(du -h ${DIST_NAME}.zip | cut -f1))"
+        
+        # Calculate checksums
+        sha256sum "${DIST_NAME}.tar.gz" > "${DIST_NAME}.tar.gz.sha256"
+        sha256sum "${DIST_NAME}.zip" > "${DIST_NAME}.zip.sha256"
+        
+        echo "📋 Checksums:"
+        cat "${DIST_NAME}.tar.gz.sha256"
+        cat "${DIST_NAME}.zip.sha256"
+        
+        # Export for release notes
+        echo "dist_name=${DIST_NAME}" >> $GITHUB_OUTPUT
+        echo "tarball=${DIST_NAME}.tar.gz" >> $GITHUB_OUTPUT
+        echo "zipfile=${DIST_NAME}.zip" >> $GITHUB_OUTPUT
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        TAG=${{ steps.version.outputs.tag }}
+        echo "📝 Generating changelog for $TAG..."
+        
+        # Find previous release tag
+        PREV_TAG=$(git tag --sort=-version:refname | grep -A1 "^${TAG}$" | tail -1)
+        
+        if [ -z "$PREV_TAG" ] || [ "$PREV_TAG" = "$TAG" ]; then
+          echo "ℹ️  No previous release found, showing all commits"
+          COMMIT_RANGE="${TAG}"
+        else
+          echo "ℹ️  Previous release: ${PREV_TAG}"
+          COMMIT_RANGE="${PREV_TAG}..${TAG}"
+        fi
+        
+        # Generate changelog with categorized commits
+        cat > CHANGELOG.md << 'EOF_HEADER'
+        ## What's Changed
+        
+        EOF_HEADER
+        
+        # Features
+        FEATURES=$(git log ${COMMIT_RANGE} --pretty=format:"- %s (%h)" --grep="^feat" --grep="^feature" -i)
+        if [ -n "$FEATURES" ]; then
+          echo "### ✨ Features" >> CHANGELOG.md
+          echo "$FEATURES" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+        fi
+        
+        # Performance improvements
+        PERF=$(git log ${COMMIT_RANGE} --pretty=format:"- %s (%h)" --grep="^perf" --grep="performance" -i)
+        if [ -n "$PERF" ]; then
+          echo "### 🚀 Performance" >> CHANGELOG.md
+          echo "$PERF" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+        fi
+        
+        # Bug fixes
+        FIXES=$(git log ${COMMIT_RANGE} --pretty=format:"- %s (%h)" --grep="^fix" --grep="^bug" -i)
+        if [ -n "$FIXES" ]; then
+          echo "### 🐛 Bug Fixes" >> CHANGELOG.md
+          echo "$FIXES" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+        fi
+        
+        # Documentation
+        DOCS=$(git log ${COMMIT_RANGE} --pretty=format:"- %s (%h)" --grep="^docs" --grep="documentation" -i)
+        if [ -n "$DOCS" ]; then
+          echo "### 📚 Documentation" >> CHANGELOG.md
+          echo "$DOCS" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+        fi
+        
+        # Other changes (excluding merge commits)
+        OTHERS=$(git log ${COMMIT_RANGE} --pretty=format:"- %s (%h)" --invert-grep --grep="^feat" --grep="^fix" --grep="^perf" --grep="^docs" --grep="^Merge" -i)
+        if [ -n "$OTHERS" ]; then
+          echo "### 🔧 Other Changes" >> CHANGELOG.md
+          echo "$OTHERS" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+        fi
+        
+        echo "📄 Generated changelog:"
+        cat CHANGELOG.md
+        
+        # Export changelog for release body (GitHub Actions multiline output)
+        {
+          echo 'changelog<<EOF_CHANGELOG'
+          cat CHANGELOG.md
+          echo 'EOF_CHANGELOG'
+        } >> $GITHUB_OUTPUT
+
+    - name: Create release notes
+      id: notes
+      run: |
+        TAG=${{ steps.version.outputs.tag }}
+        VERSION=${{ steps.version.outputs.version }}
+        DIST_NAME=${{ steps.dist.outputs.dist_name }}
+        
+        cat > RELEASE_NOTES.md << EOF
+        # fastcond ${VERSION}
+        
+        Fast POSIX condition variable alternatives using only semaphores.
+        
+        ${{ steps.changelog.outputs.changelog }}
+        
+        ## 📦 Installation
+        
+        Download and extract the source archive, then copy the library files to your project:
+        
+        \`\`\`bash
+        # Extract archive
+        tar -xzf ${DIST_NAME}.tar.gz
+        # OR
+        unzip ${DIST_NAME}.zip
+        
+        # Copy to your project
+        cp ${DIST_NAME}/*.h ${DIST_NAME}/*.c /path/to/your/project/
+        \`\`\`
+        
+        See \`INTEGRATION.md\` in the archive for detailed integration instructions.
+        
+        ## 📊 Performance Benchmarks
+        
+        View comprehensive performance analysis and GIL fairness benchmarks:
+        - [Performance Benchmarks](https://kristjanvalur.github.io/fastcond/)
+        - [GIL Fairness Analysis](https://kristjanvalur.github.io/fastcond/gil-fairness.html)
+        
+        ## 🔍 Verification
+        
+        Verify archive integrity using SHA256 checksums:
+        
+        \`\`\`bash
+        sha256sum -c ${DIST_NAME}.tar.gz.sha256
+        sha256sum -c ${DIST_NAME}.zip.sha256
+        \`\`\`
+        
+        **Checksums:**
+        \`\`\`
+        $(cat ${DIST_NAME}.tar.gz.sha256)
+        $(cat ${DIST_NAME}.zip.sha256)
+        \`\`\`
+        
+        ## 📄 License
+        
+        MIT License - see [License.md](https://github.com/kristjanvalur/fastcond/blob/master/License.md)
+        
+        ## 🐛 Issues & Support
+        
+        Report issues or request features: [GitHub Issues](https://github.com/kristjanvalur/fastcond/issues)
+        EOF
+        
+        echo "📝 Release notes preview:"
+        cat RELEASE_NOTES.md
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: fastcond ${{ steps.version.outputs.version }}
+        body_path: RELEASE_NOTES.md
+        files: |
+          ${{ steps.dist.outputs.tarball }}
+          ${{ steps.dist.outputs.tarball }}.sha256
+          ${{ steps.dist.outputs.zipfile }}
+          ${{ steps.dist.outputs.zipfile }}.sha256
+        draft: false
+        prerelease: ${{ contains(steps.version.outputs.tag, '-') }}
+        fail_on_unmatched_files: true
+
+    - name: Release summary
+      run: |
+        TAG=${{ steps.version.outputs.tag }}
+        echo "🎉 Release ${TAG} created successfully!"
+        echo "📦 Artifacts:"
+        echo "  - ${{ steps.dist.outputs.tarball }}"
+        echo "  - ${{ steps.dist.outputs.zipfile }}"
+        echo "  - SHA256 checksums"
+        echo ""
+        echo "🔗 View release: https://github.com/${{ github.repository }}/releases/tag/${TAG}"
