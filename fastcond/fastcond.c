@@ -115,6 +115,19 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
 #define YIELD() sched_yield()  /* POSIX: sched_yield() */
 #endif
 
+/* Optional: disable yield in strong condition variable spurious wakeup path
+ * Set FASTCOND_NO_YIELD=1 to test performance without scheduler yield.
+ * The yield is used when n_wakeup > 0 to give already-signaled threads
+ * a better chance to wake up before this thread re-acquires the mutex.
+ * Removing it may slightly improve latency but could theoretically increase
+ * wakeup unfairness under heavy contention.
+ */
+#ifndef FASTCOND_NO_YIELD
+#define MAYBE_YIELD() YIELD()
+#else
+#define MAYBE_YIELD() ((void)0)  /* No-op */
+#endif
+
 /*  The fastcond_wcond_t code - weak condition variable (see below for `weak`)
 
     The following comes out of work to create a working CriticalSection
@@ -316,7 +329,7 @@ fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restric
         err = pthread_mutex_unlock(mutex);
         if (err)
             return err;
-        YIELD();
+        MAYBE_YIELD();
         return pthread_mutex_lock(mutex);
     }
     cond->n_waiting++;
