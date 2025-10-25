@@ -49,8 +49,8 @@ struct fastcond_gil {
 #endif
     native_mutex_t mutex;
     native_thread_t last_owner;
-    int held;
-    int n_waiting;
+    volatile int held;      // volatile: ensures memory visibility across threads
+    volatile int n_waiting; // volatile: prevents compiler caching in wait loops
 };
 
 // Function declarations
