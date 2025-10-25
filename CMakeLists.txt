@@ -93,6 +93,10 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
         target_link_libraries(patch_test_wcond PRIVATE fastcond ${MATH_LIBRARY})
     endif()
 
+    # Debug test for native condition variable behavior
+    add_executable(test_native_cond test/test_native_cond.c)
+    target_link_libraries(test_native_cond PRIVATE fastcond ${MATH_LIBRARY})
+
     # GIL Test Suite - more complex variants with backend/fairness combinations
     # GIL tests with fastcond backend (fair)
     add_executable(gil_test_fc test/gil_test.c)
