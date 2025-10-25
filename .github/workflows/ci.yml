@@ -14,13 +14,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         compiler: [gcc, clang]
         build_type: [Release, Debug]
         exclude:
           # macOS doesn't have gcc (uses Apple Clang)
           - os: macos-latest
             compiler: gcc
+          # Windows: use MSVC and clang-cl, not gcc/clang directly
+          - os: windows-latest
+            compiler: gcc
+          - os: windows-latest
+            compiler: clang
+        include:
+          # Add Windows with MSVC
+          - os: windows-latest
+            compiler: msvc
+            build_type: Release
+          - os: windows-latest
+            compiler: msvc
+            build_type: Debug
     
     steps:
     - uses: actions/checkout@v4
@@ -35,28 +48,50 @@ jobs:
       run: |
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
           echo "CC=gcc" >> $GITHUB_ENV
-        else
+        elif [ "${{ matrix.compiler }}" = "clang" ]; then
           echo "CC=clang" >> $GITHUB_ENV
+        elif [ "${{ matrix.compiler }}" = "msvc" ]; then
+          # MSVC is the default on Windows, no need to set CC
+          echo "Using MSVC (default on Windows)"
         fi
+      shell: bash
     
     - name: Configure CMake
       run: |
-        cmake -B build \
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-              -DCMAKE_C_COMPILER=${{ matrix.compiler }} \
-              -DFASTCOND_BUILD_TESTS=ON \
-              -DFASTCOND_BUILD_BENCHMARKS=ON
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          # Windows with MSVC - let CMake detect compiler, specify generator
+          # Skip tests on Windows for now (would need pthread-win32)
+          cmake -B build \
+                -G "Visual Studio 17 2022" \
+                -DFASTCOND_BUILD_TESTS=OFF \
+                -DFASTCOND_BUILD_BENCHMARKS=OFF
+        else
+          # Unix-like systems - specify compiler and build type
+          cmake -B build \
+                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+                -DCMAKE_C_COMPILER=${{ matrix.compiler }} \
+                -DFASTCOND_BUILD_TESTS=ON \
+                -DFASTCOND_BUILD_BENCHMARKS=ON
+        fi
+      shell: bash
     
     - name: Build
-      run: cmake --build build --config ${{ matrix.build_type }} -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
+      run: |
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          cmake --build build --config ${{ matrix.build_type }} --parallel
+        else
+          cmake --build build --config ${{ matrix.build_type }} -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
+        fi
+      shell: bash
     
     - name: Run tests
+      if: runner.os != 'Windows'
       run: |
         cd build
         ctest --output-on-failure --build-config ${{ matrix.build_type }}
     
     - name: Run benchmarks (Release only)
-      if: matrix.build_type == 'Release'
+      if: matrix.build_type == 'Release' && runner.os != 'Windows'
       run: ./scripts/benchmark.sh
 
   sanitizers:
