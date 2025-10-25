@@ -16,28 +16,20 @@
                               FASTCOND_VERSION_MINOR * 100 + \
                               FASTCOND_VERSION_PATCH)
 
+/* Use native primitives abstraction for platform-specific mutex types */
+#include "native_primitives.h"
+
 /* Platform detection and synchronization primitive selection */
 #if defined(_WIN32) || defined(_WIN64)
 /* Windows platform */
 #define FASTCOND_USE_WINDOWS 1
 #include <windows.h>
-/* Windows doesn't have pthread by default, but fastcond can still be used
- * with Windows synchronization primitives (CriticalSection, etc.)
- * If you're using pthread-win32, this will work alongside it.
- */
-#ifndef _PTHREAD_H
-/* Provide minimal typedefs if pthread.h not included */
-typedef void* pthread_mutex_t;
-typedef void* pthread_condattr_t;
-#endif
 #elif defined(__APPLE__) || defined(__MACH__)
 /* macOS platform - use GCD dispatch semaphores */
-#include <pthread.h>
 #include <dispatch/dispatch.h>
 #define FASTCOND_USE_GCD 1
 #else
 /* POSIX platforms (Linux, BSD, etc.) */
-#include <pthread.h>
 #include <semaphore.h>
 #endif
 
@@ -57,16 +49,16 @@ typedef struct _fastcond_wcond_t {
 } fastcond_wcond_t;
 
 FASTCOND_API(int)
-fastcond_wcond_init(fastcond_wcond_t *restrict cond, const pthread_condattr_t *restrict attr);
+fastcond_wcond_init(fastcond_wcond_t *restrict cond, const void *restrict attr);
 
 FASTCOND_API(int)
 fastcond_wcond_fini(fastcond_wcond_t *cond);
 
 FASTCOND_API(int)
-fastcond_wcond_wait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex);
+fastcond_wcond_wait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex);
 
 FASTCOND_API(int)
-fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex,
+fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
                          const struct timespec *restrict abstime);
 
 FASTCOND_API(int)
@@ -84,16 +76,16 @@ typedef struct _fastcond_cond_t {
 } fastcond_cond_t;
 
 FASTCOND_API(int)
-fastcond_cond_init(fastcond_cond_t *restrict cond, const pthread_condattr_t *restrict attr);
+fastcond_cond_init(fastcond_cond_t *restrict cond, const void *restrict attr);
 
 FASTCOND_API(int)
 fastcond_cond_fini(fastcond_cond_t *cond);
 
 FASTCOND_API(int)
-fastcond_cond_wait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex);
+fastcond_cond_wait(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex);
 
 FASTCOND_API(int)
-fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex,
+fastcond_cond_timedwait(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex,
                         const struct timespec *restrict abstime);
 
 FASTCOND_API(int)

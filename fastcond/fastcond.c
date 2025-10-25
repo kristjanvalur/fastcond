@@ -197,7 +197,7 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
 */
 
 FASTCOND_API(int)
-fastcond_wcond_init(fastcond_wcond_t *restrict cond, const pthread_condattr_t *attr)
+fastcond_wcond_init(fastcond_wcond_t *restrict cond, const void *restrict attr)
 {
     (void) attr; /* Unused - condattr not supported */
     cond->waiting = 0;
@@ -211,23 +211,23 @@ fastcond_wcond_fini(fastcond_wcond_t *cond)
 }
 
 FASTCOND_API(int)
-fastcond_wcond_wait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex)
+fastcond_wcond_wait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex)
 {
     return fastcond_wcond_timedwait(cond, mutex, 0);
 }
 
 FASTCOND_API(int)
-fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex,
+fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
                          const struct timespec *restrict abstime)
 {
     int err1, err2;
     cond->waiting++;
-    err1 = pthread_mutex_unlock(mutex);
+    err1 = NATIVE_MUTEX_UNLOCK(mutex);
     if (err1)
         return err1;
 
     err1 = SEM_TIMEDWAIT(cond->sem, abstime);
-    err2 = pthread_mutex_lock(mutex);
+    err2 = NATIVE_MUTEX_LOCK(mutex);
 
     if (err1)
         /* wakeup did not adjust this, must do it ourselves */
@@ -290,7 +290,7 @@ fastcond_wcond_broadcast(fastcond_wcond_t *cond)
  */
 
 FASTCOND_API(int)
-fastcond_cond_init(fastcond_cond_t *restrict cond, const pthread_condattr_t *restrict attr)
+fastcond_cond_init(fastcond_cond_t *restrict cond, const void *restrict attr)
 {
     int err;
     cond->n_waiting = cond->n_wakeup = 0;
@@ -306,13 +306,13 @@ fastcond_cond_fini(fastcond_cond_t *cond)
 }
 
 FASTCOND_API(int)
-fastcond_cond_wait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex)
+fastcond_cond_wait(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex)
 {
     return fastcond_cond_timedwait(cond, mutex, NULL);
 }
 
 FASTCOND_API(int)
-fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex,
+fastcond_cond_timedwait(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex,
                         const struct timespec *restrict abstime)
 {
     int err;
@@ -326,11 +326,11 @@ fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restric
          * We must yield the lock to allow the other threads a chance to
          * wake up as well, throwing in a scheduler yield for good measure.
          */
-        err = pthread_mutex_unlock(mutex);
+        err = NATIVE_MUTEX_UNLOCK(mutex);
         if (err)
             return err;
         MAYBE_YIELD();
-        return pthread_mutex_lock(mutex);
+        return NATIVE_MUTEX_LOCK(mutex);
     }
     cond->n_waiting++;
     err = fastcond_wcond_timedwait(&cond->wait, mutex, abstime);

@@ -49,14 +49,14 @@ typedef pthread_t native_thread_t;
 typedef CRITICAL_SECTION native_mutex_t;
 #define NATIVE_MUTEX_INIT(mutex) InitializeCriticalSection(&(mutex))
 #define NATIVE_MUTEX_DESTROY(mutex) DeleteCriticalSection(&(mutex))
-#define NATIVE_MUTEX_LOCK(mutex) EnterCriticalSection(&(mutex))
-#define NATIVE_MUTEX_UNLOCK(mutex) LeaveCriticalSection(&(mutex))
+#define NATIVE_MUTEX_LOCK(mutex) EnterCriticalSection(mutex)
+#define NATIVE_MUTEX_UNLOCK(mutex) LeaveCriticalSection(mutex)
 #else
 typedef pthread_mutex_t native_mutex_t;
 #define NATIVE_MUTEX_INIT(mutex) pthread_mutex_init(&(mutex), NULL)
 #define NATIVE_MUTEX_DESTROY(mutex) pthread_mutex_destroy(&(mutex))
-#define NATIVE_MUTEX_LOCK(mutex) pthread_mutex_lock(&(mutex))
-#define NATIVE_MUTEX_UNLOCK(mutex) pthread_mutex_unlock(&(mutex))
+#define NATIVE_MUTEX_LOCK(mutex) pthread_mutex_lock(mutex)
+#define NATIVE_MUTEX_UNLOCK(mutex) pthread_mutex_unlock(mutex)
 #endif
 
 /*
