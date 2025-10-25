@@ -20,6 +20,9 @@
 #include "native_primitives.h"
 #include "test_portability.h"
 
+/* Include fastcond.h first to get type declarations */
+#include "fastcond.h"
+
 /* Include the patch - this should replace native cond vars with fastcond */
 #ifdef PATCH_WCOND
 #define FASTCOND_PATCH_WCOND
