@@ -87,7 +87,7 @@ typedef CONDITION_VARIABLE native_cond_t;
 typedef pthread_cond_t native_cond_t;
 #define NATIVE_COND_INIT(cond) pthread_cond_init(&(cond), NULL)
 #define NATIVE_COND_DESTROY(cond) pthread_cond_destroy(&(cond))
-#define NATIVE_COND_WAIT(cond, mutex) pthread_cond_wait(&(cond), &(mutex))
+#define NATIVE_COND_WAIT(cond, mutex) pthread_cond_wait(&(cond), (mutex))
 #define NATIVE_COND_SIGNAL(cond) pthread_cond_signal(&(cond))
 #define NATIVE_COND_BROADCAST(cond) pthread_cond_broadcast(&(cond))
 #else
@@ -95,7 +95,7 @@ typedef pthread_cond_t native_cond_t;
 typedef pthread_cond_t native_cond_t;
 #define NATIVE_COND_INIT(cond) pthread_cond_init(&(cond), NULL)
 #define NATIVE_COND_DESTROY(cond) pthread_cond_destroy(&(cond))
-#define NATIVE_COND_WAIT(cond, mutex) pthread_cond_wait(&(cond), &(mutex))
+#define NATIVE_COND_WAIT(cond, mutex) pthread_cond_wait(&(cond), (mutex))
 #define NATIVE_COND_SIGNAL(cond) pthread_cond_signal(&(cond))
 #define NATIVE_COND_BROADCAST(cond) pthread_cond_broadcast(&(cond))
 #endif
