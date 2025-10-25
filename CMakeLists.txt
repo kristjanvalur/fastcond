@@ -101,6 +101,15 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     add_executable(test_atomics test/test_atomics.c)
     target_link_libraries(test_atomics PRIVATE fastcond ${MATH_LIBRARY})
 
+    # Minimal GIL mutual exclusion test
+    add_executable(test_gil_exclusion_native test/test_gil_exclusion.c)
+    target_compile_definitions(test_gil_exclusion_native PRIVATE FASTCOND_GIL_USE_NATIVE_COND=1)
+    target_link_libraries(test_gil_exclusion_native PRIVATE fastcond ${MATH_LIBRARY})
+
+    add_executable(test_gil_exclusion_fc test/test_gil_exclusion.c)
+    target_compile_definitions(test_gil_exclusion_fc PRIVATE FASTCOND_GIL_USE_NATIVE_COND=0)
+    target_link_libraries(test_gil_exclusion_fc PRIVATE fastcond ${MATH_LIBRARY})
+
     # GIL Test Suite - more complex variants with backend/fairness combinations
     # GIL tests with fastcond backend (fair)
     add_executable(gil_test_fc test/gil_test.c)

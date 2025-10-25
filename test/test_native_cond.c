@@ -66,7 +66,6 @@ int main(void) {
     ready = 1;
     NATIVE_COND_SIGNAL(cond);
     
-    thread_in_critical_section--;
     printf("Main: Unlocking mutex\n");
     NATIVE_MUTEX_UNLOCK(&mutex);
     

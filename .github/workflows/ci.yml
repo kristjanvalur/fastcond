@@ -95,6 +95,10 @@ jobs:
           echo "=== Running native condition variable test ==="
           ./${{ matrix.build_type }}/test_native_cond.exe
           echo ""
+          echo "=== Running minimal GIL mutual exclusion test ==="
+          ./${{ matrix.build_type }}/test_gil_exclusion_native.exe
+          ./${{ matrix.build_type }}/test_gil_exclusion_fc.exe
+          echo ""
           
           # On Windows, run fastcond tests (uses fastcond_patch.h pthread compatibility layer)
           echo "=== Running GIL tests on Windows with native CONDITION_VARIABLE ==="
