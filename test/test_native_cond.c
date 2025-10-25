@@ -5,8 +5,8 @@
 
 native_mutex_t mutex;
 native_cond_t cond;
-int ready = 0;
-int thread_in_critical_section = 0;
+volatile int ready = 0;
+volatile int thread_in_critical_section = 0;
 
 TEST_THREAD_FUNC_RETURN thread_func(void *arg) {
     printf("Thread: Locking mutex...\n");
