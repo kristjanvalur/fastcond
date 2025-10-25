@@ -56,29 +56,41 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
         set(MATH_LIBRARY "")
     endif()
 
-    # Helper function to create test variants (POSIX only - requires pthread)
-    if(NOT WIN32)
-        function(add_test_variant TEST_NAME SOURCE_FILE)
-            # Pthread version (baseline)
+    # Helper function to create test variants
+    # On Windows: only fastcond variants (no pthread baseline)
+    # On POSIX: all three variants (pthread baseline + fastcond weak/strong)
+    function(add_test_variant TEST_NAME SOURCE_FILE)
+        if(NOT WIN32)
+            # Pthread version (baseline) - POSIX only
             add_executable(${TEST_NAME}_pt ${SOURCE_FILE})
             target_link_libraries(${TEST_NAME}_pt PRIVATE fastcond ${MATH_LIBRARY})
-            
-            # Fastcond weak version
-            add_executable(${TEST_NAME}_wcond ${SOURCE_FILE})
-            target_compile_definitions(${TEST_NAME}_wcond PRIVATE FASTCOND_PATCH_WCOND)
-            target_link_libraries(${TEST_NAME}_wcond PRIVATE fastcond ${MATH_LIBRARY})
-            
-            # Fastcond strong version (default)
-            add_executable(${TEST_NAME}_fc ${SOURCE_FILE})
-            target_compile_definitions(${TEST_NAME}_fc PRIVATE FASTCOND_PATCH_COND)
-            target_link_libraries(${TEST_NAME}_fc PRIVATE fastcond ${MATH_LIBRARY})
-        endfunction()
-    endif()
+        endif()
+        
+        # Fastcond weak version (all platforms)
+        add_executable(${TEST_NAME}_wcond ${SOURCE_FILE})
+        target_compile_definitions(${TEST_NAME}_wcond PRIVATE FASTCOND_PATCH_WCOND)
+        target_link_libraries(${TEST_NAME}_wcond PRIVATE fastcond ${MATH_LIBRARY})
+        
+        # Fastcond strong version (default) (all platforms)
+        add_executable(${TEST_NAME}_fc ${SOURCE_FILE})
+        target_compile_definitions(${TEST_NAME}_fc PRIVATE FASTCOND_PATCH_COND)
+        target_link_libraries(${TEST_NAME}_fc PRIVATE fastcond ${MATH_LIBRARY})
+    endfunction()
 
-    # qtest and strongtest are POSIX-only (require pthread for baseline comparison)
+    # qtest and strongtest - build fastcond variants on all platforms
+    add_test_variant(qtest test/qtest.c)
+    add_test_variant(strongtest test/strongtest.c)
+
+    # Patch validation test - verifies fastcond_patch.h works correctly
+    # POSIX only for now - Windows patch mechanism needs design
     if(NOT WIN32)
-        add_test_variant(qtest test/qtest.c)
-        add_test_variant(strongtest test/strongtest.c)
+        add_executable(patch_test_cond test/patch_test.c)
+        target_compile_definitions(patch_test_cond PRIVATE PATCH_COND)
+        target_link_libraries(patch_test_cond PRIVATE fastcond ${MATH_LIBRARY})
+        
+        add_executable(patch_test_wcond test/patch_test.c)
+        target_compile_definitions(patch_test_wcond PRIVATE PATCH_WCOND)
+        target_link_libraries(patch_test_wcond PRIVATE fastcond ${MATH_LIBRARY})
     endif()
 
     # GIL Test Suite - more complex variants with backend/fairness combinations
@@ -153,6 +165,18 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
 
     # Add CTest tests with appropriate arguments
     if(FASTCOND_BUILD_TESTS)
+        if(NOT WIN32)
+            # Patch validation tests (POSIX only)
+            add_test(NAME patch_test_strong
+                     COMMAND patch_test_cond)
+            add_test(NAME patch_test_weak
+                     COMMAND patch_test_wcond)
+            set_tests_properties(patch_test_strong PROPERTIES
+                PASS_REGULAR_EXPRESSION "Patch test PASSED")
+            set_tests_properties(patch_test_weak PROPERTIES
+                PASS_REGULAR_EXPRESSION "Patch test PASSED")
+        endif()
+        
         # Quick smoke tests (small data count for fast CI)
         add_test(NAME qtest_pthread_smoke 
                  COMMAND qtest_pt 100 2 5)
