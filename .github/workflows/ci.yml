@@ -59,11 +59,11 @@ jobs:
     - name: Configure CMake
       run: |
         if [ "${{ runner.os }}" = "Windows" ]; then
-          # Windows with MSVC - let CMake detect compiler, specify generator
-          # Skip tests on Windows for now (would need pthread-win32)
+          # Windows with MSVC - GIL tests now supported with test_portability.h
+          # Other tests (qtest, strongtest) still need pthread, so skip those
           cmake -B build \
                 -G "Visual Studio 17 2022" \
-                -DFASTCOND_BUILD_TESTS=OFF \
+                -DFASTCOND_BUILD_TESTS=ON \
                 -DFASTCOND_BUILD_BENCHMARKS=OFF
         else
           # Unix-like systems - specify compiler and build type
@@ -85,10 +85,18 @@ jobs:
       shell: bash
     
     - name: Run tests
-      if: runner.os != 'Windows'
       run: |
         cd build
-        ctest --output-on-failure --build-config ${{ matrix.build_type }}
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          # On Windows, only run GIL tests (qtest/strongtest need pthread)
+          echo "Running GIL tests on Windows with native CONDITION_VARIABLE..."
+          ./${{ matrix.build_type }}/gil_test_native.exe 4 1000
+          ./${{ matrix.build_type }}/gil_test_fc.exe 4 1000
+        else
+          # On POSIX systems, run full test suite via CTest
+          ctest --output-on-failure --build-config ${{ matrix.build_type }}
+        fi
+      shell: bash
     
     - name: Run benchmarks (Release only)
       if: matrix.build_type == 'Release' && runner.os != 'Windows'

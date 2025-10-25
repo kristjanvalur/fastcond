@@ -6,13 +6,11 @@
 #endif
 
 #include "gil.h"
+#include "test_portability.h"
 #include <math.h>
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#include <unistd.h>
 
 /*
  * Comprehensive GIL correctness and fairness test with Python-like behavior simulation
@@ -47,13 +45,13 @@ struct test_context {
     volatile int max_holder_violation; // Track worst case violation
 
     // Thread startup synchronization
-    pthread_mutex_t start_mutex;
-    pthread_cond_t start_cond;
+    test_mutex_t start_mutex;
+    test_cond_t start_cond;
     volatile int threads_ready; // Number of threads waiting to start
 
     // Fairness tracking - competitive acquisition model
     int thread_acquisitions[MAX_THREADS];
-    pthread_t thread_ids[MAX_THREADS];
+    test_thread_t thread_ids[MAX_THREADS];
     int num_threads;
     int total_acquisitions_target; // Total acquisitions to perform across all threads
     int hold_time_us;              // Time to sleep while holding GIL
@@ -71,7 +69,7 @@ struct test_context {
     // Statistics
     volatile int consecutive_reacquisitions;
     volatile int max_consecutive_same_thread;
-    volatile pthread_t last_holder;
+    volatile test_thread_t last_holder;
     volatile int last_holder_count;
 
     // Test control
@@ -100,33 +98,33 @@ struct thread_arg {
     int thread_idx;
 };
 
-void *worker_thread(void *arg)
+TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
 {
     struct thread_arg *targ = (struct thread_arg *) arg;
     struct test_context *ctx = targ->ctx;
     int thread_idx = targ->thread_idx;
-    pthread_t self = pthread_self();
+    test_thread_t self = test_thread_self();
 
     // Signal that this thread is ready and wait for synchronized start
-    pthread_mutex_lock(&ctx->start_mutex);
+    test_mutex_lock(&ctx->start_mutex);
     ctx->threads_ready++;
     if (ctx->threads_ready == ctx->num_threads) {
         // Last thread to arrive - signal all to start
-        pthread_cond_broadcast(&ctx->start_cond);
+        test_cond_broadcast(&ctx->start_cond);
     } else {
         // Wait for all threads to be ready
         while (ctx->threads_ready < ctx->num_threads && !ctx->stop_flag) {
-            pthread_cond_wait(&ctx->start_cond, &ctx->start_mutex);
+            test_cond_wait(&ctx->start_cond, &ctx->start_mutex);
         }
     }
-    pthread_mutex_unlock(&ctx->start_mutex);
+    test_mutex_unlock(&ctx->start_mutex);
 
     // Wait for explicit start signal using condition variable
-    pthread_mutex_lock(&ctx->start_mutex);
+    test_mutex_lock(&ctx->start_mutex);
     while (!ctx->start_flag && !ctx->stop_flag) {
-        pthread_cond_wait(&ctx->start_cond, &ctx->start_mutex);
+        test_cond_wait(&ctx->start_cond, &ctx->start_mutex);
     }
-    pthread_mutex_unlock(&ctx->start_mutex);
+    test_mutex_unlock(&ctx->start_mutex);
 
     // INITIALIZE: Acquire GIL at thread startup (Python-like behavior)
     fastcond_gil_acquire(&ctx->gil);
@@ -170,10 +168,10 @@ void *worker_thread(void *arg)
         // Track fairness statistics
         local_acquisitions++;
 
-        pthread_t prev_holder = ctx->last_holder;
+        test_thread_t prev_holder = ctx->last_holder;
         ctx->last_holder = self;
 
-        if (NATIVE_THREAD_EQUAL(prev_holder, self)) {
+        if (test_thread_equal(prev_holder, self)) {
             __sync_add_and_fetch(&ctx->consecutive_reacquisitions, 1);
             ctx->last_holder_count++;
 
@@ -237,7 +235,7 @@ void *worker_thread(void *arg)
     }
 
     __sync_sub_and_fetch(&ctx->active_threads, 1);
-    return NULL;
+    TEST_THREAD_RETURN;
 }
 
 static void print_fairness_statistics(struct test_context *ctx, int num_threads)
@@ -503,7 +501,7 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
                  int release_delay_us, int release_delay_variance_us)
 {
     struct test_context ctx;
-    pthread_t threads[MAX_THREADS];
+    test_thread_t threads[MAX_THREADS];
     struct thread_arg thread_args[MAX_THREADS]; // Pass index safely
 
     if (num_threads > MAX_THREADS) {
@@ -526,8 +524,8 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     // Initialize test context
     memset(&ctx, 0, sizeof(ctx));
     fastcond_gil_init(&ctx.gil);
-    pthread_mutex_init(&ctx.start_mutex, NULL);
-    pthread_cond_init(&ctx.start_cond, NULL);
+    test_mutex_init(&ctx.start_mutex, NULL);
+    test_cond_init(&ctx.start_cond, NULL);
 
     ctx.num_threads = num_threads;
     ctx.total_acquisitions_target = total_acquisitions;
@@ -551,7 +549,7 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
         thread_args[i].ctx = &ctx;
         thread_args[i].thread_idx = i;
 
-        if (pthread_create(&threads[i], NULL, worker_thread, &thread_args[i]) != 0) {
+        if (test_thread_create(&threads[i], NULL, worker_thread, &thread_args[i]) != 0) {
             fprintf(stderr, "Error creating thread %d\n", i);
             return 1;
         }
@@ -559,32 +557,31 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     }
 
     // Wait for all threads to signal readiness
-    pthread_mutex_lock(&ctx.start_mutex);
+    test_mutex_lock(&ctx.start_mutex);
     while (ctx.threads_ready < num_threads) {
-        pthread_cond_wait(&ctx.start_cond, &ctx.start_mutex);
+        test_cond_wait(&ctx.start_cond, &ctx.start_mutex);
     }
-    pthread_mutex_unlock(&ctx.start_mutex);
+    test_mutex_unlock(&ctx.start_mutex);
 
     printf("All threads ready. Starting synchronized test...\n");
-    struct timespec start_time, end_time;
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    test_timespec_t start_time, end_time;
+    test_clock_gettime(&start_time);
 
     // Signal all threads to start simultaneously
-    pthread_mutex_lock(&ctx.start_mutex);
+    test_mutex_lock(&ctx.start_mutex);
     ctx.start_flag = 1;
-    pthread_cond_broadcast(&ctx.start_cond);
-    pthread_mutex_unlock(&ctx.start_mutex);
+    test_cond_broadcast(&ctx.start_cond);
+    test_mutex_unlock(&ctx.start_mutex);
 
     // Wait for all threads to complete
     for (int i = 0; i < num_threads; i++) {
-        pthread_join(threads[i], NULL);
+        test_thread_join(threads[i], NULL);
     }
 
-    clock_gettime(CLOCK_MONOTONIC, &end_time);
+    test_clock_gettime(&end_time);
 
     // Calculate elapsed time
-    double elapsed =
-        (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) * 1e-9;
+    double elapsed = test_timespec_diff(&end_time, &start_time);
 
     printf("Test completed in %.3f seconds\n", elapsed);
 
@@ -615,8 +612,8 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
 
     // Cleanup
     fastcond_gil_destroy(&ctx.gil);
-    pthread_mutex_destroy(&ctx.start_mutex);
-    pthread_cond_destroy(&ctx.start_cond);
+    test_mutex_destroy(&ctx.start_mutex);
+    test_cond_destroy(&ctx.start_cond);
     free(ctx.acquisition_sequence);
 
     return (ctx.max_holder_violation > 1) ? 1 : 0;
