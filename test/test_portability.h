@@ -1,10 +1,10 @@
 /* Copyright (c) 2025 Kristján Valur Jónsson */
 /*
  * Cross-platform portability layer for test programs
- * 
+ *
  * Provides thin wrappers around threading and timing primitives to allow
  * test programs to compile on both POSIX (Linux/macOS) and Windows platforms.
- * 
+ *
  * On Windows, this allows testing fastcond with native CONDITION_VARIABLE
  * rather than requiring pthread-win32 compatibility layer.
  */
@@ -14,8 +14,8 @@
 
 #ifdef _WIN32
 #define TEST_USE_WINDOWS 1
+#include <process.h> /* For _beginthread */
 #include <windows.h>
-#include <process.h>  /* For _beginthread */
 #else
 #define TEST_USE_WINDOWS 0
 #include <pthread.h>
@@ -30,22 +30,22 @@
  */
 #if TEST_USE_WINDOWS
 typedef HANDLE test_thread_t;
-typedef unsigned (__stdcall *test_thread_func_t)(void *);
+typedef unsigned(__stdcall *test_thread_func_t)(void *);
 #define TEST_THREAD_FUNC_RETURN unsigned __stdcall
 #define TEST_THREAD_RETURN return 0
 
 /* Windows thread creation wrapper */
-static inline int test_thread_create(test_thread_t *thread, void *attr, 
-                                      test_thread_func_t func, void *arg)
+static inline int test_thread_create(test_thread_t *thread, void *attr, test_thread_func_t func,
+                                     void *arg)
 {
-    (void)attr;  /* Attributes not supported in this simple wrapper */
-    *thread = (HANDLE)_beginthreadex(NULL, 0, func, arg, 0, NULL);
+    (void) attr; /* Attributes not supported in this simple wrapper */
+    *thread = (HANDLE) _beginthreadex(NULL, 0, func, arg, 0, NULL);
     return (*thread == 0) ? -1 : 0;
 }
 
 static inline int test_thread_join(test_thread_t thread, void **retval)
 {
-    (void)retval;  /* Return value not captured in this simple wrapper */
+    (void) retval; /* Return value not captured in this simple wrapper */
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
     return 0;
@@ -83,7 +83,7 @@ typedef CRITICAL_SECTION test_mutex_t;
 
 static inline int test_mutex_init(test_mutex_t *mutex, void *attr)
 {
-    (void)attr;
+    (void) attr;
     InitializeCriticalSection(mutex);
     return 0;
 }
@@ -124,14 +124,14 @@ typedef CONDITION_VARIABLE test_cond_t;
 
 static inline int test_cond_init(test_cond_t *cond, void *attr)
 {
-    (void)attr;
+    (void) attr;
     InitializeConditionVariable(cond);
     return 0;
 }
 
 static inline int test_cond_destroy(test_cond_t *cond)
 {
-    (void)cond;  /* No cleanup needed for CONDITION_VARIABLE */
+    (void) cond; /* No cleanup needed for CONDITION_VARIABLE */
     return 0;
 }
 
@@ -177,17 +177,18 @@ static inline int test_clock_gettime(test_timespec_t *ts)
 {
     static LARGE_INTEGER frequency = {0};
     LARGE_INTEGER counter;
-    
+
     if (frequency.QuadPart == 0) {
         QueryPerformanceFrequency(&frequency);
     }
-    
+
     QueryPerformanceCounter(&counter);
-    
+
     /* Convert to seconds and nanoseconds */
-    ts->tv_sec = (long)(counter.QuadPart / frequency.QuadPart);
-    ts->tv_nsec = (long)(((counter.QuadPart % frequency.QuadPart) * 1000000000LL) / frequency.QuadPart);
-    
+    ts->tv_sec = (long) (counter.QuadPart / frequency.QuadPart);
+    ts->tv_nsec =
+        (long) (((counter.QuadPart % frequency.QuadPart) * 1000000000LL) / frequency.QuadPart);
+
     return 0;
 }
 

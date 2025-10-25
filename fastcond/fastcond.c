@@ -5,6 +5,11 @@
 #include <assert.h>
 #include <errno.h>
 
+/* Windows needs time.h for struct timespec (C11) */
+#ifdef FASTCOND_USE_WINDOWS
+#include <time.h>
+#endif
+
 /* Include sched.h for sched_yield() on POSIX platforms */
 #ifndef FASTCOND_USE_WINDOWS
 #include <sched.h>
@@ -35,7 +40,7 @@ static int _sem_timedwait_windows(HANDLE sem, const struct timespec *abstime)
 
     /* Convert absolute timespec to relative timeout in milliseconds */
     struct timespec now;
-    timespec_get(&now, TIME_UTC);  /* C11 standard, widely supported */
+    timespec_get(&now, TIME_UTC); /* C11 standard, widely supported */
 
     long long ns_diff =
         (abstime->tv_sec - now.tv_sec) * 1000000000LL + (abstime->tv_nsec - now.tv_nsec);
@@ -45,16 +50,16 @@ static int _sem_timedwait_windows(HANDLE sem, const struct timespec *abstime)
         timeout_ms = 0;
     } else {
         /* Convert nanoseconds to milliseconds, rounding up */
-        timeout_ms = (DWORD)((ns_diff + 999999) / 1000000);
+        timeout_ms = (DWORD) ((ns_diff + 999999) / 1000000);
     }
 
     DWORD result = WaitForSingleObject(sem, timeout_ms);
     if (result == WAIT_OBJECT_0) {
-        return 0;  /* Success */
+        return 0; /* Success */
     } else if (result == WAIT_TIMEOUT) {
         return ETIMEDOUT;
     } else {
-        return EINVAL;  /* Error */
+        return EINVAL; /* Error */
     }
 }
 
@@ -110,9 +115,9 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
 
 /* Platform-specific thread yield */
 #ifdef FASTCOND_USE_WINDOWS
-#define YIELD() Sleep(0)  /* Windows: Sleep(0) yields to other ready threads */
+#define YIELD() Sleep(0) /* Windows: Sleep(0) yields to other ready threads */
 #else
-#define YIELD() sched_yield()  /* POSIX: sched_yield() */
+#define YIELD() sched_yield() /* POSIX: sched_yield() */
 #endif
 
 /* Optional: disable yield in strong condition variable spurious wakeup path
@@ -125,7 +130,7 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
 #ifndef FASTCOND_NO_YIELD
 #define MAYBE_YIELD() YIELD()
 #else
-#define MAYBE_YIELD() ((void)0)  /* No-op */
+#define MAYBE_YIELD() ((void) 0) /* No-op */
 #endif
 
 /*  The fastcond_wcond_t code - weak condition variable (see below for `weak`)

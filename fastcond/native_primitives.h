@@ -12,11 +12,11 @@
 /* Platform detection - same as fastcond.h */
 #if defined(_WIN32) || defined(_WIN64)
 #define NATIVE_USE_WINDOWS 1
+#include <process.h> /* for _beginthreadex */
 #include <windows.h>
-#include <process.h>  /* for _beginthreadex */
 #elif defined(__APPLE__) || defined(__MACH__)
-#include <pthread.h>
 #include <dispatch/dispatch.h>
+#include <pthread.h>
 #define NATIVE_USE_GCD 1
 #else
 #include <pthread.h>
@@ -49,8 +49,9 @@ typedef pthread_t native_thread_t;
 typedef CRITICAL_SECTION native_mutex_t;
 #define NATIVE_MUTEX_INIT(mutex) InitializeCriticalSection(&(mutex))
 #define NATIVE_MUTEX_DESTROY(mutex) DeleteCriticalSection(&(mutex))
-#define NATIVE_MUTEX_LOCK(mutex) EnterCriticalSection(mutex)
-#define NATIVE_MUTEX_UNLOCK(mutex) LeaveCriticalSection(mutex)
+/* Windows critical section functions return void, wrap to return 0 for success */
+#define NATIVE_MUTEX_LOCK(mutex) (EnterCriticalSection(mutex), 0)
+#define NATIVE_MUTEX_UNLOCK(mutex) (LeaveCriticalSection(mutex), 0)
 #else
 typedef pthread_mutex_t native_mutex_t;
 #define NATIVE_MUTEX_INIT(mutex) pthread_mutex_init(&(mutex), NULL)
@@ -77,7 +78,7 @@ typedef pthread_mutex_t native_mutex_t;
 /* Windows: Use native CONDITION_VARIABLE with CRITICAL_SECTION */
 typedef CONDITION_VARIABLE native_cond_t;
 #define NATIVE_COND_INIT(cond) InitializeConditionVariable(&(cond))
-#define NATIVE_COND_DESTROY(cond) ((void)0)  /* No cleanup needed for CONDITION_VARIABLE */
+#define NATIVE_COND_DESTROY(cond) ((void) 0) /* No cleanup needed for CONDITION_VARIABLE */
 #define NATIVE_COND_WAIT(cond, mutex) SleepConditionVariableCS(&(cond), &(mutex), INFINITE)
 #define NATIVE_COND_SIGNAL(cond) WakeConditionVariable(&(cond))
 #define NATIVE_COND_BROADCAST(cond) WakeAllConditionVariable(&(cond))

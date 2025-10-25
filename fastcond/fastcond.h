@@ -12,9 +12,8 @@
 #define FASTCOND_VERSION "0.2.0"
 
 /* Numeric version for compile-time comparisons: MAJOR*10000 + MINOR*100 + PATCH */
-#define FASTCOND_VERSION_NUM (FASTCOND_VERSION_MAJOR * 10000 + \
-                              FASTCOND_VERSION_MINOR * 100 + \
-                              FASTCOND_VERSION_PATCH)
+#define FASTCOND_VERSION_NUM                                                                       \
+    (FASTCOND_VERSION_MAJOR * 10000 + FASTCOND_VERSION_MINOR * 100 + FASTCOND_VERSION_PATCH)
 
 /* Use native primitives abstraction for platform-specific mutex types */
 #include "native_primitives.h"
@@ -39,7 +38,7 @@
 
 typedef struct _fastcond_wcond_t {
 #ifdef FASTCOND_USE_WINDOWS
-    HANDLE sem;  /* Windows semaphore handle */
+    HANDLE sem; /* Windows semaphore handle */
 #elif defined(FASTCOND_USE_GCD)
     dispatch_semaphore_t sem;
 #else
