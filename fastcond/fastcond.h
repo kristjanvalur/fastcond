@@ -3,6 +3,19 @@
 #ifndef _FASTCOND_H_
 #define _FASTCOND_H_
 
+/* Version information */
+#define FASTCOND_VERSION_MAJOR 0
+#define FASTCOND_VERSION_MINOR 1
+#define FASTCOND_VERSION_PATCH 0
+
+/* Semantic version string */
+#define FASTCOND_VERSION "0.1.0"
+
+/* Numeric version for compile-time comparisons: MAJOR*10000 + MINOR*100 + PATCH */
+#define FASTCOND_VERSION_NUM (FASTCOND_VERSION_MAJOR * 10000 + \
+                              FASTCOND_VERSION_MINOR * 100 + \
+                              FASTCOND_VERSION_PATCH)
+
 #include <pthread.h> /* for the pthread mutex that we use */
 
 /* Platform detection and semaphore selection */
