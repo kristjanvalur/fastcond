@@ -1,4 +1,4 @@
-/* Copyright (c) 2017 Kristján Valur Jónsson */
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 
 // Fairness mechanism control - matches definition in gil.c
 #ifndef FASTCOND_GIL_DISABLE_FAIRNESS

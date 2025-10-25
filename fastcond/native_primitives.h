@@ -1,4 +1,4 @@
-/* Copyright (c) 2017 Kristján Valur Jónsson */
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 
 #ifndef _NATIVE_PRIMITIVES_H_
 #define _NATIVE_PRIMITIVES_H_

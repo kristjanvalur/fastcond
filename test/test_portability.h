@@ -1,3 +1,4 @@
+/* Copyright (c) 2025 Kristján Valur Jónsson */
 /*
  * Cross-platform portability layer for test programs
  * 

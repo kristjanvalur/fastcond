@@ -1,3 +1,4 @@
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 
 #include "gil.h"
 #include <assert.h>

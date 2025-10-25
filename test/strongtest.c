@@ -1,3 +1,4 @@
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 
 #include <math.h>
 #include <pthread.h>

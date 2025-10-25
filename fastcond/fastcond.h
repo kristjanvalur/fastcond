@@ -1,4 +1,4 @@
-/* Copyright (c) 2017 Kristján Valur Jónsson */
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 
 #ifndef _FASTCOND_H_
 #define _FASTCOND_H_

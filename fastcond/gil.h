@@ -1,3 +1,5 @@
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
+
 #include "fastcond.h"
 #include "native_primitives.h"
 
