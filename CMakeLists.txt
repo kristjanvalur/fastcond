@@ -73,9 +73,11 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
         target_link_libraries(${TEST_NAME}_fc PRIVATE fastcond ${MATH_LIBRARY})
     endfunction()
 
-    # Create test executables
-    add_test_variant(qtest test/qtest.c)
-    add_test_variant(strongtest test/strongtest.c)
+    # qtest and strongtest are POSIX-only (require pthread for baseline comparison)
+    if(NOT WIN32)
+        add_test_variant(qtest test/qtest.c)
+        add_test_variant(strongtest test/strongtest.c)
+    endif()
 
     # GIL Test Suite - more complex variants with backend/fairness combinations
     # GIL tests with fastcond backend (fair)
@@ -124,26 +126,28 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     target_include_directories(gil_test_native_naive PRIVATE fastcond)
     target_link_libraries(gil_test_native_naive PRIVATE fastcond ${MATH_LIBRARY})
 
-    # GIL Benchmarks
-    add_executable(gil_benchmark_fc test/gil_benchmark.c)
-    target_link_libraries(gil_benchmark_fc PRIVATE fastcond ${MATH_LIBRARY})
-    
-    add_executable(gil_benchmark_native test/gil_benchmark.c)
-    target_compile_definitions(gil_benchmark_native PRIVATE FASTCOND_GIL_USE_NATIVE_COND=1)
-    target_link_libraries(gil_benchmark_native PRIVATE fastcond ${MATH_LIBRARY})
-    
-    add_executable(gil_benchmark_fc_unfair test/gil_benchmark.c)
-    target_compile_definitions(gil_benchmark_fc_unfair PRIVATE 
-        FASTCOND_GIL_YIELD_FAIR=0 
-        FASTCOND_GIL_ACQUIRE_GREEDY=1)
-    target_link_libraries(gil_benchmark_fc_unfair PRIVATE fastcond ${MATH_LIBRARY})
-    
-    add_executable(gil_benchmark_native_unfair test/gil_benchmark.c)
-    target_compile_definitions(gil_benchmark_native_unfair PRIVATE 
-        FASTCOND_GIL_USE_NATIVE_COND=1 
-        FASTCOND_GIL_YIELD_FAIR=0 
-        FASTCOND_GIL_ACQUIRE_GREEDY=1)
-    target_link_libraries(gil_benchmark_native_unfair PRIVATE fastcond ${MATH_LIBRARY})
+    # GIL Benchmarks - POSIX only (uses pthread directly)
+    if(NOT WIN32)
+        add_executable(gil_benchmark_fc test/gil_benchmark.c)
+        target_link_libraries(gil_benchmark_fc PRIVATE fastcond ${MATH_LIBRARY})
+        
+        add_executable(gil_benchmark_native test/gil_benchmark.c)
+        target_compile_definitions(gil_benchmark_native PRIVATE FASTCOND_GIL_USE_NATIVE_COND=1)
+        target_link_libraries(gil_benchmark_native PRIVATE fastcond ${MATH_LIBRARY})
+        
+        add_executable(gil_benchmark_fc_unfair test/gil_benchmark.c)
+        target_compile_definitions(gil_benchmark_fc_unfair PRIVATE 
+            FASTCOND_GIL_YIELD_FAIR=0 
+            FASTCOND_GIL_ACQUIRE_GREEDY=1)
+        target_link_libraries(gil_benchmark_fc_unfair PRIVATE fastcond ${MATH_LIBRARY})
+        
+        add_executable(gil_benchmark_native_unfair test/gil_benchmark.c)
+        target_compile_definitions(gil_benchmark_native_unfair PRIVATE 
+            FASTCOND_GIL_USE_NATIVE_COND=1 
+            FASTCOND_GIL_YIELD_FAIR=0 
+            FASTCOND_GIL_ACQUIRE_GREEDY=1)
+        target_link_libraries(gil_benchmark_native_unfair PRIVATE fastcond ${MATH_LIBRARY})
+    endif()
 
     # Add CTest tests with appropriate arguments
     if(FASTCOND_BUILD_TESTS)

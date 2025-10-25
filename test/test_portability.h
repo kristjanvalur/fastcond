@@ -212,6 +212,42 @@ static inline int test_clock_gettime(test_timespec_t *ts)
 #endif
 
 /*
+ * Microsecond sleep abstraction
+ */
+#if TEST_USE_WINDOWS
+static inline void test_usleep(unsigned int usec)
+{
+    Sleep(usec / 1000);  /* Sleep takes milliseconds */
+}
+#define usleep test_usleep
+#else
+#include <unistd.h>
+/* usleep is already available on POSIX */
+#endif
+
+/*
+ * Atomic operations abstraction
+ * Windows: Use InterlockedXxx intrinsics
+ * POSIX: Use GCC __sync builtins
+ */
+#if TEST_USE_WINDOWS
+#include <intrin.h>
+#define __sync_fetch_and_add(ptr, value) InterlockedExchangeAdd((volatile LONG*)(ptr), (value))
+#define __sync_add_and_fetch(ptr, value) (InterlockedExchangeAdd((volatile LONG*)(ptr), (value)) + (value))
+#define __sync_sub_and_fetch(ptr, value) (InterlockedExchangeAdd((volatile LONG*)(ptr), -(value)) - (value))
+#define __sync_bool_compare_and_swap(ptr, oldval, newval) \
+    (InterlockedCompareExchange((volatile LONG*)(ptr), (newval), (oldval)) == (oldval))
+#endif
+
+/*
+ * Time function abstraction
+ */
+#if TEST_USE_WINDOWS
+#include <time.h>
+/* time() is available in time.h on Windows */
+#endif
+
+/*
  * Time difference calculation helper
  * Returns difference in seconds as a double
  */
