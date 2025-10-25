@@ -79,7 +79,7 @@ typedef pthread_mutex_t native_mutex_t;
 typedef CONDITION_VARIABLE native_cond_t;
 #define NATIVE_COND_INIT(cond) InitializeConditionVariable(&(cond))
 #define NATIVE_COND_DESTROY(cond) ((void) 0) /* No cleanup needed for CONDITION_VARIABLE */
-#define NATIVE_COND_WAIT(cond, mutex) SleepConditionVariableCS(&(cond), &(mutex), INFINITE)
+#define NATIVE_COND_WAIT(cond, mutex) SleepConditionVariableCS(&(cond), (mutex), INFINITE)
 #define NATIVE_COND_SIGNAL(cond) WakeConditionVariable(&(cond))
 #define NATIVE_COND_BROADCAST(cond) WakeAllConditionVariable(&(cond))
 #elif defined(NATIVE_USE_GCD)
