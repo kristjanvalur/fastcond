@@ -634,11 +634,12 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
 
             FILE *fp = fopen(csv_file, "a");
             if (fp) {
-                /* Write CSV row:
-                 * platform,os_version,test,variant,threads,operations,elapsed_sec,throughput_ops_per_sec
+                /* Write CSV row to match standard format:
+                 * platform,os_version,test,variant,threads,param,iterations,elapsed_sec,throughput
+                 * For gil_test: param=total_acquisitions, iterations=1 (single run)
                  */
-                fprintf(fp, "%s,%s,gil_test,%s,%d,%d,%.6f,%.2f\n", platform, os_version, variant,
-                        num_threads, ctx.global_acquisitions_done, elapsed,
+                fprintf(fp, "%s,%s,gil_test,%s,%d,%d,%d,%.6f,%.2f\n", platform, os_version, variant,
+                        num_threads, ctx.global_acquisitions_done, 1, elapsed,
                         ctx.global_acquisitions_done / elapsed);
                 fclose(fp);
             }
