@@ -222,9 +222,9 @@ static inline void test_usleep(unsigned int usec)
      * For >= 1ms, round up to ensure at least the requested delay
      */
     if (usec == 0) {
-        return;  /* No sleep requested */
+        return; /* No sleep requested */
     } else if (usec < 1000) {
-        Sleep(0);  /* Yield CPU for sub-millisecond delays */
+        Sleep(0); /* Yield CPU for sub-millisecond delays */
     } else {
         /* Convert microseconds to milliseconds, rounding up */
         Sleep((usec + 999) / 1000);
@@ -243,11 +243,13 @@ static inline void test_usleep(unsigned int usec)
  */
 #if TEST_USE_WINDOWS
 #include <intrin.h>
-#define __sync_fetch_and_add(ptr, value) InterlockedExchangeAdd((volatile LONG*)(ptr), (value))
-#define __sync_add_and_fetch(ptr, value) (InterlockedExchangeAdd((volatile LONG*)(ptr), (value)) + (value))
-#define __sync_sub_and_fetch(ptr, value) (InterlockedExchangeAdd((volatile LONG*)(ptr), -(value)) - (value))
-#define __sync_bool_compare_and_swap(ptr, oldval, newval) \
-    (InterlockedCompareExchange((volatile LONG*)(ptr), (newval), (oldval)) == (oldval))
+#define __sync_fetch_and_add(ptr, value) InterlockedExchangeAdd((volatile LONG *) (ptr), (value))
+#define __sync_add_and_fetch(ptr, value)                                                           \
+    (InterlockedExchangeAdd((volatile LONG *) (ptr), (value)) + (value))
+#define __sync_sub_and_fetch(ptr, value)                                                           \
+    (InterlockedExchangeAdd((volatile LONG *) (ptr), -(value)) - (value))
+#define __sync_bool_compare_and_swap(ptr, oldval, newval)                                          \
+    (InterlockedCompareExchange((volatile LONG *) (ptr), (newval), (oldval)) == (oldval))
 #endif
 
 /*

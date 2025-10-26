@@ -3,12 +3,12 @@
 /*
  * Test to verify that fastcond_patch.h correctly replaces native condition
  * variable functions with fastcond equivalents.
- * 
+ *
  * This test validates that:
  * 1. The patch macros compile successfully
  * 2. Basic operations work (init, wait, signal, destroy)
  * 3. The patched code actually calls fastcond functions (verified via symbols)
- * 
+ *
  * Platform support:
  * - POSIX: Replaces pthread_cond_* with fastcond_cond_*
  * - Windows: TODO - design Windows-specific patch mechanism
@@ -52,7 +52,7 @@ TEST_THREAD_FUNC_RETURN waiter_thread(void *arg)
     test_ctx_t *ctx = (test_ctx_t *) arg;
 
     NATIVE_MUTEX_LOCK(&ctx->mutex);
-    
+
     while (!ctx->ready) {
 #ifdef _WIN32
         NATIVE_COND_WAIT(&ctx->cond, &ctx->mutex);
@@ -61,10 +61,10 @@ TEST_THREAD_FUNC_RETURN waiter_thread(void *arg)
         pthread_cond_wait(&ctx->cond, &ctx->mutex);
 #endif
     }
-    
+
     ctx->done = 1;
     NATIVE_MUTEX_UNLOCK(&ctx->mutex);
-    
+
     TEST_THREAD_RETURN;
 }
 
@@ -72,7 +72,7 @@ int main(void)
 {
     test_ctx_t ctx;
     test_thread_t thread;
-    
+
 #ifdef _WIN32
     printf("Patch test on Windows: NOT YET IMPLEMENTED\n");
     printf("Windows patch mechanism needs design - should replace CONDITION_VARIABLE\n");
@@ -81,7 +81,7 @@ int main(void)
 #else
     printf("Fastcond Patch Validation Test (POSIX)\n");
     printf("=======================================\n");
-    
+
 #if defined(FASTCOND_PATCH_COND)
     printf("Patch mode: STRONG (fastcond_cond_t)\n");
 #elif defined(FASTCOND_PATCH_WCOND)
@@ -90,53 +90,53 @@ int main(void)
     printf("ERROR: No patch mode defined! Use -DPATCH_COND or -DPATCH_WCOND\n");
     return 1;
 #endif
-    
+
     printf("\nInitializing test context...\n");
     ctx.ready = 0;
     ctx.done = 0;
     /* Initialize test context */
     NATIVE_MUTEX_INIT(&ctx.mutex);
-    
+
     /* This will be replaced by fastcond_*_init via patch */
     pthread_cond_init(&ctx.cond, NULL);
-    
+
     printf("Creating waiter thread...\n");
     if (test_thread_create(&thread, NULL, waiter_thread, &ctx) != 0) {
         fprintf(stderr, "Failed to create thread\n");
         return 1;
     }
-    
+
     /* Give thread time to start waiting */
     usleep(100000); /* 100ms */
-    
+
     printf("Signaling condition variable...\n");
     NATIVE_MUTEX_LOCK(&ctx.mutex);
     ctx.ready = 1;
     /* This will be replaced by fastcond_*_signal via patch */
     pthread_cond_signal(&ctx.cond);
     NATIVE_MUTEX_UNLOCK(&ctx.mutex);
-    
+
     printf("Waiting for thread to complete...\n");
     test_thread_join(thread, NULL);
-    
+
     /* Verify thread completed */
     if (!ctx.done) {
         fprintf(stderr, "ERROR: Thread did not complete properly!\n");
         return 1;
     }
-    
+
     printf("Cleaning up...\n");
     /* This will be replaced by fastcond_*_fini via patch */
     pthread_cond_destroy(&ctx.cond);
     NATIVE_MUTEX_DESTROY(&ctx.mutex);
-    
+
     printf("\n✅ Patch test PASSED\n");
     printf("   - init/wait/signal/destroy operations work\n");
     printf("   - Thread synchronized successfully\n");
     printf("\nTo verify fastcond symbols are used, run:\n");
     printf("   nm patch_test_fc | grep fastcond\n");
     printf("   (should see fastcond_cond_* or fastcond_wcond_* symbols)\n");
-    
+
     return 0;
 #endif
 }

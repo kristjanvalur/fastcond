@@ -13,7 +13,7 @@
  * a single producer and server.  It tests how a `strong` condition variable wakes up
  * at least one of the threads already waiting, i.e. that the wakeup cannot be
  * stolen by the other thread.
- * 
+ *
  * Compile-time options:
  *   (none)      - Use native condition variables (pthread_cond_t or CONDITION_VARIABLE)
  *   -DTEST_COND - Use fastcond strong condition variable
@@ -21,36 +21,36 @@
  */
 
 #if defined(TEST_WCOND)
-    typedef fastcond_wcond_t cond_t;
-    #define COND_INIT(c) fastcond_wcond_init(&(c), NULL)
-    #define COND_DESTROY(c) fastcond_wcond_fini(&(c))
-    #define COND_WAIT(c, m) fastcond_wcond_wait(&(c), &(m))
-    #define COND_SIGNAL(c) fastcond_wcond_signal(&(c))
-    #define COND_BROADCAST(c) fastcond_wcond_broadcast(&(c))
+typedef fastcond_wcond_t cond_t;
+#define COND_INIT(c) fastcond_wcond_init(&(c), NULL)
+#define COND_DESTROY(c) fastcond_wcond_fini(&(c))
+#define COND_WAIT(c, m) fastcond_wcond_wait(&(c), &(m))
+#define COND_SIGNAL(c) fastcond_wcond_signal(&(c))
+#define COND_BROADCAST(c) fastcond_wcond_broadcast(&(c))
 #elif defined(TEST_COND)
-    typedef fastcond_cond_t cond_t;
-    #define COND_INIT(c) fastcond_cond_init(&(c), NULL)
-    #define COND_DESTROY(c) fastcond_cond_fini(&(c))
-    #define COND_WAIT(c, m) fastcond_cond_wait(&(c), &(m))
-    #define COND_SIGNAL(c) fastcond_cond_signal(&(c))
-    #define COND_BROADCAST(c) fastcond_cond_broadcast(&(c))
+typedef fastcond_cond_t cond_t;
+#define COND_INIT(c) fastcond_cond_init(&(c), NULL)
+#define COND_DESTROY(c) fastcond_cond_fini(&(c))
+#define COND_WAIT(c, m) fastcond_cond_wait(&(c), &(m))
+#define COND_SIGNAL(c) fastcond_cond_signal(&(c))
+#define COND_BROADCAST(c) fastcond_cond_broadcast(&(c))
 #else
-    typedef native_cond_t cond_t;
-    #define COND_INIT(c) NATIVE_COND_INIT(&(c))
-    #define COND_DESTROY(c) NATIVE_COND_DESTROY(&(c))
-    #define COND_WAIT(c, m) NATIVE_COND_WAIT(&(c), &(m))
-    #define COND_SIGNAL(c) NATIVE_COND_SIGNAL(&(c))
-    #define COND_BROADCAST(c) NATIVE_COND_BROADCAST(&(c))
+typedef native_cond_t cond_t;
+#define COND_INIT(c) NATIVE_COND_INIT(&(c))
+#define COND_DESTROY(c) NATIVE_COND_DESTROY(&(c))
+#define COND_WAIT(c, m) NATIVE_COND_WAIT(&(c), &(m))
+#define COND_SIGNAL(c) NATIVE_COND_SIGNAL(&(c))
+#define COND_BROADCAST(c) NATIVE_COND_BROADCAST(&(c))
 #endif
 
 typedef struct _queue {
     native_mutex_t mutex;
     int n_data; /* current size of queue */
     cond_t cond;
-    int max_queue;                /* how much fits in the queue */
-    int max_send;                 /* how many packets to send? (termination test) */
-    int n_sent;                   /* total amount sent */
-    test_timespec_t *timestamps;  /* track enqueue times for latency measurement */
+    int max_queue;               /* how much fits in the queue */
+    int max_send;                /* how many packets to send? (termination test) */
+    int n_sent;                  /* total amount sent */
+    test_timespec_t *timestamps; /* track enqueue times for latency measurement */
 } queue_t;
 
 typedef struct _args {

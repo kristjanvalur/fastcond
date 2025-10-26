@@ -11,7 +11,7 @@
 /*
  * This code tests parallelism by implementing a producer-consumer system
  * and push stuff through the queue.
- * 
+ *
  * Compile-time options:
  *   (none)      - Use native condition variables (pthread_cond_t or CONDITION_VARIABLE)
  *   -DTEST_COND - Use fastcond strong condition variable
@@ -19,26 +19,26 @@
  */
 
 #if defined(TEST_WCOND)
-    typedef fastcond_wcond_t cond_t;
-    #define COND_INIT(c) fastcond_wcond_init(&(c), NULL)
-    #define COND_DESTROY(c) fastcond_wcond_fini(&(c))
-    #define COND_WAIT(c, m) fastcond_wcond_wait(&(c), &(m))
-    #define COND_SIGNAL(c) fastcond_wcond_signal(&(c))
-    #define COND_BROADCAST(c) fastcond_wcond_broadcast(&(c))
+typedef fastcond_wcond_t cond_t;
+#define COND_INIT(c) fastcond_wcond_init(&(c), NULL)
+#define COND_DESTROY(c) fastcond_wcond_fini(&(c))
+#define COND_WAIT(c, m) fastcond_wcond_wait(&(c), &(m))
+#define COND_SIGNAL(c) fastcond_wcond_signal(&(c))
+#define COND_BROADCAST(c) fastcond_wcond_broadcast(&(c))
 #elif defined(TEST_COND)
-    typedef fastcond_cond_t cond_t;
-    #define COND_INIT(c) fastcond_cond_init(&(c), NULL)
-    #define COND_DESTROY(c) fastcond_cond_fini(&(c))
-    #define COND_WAIT(c, m) fastcond_cond_wait(&(c), &(m))
-    #define COND_SIGNAL(c) fastcond_cond_signal(&(c))
-    #define COND_BROADCAST(c) fastcond_cond_broadcast(&(c))
+typedef fastcond_cond_t cond_t;
+#define COND_INIT(c) fastcond_cond_init(&(c), NULL)
+#define COND_DESTROY(c) fastcond_cond_fini(&(c))
+#define COND_WAIT(c, m) fastcond_cond_wait(&(c), &(m))
+#define COND_SIGNAL(c) fastcond_cond_signal(&(c))
+#define COND_BROADCAST(c) fastcond_cond_broadcast(&(c))
 #else
-    typedef native_cond_t cond_t;
-    #define COND_INIT(c) NATIVE_COND_INIT(&(c))
-    #define COND_DESTROY(c) NATIVE_COND_DESTROY(&(c))
-    #define COND_WAIT(c, m) NATIVE_COND_WAIT(&(c), &(m))
-    #define COND_SIGNAL(c) NATIVE_COND_SIGNAL(&(c))
-    #define COND_BROADCAST(c) NATIVE_COND_BROADCAST(&(c))
+typedef native_cond_t cond_t;
+#define COND_INIT(c) NATIVE_COND_INIT(&(c))
+#define COND_DESTROY(c) NATIVE_COND_DESTROY(&(c))
+#define COND_WAIT(c, m) NATIVE_COND_WAIT(&(c), &(m))
+#define COND_SIGNAL(c) NATIVE_COND_SIGNAL(&(c))
+#define COND_BROADCAST(c) NATIVE_COND_BROADCAST(&(c))
 #endif
 
 /*

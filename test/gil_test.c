@@ -108,10 +108,10 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
     // Signal that this thread is ready and wait for synchronized start
     test_mutex_lock(&ctx->start_mutex);
     ctx->threads_ready++;
-    
+
     // Signal main thread that we've incremented the counter
     test_cond_broadcast(&ctx->start_cond);
-    
+
     if (ctx->threads_ready == ctx->num_threads) {
         // Last thread to arrive - all threads are ready
         // (main thread will see threads_ready == num_threads and proceed)
@@ -122,7 +122,7 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
         }
     }
     test_mutex_unlock(&ctx->start_mutex);
-    
+
     // Wait for explicit start signal using condition variable
     test_mutex_lock(&ctx->start_mutex);
     while (!ctx->start_flag && !ctx->stop_flag) {
@@ -131,7 +131,7 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
     test_mutex_unlock(&ctx->start_mutex);
 
     int local_acquisitions = 0;
-    
+
     // INITIALIZE: Acquire GIL at thread startup (Python-like behavior)
     fastcond_gil_acquire(&ctx->gil);
     int yields_since_io = 0;
@@ -226,7 +226,7 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
 
             // Reacquire GIL after I/O
             fastcond_gil_acquire(&ctx->gil);
-            
+
             yields_since_io = 0; // Reset counter
             // Next loop iteration will re-enter critical section with holder_count++
         } else {
@@ -560,7 +560,7 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
 
     // Wait for all threads to signal readiness
     test_mutex_lock(&ctx.start_mutex);
-    
+
     while (ctx.threads_ready < num_threads) {
         test_cond_wait(&ctx.start_cond, &ctx.start_mutex);
     }
@@ -626,7 +626,7 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
 void test_gil_yield()
 {
     printf("\n=== GIL Yield API Test ===\n");
-    
+
     struct fastcond_gil gil;
     fastcond_gil_init(&gil);
 
