@@ -93,6 +93,26 @@ fastcond_cond_signal(fastcond_cond_t *cond);
 FASTCOND_API(int)
 fastcond_cond_broadcast(fastcond_cond_t *cond);
 
+#ifdef FASTCOND_TEST_INSTRUMENTATION
+/*
+ * Test instrumentation for validating fastcond_patch.h
+ * 
+ * When FASTCOND_TEST_INSTRUMENTATION is defined, fastcond functions will
+ * call a registered callback on entry, allowing tests to verify that
+ * patched code actually invokes fastcond implementations rather than
+ * native condition variable functions.
+ *
+ * This is only for testing - never define in production code.
+ */
+typedef void (*fastcond_test_callback_t)(const char *function_name);
+
+FASTCOND_API(void)
+fastcond_set_test_callback(fastcond_test_callback_t callback);
+
+FASTCOND_API(fastcond_test_callback_t)
+fastcond_get_test_callback(void);
+#endif /* FASTCOND_TEST_INSTRUMENTATION */
+
 #ifdef FASTCOND_USE_WINDOWS
 /*
  * Windows-specific variants that take timeout in milliseconds directly,

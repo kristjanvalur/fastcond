@@ -7,15 +7,19 @@
  * This test validates that:
  * 1. The patch macros compile successfully
  * 2. Basic operations work (init, wait, signal, destroy)
- * 3. The patched code actually calls fastcond functions (verified via symbols)
+ * 3. The patched code actually calls fastcond functions (verified via callbacks)
  *
  * Platform support:
  * - POSIX: Replaces pthread_cond_* with fastcond_cond_*
  * - Windows: Replaces CONDITION_VARIABLE APIs with fastcond_*_wait_ms
+ *
+ * When compiled with FASTCOND_TEST_INSTRUMENTATION, uses callback mechanism
+ * to definitively prove that fastcond functions are being called.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "native_primitives.h"
 #include "test_portability.h"
@@ -31,6 +35,20 @@
 #define FASTCOND_PATCH_COND
 #endif
 #include "fastcond_patch.h"
+
+#ifdef FASTCOND_TEST_INSTRUMENTATION
+/* Callback tracking for instrumentation */
+static int callback_count = 0;
+static char last_function[64] = "";
+
+static void test_callback(const char *function_name)
+{
+    callback_count++;
+    strncpy(last_function, function_name, sizeof(last_function) - 1);
+    last_function[sizeof(last_function) - 1] = '\0';
+    printf("  [CALLBACK] %s called\n", function_name);
+}
+#endif /* FASTCOND_TEST_INSTRUMENTATION */
 
 /* Test structure using "native" condition variable types that will be patched */
 typedef struct {
@@ -74,6 +92,12 @@ int main(void)
     test_ctx_t ctx;
     test_thread_t thread;
 
+#ifdef FASTCOND_TEST_INSTRUMENTATION
+    /* Register callback to track fastcond calls */
+    fastcond_set_test_callback(test_callback);
+    callback_count = 0;
+#endif
+
 #ifdef _WIN32
     printf("Fastcond Patch Validation Test (Windows)\n");
     printf("=========================================\n");
@@ -90,6 +114,15 @@ int main(void)
     printf("ERROR: No patch mode defined! Use -DPATCH_COND or -DPATCH_WCOND\n");
     return 1;
 #endif
+
+#ifdef FASTCOND_TEST_INSTRUMENTATION
+    printf("Test instrumentation: ENABLED\n");
+    printf("  (Callbacks will verify fastcond functions are called)\n");
+#else
+    printf("Test instrumentation: DISABLED\n");
+    printf("  (To enable, compile with -DFASTCOND_TEST_INSTRUMENTATION)\n");
+#endif
+    printf("\n");
 
     printf("\nInitializing test context...\n");
     ctx.ready = 0;
@@ -153,14 +186,43 @@ int main(void)
     printf("\n✅ Patch test PASSED\n");
     printf("   - init/wait/signal/destroy operations work\n");
     printf("   - Thread synchronized successfully\n");
+
+#ifdef FASTCOND_TEST_INSTRUMENTATION
+    printf("\n🔍 Instrumentation results:\n");
+    printf("   - Total fastcond function calls: %d\n", callback_count);
+    if (callback_count > 0) {
+        printf("   - ✅ VERIFIED: Patched code calls fastcond functions\n");
+        printf("   - Last function called: %s\n", last_function);
+    } else {
+        printf("   - ❌ WARNING: No fastcond calls detected!\n");
+        printf("   - This suggests patching may not be working correctly\n");
+        return 1;
+    }
+#ifdef _WIN32
+    /* Windows should have called: init, wait_ms, signal */
+    int expected_min = 3;
+#else
+    /* POSIX should have called: init, wait, signal */
+    int expected_min = 3;
+#endif
+    if (callback_count >= expected_min) {
+        printf("   - ✅ Expected number of calls confirmed (%d >= %d)\n",
+               callback_count, expected_min);
+    } else {
+        printf("   - ⚠️  Fewer calls than expected (%d < %d)\n",
+               callback_count, expected_min);
+    }
+#else
 #ifdef _WIN32
     printf("\nTo verify fastcond symbols are used on Windows, check the binary\n");
-    printf("or enable debugging to confirm fastcond_*_wait_ms is called.\n");
+    printf("or compile with -DFASTCOND_TEST_INSTRUMENTATION for definitive proof.\n");
 #else
     printf("\nTo verify fastcond symbols are used, run:\n");
-    printf("   nm patch_test_fc | grep fastcond\n");
+    printf("   nm patch_test_cond | grep fastcond\n");
     printf("   (should see fastcond_cond_* or fastcond_wcond_* symbols)\n");
+    printf("Or compile with -DFASTCOND_TEST_INSTRUMENTATION for definitive proof.\n");
 #endif
+#endif /* FASTCOND_TEST_INSTRUMENTATION */
 
     return 0;
 }

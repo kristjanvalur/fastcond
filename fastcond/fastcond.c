@@ -15,6 +15,38 @@
 #include <sched.h>
 #endif
 
+#ifdef FASTCOND_TEST_INSTRUMENTATION
+/*
+ * Test instrumentation callback
+ * This global callback is invoked by fastcond functions when
+ * FASTCOND_TEST_INSTRUMENTATION is defined, allowing tests to verify
+ * that patched code actually calls fastcond implementations.
+ */
+static fastcond_test_callback_t _test_callback = NULL;
+
+FASTCOND_API(void)
+fastcond_set_test_callback(fastcond_test_callback_t callback)
+{
+    _test_callback = callback;
+}
+
+FASTCOND_API(fastcond_test_callback_t)
+fastcond_get_test_callback(void)
+{
+    return _test_callback;
+}
+
+/* Helper macro to invoke test callback if registered */
+#define TEST_CALLBACK(func_name)                                                                   \
+    do {                                                                                           \
+        if (_test_callback)                                                                        \
+            _test_callback(func_name);                                                             \
+    } while (0)
+#else
+/* No-op when instrumentation disabled */
+#define TEST_CALLBACK(func_name) ((void) 0)
+#endif /* FASTCOND_TEST_INSTRUMENTATION */
+
 /* Platform-specific semaphore wrapper macros for cleaner code */
 #ifdef FASTCOND_USE_WINDOWS
 /* Windows Semaphore Objects
@@ -204,6 +236,7 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
 FASTCOND_API(int)
 fastcond_wcond_init(fastcond_wcond_t *restrict cond, const void *restrict attr)
 {
+    TEST_CALLBACK("fastcond_wcond_init");
     (void) attr; /* Unused - condattr not supported */
     cond->waiting = 0;
     return SEM_INIT(cond->sem);
@@ -218,6 +251,7 @@ fastcond_wcond_fini(fastcond_wcond_t *cond)
 FASTCOND_API(int)
 fastcond_wcond_wait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex)
 {
+    TEST_CALLBACK("fastcond_wcond_wait");
     return fastcond_wcond_timedwait(cond, mutex, 0);
 }
 
@@ -249,6 +283,7 @@ fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restri
 FASTCOND_API(int)
 fastcond_wcond_signal(fastcond_wcond_t *cond)
 {
+    TEST_CALLBACK("fastcond_wcond_signal");
     if (cond->waiting > 0) {
         int err = SEM_POST(cond->sem);
         if (err)
@@ -297,6 +332,7 @@ fastcond_wcond_broadcast(fastcond_wcond_t *cond)
 FASTCOND_API(int)
 fastcond_cond_init(fastcond_cond_t *restrict cond, const void *restrict attr)
 {
+    TEST_CALLBACK("fastcond_cond_init");
     int err;
     cond->n_waiting = cond->n_wakeup = 0;
     err = fastcond_wcond_init(&cond->wait, attr);
@@ -313,7 +349,8 @@ fastcond_cond_fini(fastcond_cond_t *cond)
 FASTCOND_API(int)
 fastcond_cond_wait(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex)
 {
-    return fastcond_cond_timedwait(cond, mutex, NULL);
+    TEST_CALLBACK("fastcond_cond_wait");
+    return fastcond_cond_timedwait(cond, mutex, 0);
 }
 
 FASTCOND_API(int)
@@ -370,6 +407,7 @@ static int _fastcond_cond_signal_n(fastcond_cond_t *cond, int n)
 FASTCOND_API(int)
 fastcond_cond_signal(fastcond_cond_t *cond)
 {
+    TEST_CALLBACK("fastcond_cond_signal");
     return _fastcond_cond_signal_n(cond, 1);
 }
 FASTCOND_API(int)
@@ -402,6 +440,7 @@ FASTCOND_API(int)
 fastcond_wcond_wait_ms(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
                        DWORD timeout_ms)
 {
+    TEST_CALLBACK("fastcond_wcond_wait_ms");
     int err1, err2;
     cond->waiting++;
     err1 = NATIVE_MUTEX_UNLOCK(mutex);
@@ -427,6 +466,7 @@ FASTCOND_API(int)
 fastcond_cond_wait_ms(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex,
                       DWORD timeout_ms)
 {
+    TEST_CALLBACK("fastcond_cond_wait_ms");
     int err;
 
     /* Same logic as fastcond_cond_timedwait, but using millisecond timeout */

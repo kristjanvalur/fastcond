@@ -81,15 +81,20 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
 
     # Patch validation test - verifies fastcond_patch.h works correctly
     # POSIX only for now - Windows patch mechanism needs design
-    if(NOT WIN32)
-        add_executable(patch_test_cond test/patch_test.c)
-        target_compile_definitions(patch_test_cond PRIVATE PATCH_COND)
-        target_link_libraries(patch_test_cond PRIVATE fastcond ${MATH_LIBRARY})
-        
-        add_executable(patch_test_wcond test/patch_test.c)
-        target_compile_definitions(patch_test_wcond PRIVATE PATCH_WCOND)
-        target_link_libraries(patch_test_wcond PRIVATE fastcond ${MATH_LIBRARY})
-    endif()
+    # Patch validation tests with instrumentation
+    # These compile fastcond.c directly with FASTCOND_TEST_INSTRUMENTATION
+    # to definitively prove patching works via callback mechanism
+    add_executable(patch_test_cond test/patch_test.c fastcond/fastcond.c fastcond/gil.c)
+    target_compile_definitions(patch_test_cond PRIVATE 
+        PATCH_COND FASTCOND_TEST_INSTRUMENTATION)
+    target_include_directories(patch_test_cond PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/fastcond)
+    target_link_libraries(patch_test_cond PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${MATH_LIBRARY})
+    
+    add_executable(patch_test_wcond test/patch_test.c fastcond/fastcond.c fastcond/gil.c)
+    target_compile_definitions(patch_test_wcond PRIVATE 
+        PATCH_WCOND FASTCOND_TEST_INSTRUMENTATION)
+    target_include_directories(patch_test_wcond PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/fastcond)
+    target_link_libraries(patch_test_wcond PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${MATH_LIBRARY})
 
     # Debug test for native condition variable behavior
     add_executable(test_native_cond test/test_native_cond.c)
