@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] - 2025-10-26
 
 ### Added
+- **Cross-platform performance data collection and analysis infrastructure**
+  - CSV-based data collection from CI builds across all platforms (Linux, macOS, Windows)
+  - Automated benchmark artifact collection and merging from CI workflows
+  - Python-based analysis tool (`analyze_performance.py`) generating comparison tables, charts, and JSON summaries
+  - Automated GitHub Pages deployment with performance comparison visualizations
+  - Standardized CSV schema for consistent cross-platform benchmark data
 - **Windows platform support** with native CONDITION_VARIABLE and CRITICAL_SECTION implementations
 - Native Windows semaphore implementation (CreateSemaphore/Wait/Release APIs)
 - Cross-platform test portability layer (`test_portability.h`) for unified test code
@@ -33,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GIL bookkeeping bugs in `holder_count` tracking around yield operations
 - Thread synchronization race conditions in `gil_test` startup
 - Mutual exclusion violations on Windows (added volatile qualifiers)
+- CSV output format in `gil_test` to match standard schema (iterations column was missing)
 
 ## [0.1.0] - 2025-01-15
 
