@@ -6,10 +6,11 @@ on:
     workflows: ["CI"]
     types:
       - completed
+    branches: [ master, main, perf-figures-improvements ]
   push:
     branches: [ master, main, perf-figures-improvements ]
   pull_request:
-    branches: [ master, main ]
+    branches: [ master, main, perf-figures-improvements ]
   workflow_dispatch:  # Allow manual trigger
   schedule:
     # Run weekly on Monday at 00:00 UTC to track performance over time
