@@ -32,23 +32,13 @@
 
 void fastcond_gil_init(struct fastcond_gil *gil)
 {
-    // TEMPORARILY DISABLE COND INIT TO ISOLATE HANG
-    // Always initialize condition variables (even if NAIVE mode won't use them)
-// #if FASTCOND_GIL_USE_NATIVE_COND
-//     NATIVE_COND_INIT(&gil->cond);
-// #else
-//     fastcond_cond_init(&gil->cond, NULL);
-// #endif
-
+    // STEP-BY-STEP ISOLATION: Test ONLY mutex init
     NATIVE_MUTEX_INIT(&gil->mutex);
 
-    // Always initialize tracking variables (minimal overhead)
-    gil->held = 0;
-    gil->n_waiting = 0;
-    // we can initialize this to self, fairness check will not
-    // be made in the first acquisition by a thread because
-    // n_waiting is 0
-    gil->last_owner = NATIVE_THREAD_SELF();
+    // TEMPORARILY DISABLED TO ISOLATE HANG
+    // gil->held = 0;
+    // gil->n_waiting = 0;
+    // gil->last_owner = NATIVE_THREAD_SELF();
 }
 
 void fastcond_gil_destroy(struct fastcond_gil *gil)
