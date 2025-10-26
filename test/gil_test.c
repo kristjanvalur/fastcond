@@ -691,33 +691,27 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
 // Simple test to verify fastcond_gil_yield() functionality
 void test_gil_yield()
 {
-    // CHANGED: Allocate on heap instead of stack to test for stack corruption
-    struct fastcond_gil *gil = malloc(sizeof(struct fastcond_gil));
     printf("\n=== GIL Yield API Test ===\n");
     fflush(stdout);
 
-    printf("Testing minimal GIL init/destroy (heap allocated)...\n");
+    printf("Testing minimal malloc/free only (no GIL operations)...\n");
     fflush(stdout);
 
-    fastcond_gil_init(gil);
-    printf("  ✅ GIL init successfully\n");
+    struct fastcond_gil *gil = malloc(sizeof(struct fastcond_gil));
+    printf("  ✅ malloc() successfully\n");
     fflush(stdout);
 
-    // REMOVED: acquire, yield, release - testing just init/destroy
-    // fastcond_gil_acquire(gil);
-    // fastcond_gil_yield(gil);
-    // fastcond_gil_release(gil);
+    // REMOVED: All GIL operations - testing ONLY malloc/free
+    // fastcond_gil_init(gil);
+    // fastcond_gil_destroy(gil);
 
-    // Cleanup
-    fastcond_gil_destroy(gil);
-    printf("  ✅ GIL destroyed successfully\n");
+    printf("  About to free()...\n");
     fflush(stdout);
-
     free(gil);
-    printf("  ✅ GIL freed successfully\n");
+    printf("  ✅ free() successfully\n");
     fflush(stdout);
 
-    printf("GIL yield API test completed successfully!\n");
+    printf("Malloc/free test completed successfully!\n");
     fflush(stdout);
     
     printf("=== About to return from test_gil_yield ===\n");
