@@ -111,13 +111,16 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     target_link_libraries(test_gil_exclusion_fc PRIVATE fastcond ${MATH_LIBRARY})
 
     # GIL Test Suite - more complex variants with backend/fairness combinations
-    # GIL tests with fastcond backend (fair)
+        # GIL tests with fastcond backend (fair - default)
     add_executable(gil_test_fc test/gil_test.c)
     target_link_libraries(gil_test_fc PRIVATE fastcond ${MATH_LIBRARY})
     
     # GIL tests with native pthread backend (fair)
-    add_executable(gil_test_native test/gil_test.c)
+    # CRITICAL: Compile gil.c directly to avoid ODR violation from library
+    # The library is compiled without FASTCOND_GIL_USE_NATIVE_COND, but this test needs it
+    add_executable(gil_test_native test/gil_test.c fastcond/gil.c)
     target_compile_definitions(gil_test_native PRIVATE FASTCOND_GIL_USE_NATIVE_COND=1)
+    target_include_directories(gil_test_native PRIVATE fastcond)
     target_link_libraries(gil_test_native PRIVATE fastcond ${MATH_LIBRARY})
     
     # GIL tests with fastcond backend (unfair)
@@ -130,11 +133,13 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     target_link_libraries(gil_test_fc_unfair PRIVATE fastcond ${MATH_LIBRARY})
     
     # GIL tests with native pthread backend (unfair)
-    add_executable(gil_test_native_unfair test/gil_test.c)
+    # CRITICAL: Compile gil.c directly to avoid ODR violation from library
+    add_executable(gil_test_native_unfair test/gil_test.c fastcond/gil.c)
     target_compile_definitions(gil_test_native_unfair PRIVATE 
         FASTCOND_GIL_USE_NATIVE_COND=1 
         FASTCOND_GIL_YIELD_FAIR=0 
         FASTCOND_GIL_ACQUIRE_GREEDY=1)
+    target_include_directories(gil_test_native_unfair PRIVATE fastcond)
     target_link_libraries(gil_test_native_unfair PRIVATE fastcond ${MATH_LIBRARY})
 
     # GIL tests with naive mode (simple mutex - no condition variables)

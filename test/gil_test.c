@@ -706,10 +706,10 @@ void test_gil_yield()
     printf("  ✅ GIL init successfully\n");
     fflush(stdout);
 
-    // TEMPORARILY DISABLED TO TEST IF INIT ALONE CAUSES CRASH
-    // fastcond_gil_destroy(gil);
-    // printf("  ✅ GIL destroyed successfully\n");
-    // fflush(stdout);
+    // RE-ENABLE destroy now that we've isolated the init issue
+    fastcond_gil_destroy(gil);
+    printf("  ✅ GIL destroyed successfully\n");
+    fflush(stdout);
 
     free(gil);
     printf("  ✅ GIL freed successfully\n");
