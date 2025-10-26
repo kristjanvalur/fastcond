@@ -112,6 +112,13 @@ jobs:
           echo ""
           echo "Fastcond strong:"
           ./${{ matrix.build_type }}/strongtest_fc.exe 10000 5
+          echo ""
+          echo "=== Running patch tests on Windows ==="
+          echo "Patch test (strong):"
+          ./${{ matrix.build_type }}/patch_test_cond.exe
+          echo ""
+          echo "Patch test (weak):"
+          ./${{ matrix.build_type }}/patch_test_wcond.exe
         else
           # On POSIX systems, run full test suite via CTest
           ctest --output-on-failure --build-config ${{ matrix.build_type }}
