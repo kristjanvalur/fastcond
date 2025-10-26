@@ -12,26 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#include <signal.h>
-
-// Windows exception handler to catch crashes
-LONG WINAPI exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {
-    fprintf(stderr, "\n!!! EXCEPTION CAUGHT !!!\n");
-    fprintf(stderr, "Exception code: 0x%lx\n", ExceptionInfo->ExceptionRecord->ExceptionCode);
-    fprintf(stderr, "Exception address: %p\n", ExceptionInfo->ExceptionRecord->ExceptionAddress);
-    fflush(stderr);
-    return EXCEPTION_EXECUTE_HANDLER;
-}
-
-void signal_handler(int sig) {
-    fprintf(stderr, "\n!!! SIGNAL %d CAUGHT !!!\n", sig);
-    fflush(stderr);
-    exit(1);
-}
-#endif
-
 /*
  * Comprehensive GIL correctness and fairness test with Python-like behavior simulation
  *
@@ -397,9 +377,8 @@ static void print_fairness_statistics(struct test_context *ctx, int num_threads)
             last_acquisition_index[thread_id] = i;
         }
 
-        // CRITICAL FIX: Add terminal wait depths for each thread
+        // Add terminal wait depths for each thread
         // This captures the wait depth that starved threads would experience
-        printf("Adding terminal wait analysis for threads that didn't get final turns...\n");
         for (int thread_id = 0; thread_id < num_threads; thread_id++) {
             if (last_acquisition_index[thread_id] != -1) {
                 // Calculate wait depth from this thread's last acquisition to sequence end
@@ -415,9 +394,6 @@ static void print_fairness_statistics(struct test_context *ctx, int num_threads)
                     if (terminal_wait_depth > max_wait_depth) {
                         max_wait_depth = terminal_wait_depth;
                     }
-                    printf("  Thread %d: terminal wait depth = %d (from position %d to end %d)\n",
-                           thread_id, terminal_wait_depth, last_acquisition_index[thread_id],
-                           ctx->sequence_index - 1);
                 }
             } else {
                 // Thread never acquired GIL - would wait through entire sequence
@@ -431,8 +407,6 @@ static void print_fairness_statistics(struct test_context *ctx, int num_threads)
                     if (full_wait_depth > max_wait_depth) {
                         max_wait_depth = full_wait_depth;
                     }
-                    printf("  Thread %d: never acquired GIL, full wait depth = %d\n", thread_id,
-                           full_wait_depth);
                 }
             }
         }
@@ -572,8 +546,6 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
         return 1;
     }
 
-    printf("Creating %d threads...\n", num_threads);
-
     // Create worker threads with proper index passing
     for (int i = 0; i < num_threads; i++) {
         thread_args[i].ctx = &ctx;
@@ -586,8 +558,6 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
         ctx.thread_ids[i] = threads[i]; // Store for cleanup only
     }
 
-    printf("Main: Waiting for all threads to signal readiness...\n");
-    
     // Wait for all threads to signal readiness
     test_mutex_lock(&ctx.start_mutex);
     
@@ -596,7 +566,7 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     }
     test_mutex_unlock(&ctx.start_mutex);
 
-    printf("All threads ready. Starting synchronized test...\n");
+    // Start the test
     test_timespec_t start_time, end_time;
     test_clock_gettime(&start_time);
 
@@ -678,15 +648,6 @@ void test_gil_yield()
 
 int main(int argc, char *argv[])
 {
-#ifdef _WIN32
-    // Install exception and signal handlers
-    SetUnhandledExceptionFilter(exception_handler);
-    signal(SIGABRT, signal_handler);
-    signal(SIGILL, signal_handler);
-    signal(SIGSEGV, signal_handler);
-    fprintf(stderr, "=== Windows exception handlers installed ===\n");
-#endif
-
     int num_threads = 8; // Increased for better statistical power (was 4)
     int total_acquisitions = DEFAULT_ITERATIONS;
     int hold_time_us = 100; // 100 microseconds default hold time
