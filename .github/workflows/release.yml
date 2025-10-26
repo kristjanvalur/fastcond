@@ -76,19 +76,15 @@ jobs:
         For existing code using `pthread_cond_t`, use the patch header:
         
         ```c
-        #define FASTCOND_PATCH_COND    // For strong semantics (default)
-        // OR
-        #define FASTCOND_PATCH_WCOND   // For weak semantics (higher performance)
+        #define FASTCOND_PATCH_COND    // Use fastcond implementation
         
         #include "fastcond_patch.h"    // Before any pthread includes
         ```
         
         This automatically replaces `pthread_cond_*` calls with `fastcond_*`.
         
-        ## Semantics Choice
-        
-        - **Strong** (`fastcond_cond_t`): Full POSIX semantics, only wakes threads already waiting
-        - **Weak** (`fastcond_wcond_t`): May wake threads not yet waiting, maximum performance
+        **Note:** Both `fastcond_cond_t` and the legacy `fastcond_wcond_t` now provide 
+        strong POSIX semantics. The wcond API is kept for backward compatibility only.
         
         See README.md for detailed explanation and benchmarks.
         

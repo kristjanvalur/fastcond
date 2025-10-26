@@ -57,22 +57,23 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     endif()
 
     # Helper function to create test variants
-    # All platforms: native baseline + fastcond weak/strong
+    # All platforms: native baseline + fastcond
     # Native baseline uses pthread on POSIX, CONDITION_VARIABLE on Windows
     function(add_test_variant TEST_NAME SOURCE_FILE)
         # Native version (baseline) - uses pthread on POSIX, CONDITION_VARIABLE on Windows
         add_executable(${TEST_NAME}_native ${SOURCE_FILE})
         target_link_libraries(${TEST_NAME}_native PRIVATE fastcond ${MATH_LIBRARY})
         
-        # Fastcond weak version (all platforms)
-        add_executable(${TEST_NAME}_wcond ${SOURCE_FILE})
-        target_compile_definitions(${TEST_NAME}_wcond PRIVATE FASTCOND_PATCH_WCOND TEST_WCOND)
-        target_link_libraries(${TEST_NAME}_wcond PRIVATE fastcond ${MATH_LIBRARY})
-        
-        # Fastcond strong version (default) (all platforms)
+        # Fastcond version (strong semantics - the only variant now)
         add_executable(${TEST_NAME}_fc ${SOURCE_FILE})
         target_compile_definitions(${TEST_NAME}_fc PRIVATE FASTCOND_PATCH_COND TEST_COND)
         target_link_libraries(${TEST_NAME}_fc PRIVATE fastcond ${MATH_LIBRARY})
+        
+        # Legacy wcond variant disabled - now identical to _fc (both use strong semantics)
+        # Keeping wcond API in headers for backward compatibility only
+        # add_executable(${TEST_NAME}_wcond ${SOURCE_FILE})
+        # target_compile_definitions(${TEST_NAME}_wcond PRIVATE FASTCOND_PATCH_WCOND TEST_WCOND)
+        # target_link_libraries(${TEST_NAME}_wcond PRIVATE fastcond ${MATH_LIBRARY})
     endfunction()
 
     # qtest and strongtest - build fastcond variants on all platforms
@@ -81,7 +82,6 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
 
     # Patch validation test - verifies fastcond_patch.h works correctly
     # POSIX only for now - Windows patch mechanism needs design
-    # Patch validation tests with instrumentation
     # These compile fastcond.c directly with FASTCOND_TEST_INSTRUMENTATION
     # to definitively prove patching works via callback mechanism
     add_executable(patch_test_cond test/patch_test.c fastcond/fastcond.c fastcond/gil.c)
@@ -90,11 +90,12 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     target_include_directories(patch_test_cond PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/fastcond)
     target_link_libraries(patch_test_cond PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${MATH_LIBRARY})
     
-    add_executable(patch_test_wcond test/patch_test.c fastcond/fastcond.c fastcond/gil.c)
-    target_compile_definitions(patch_test_wcond PRIVATE 
-        PATCH_WCOND FASTCOND_TEST_INSTRUMENTATION)
-    target_include_directories(patch_test_wcond PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/fastcond)
-    target_link_libraries(patch_test_wcond PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${MATH_LIBRARY})
+    # Legacy patch_test_wcond disabled - wcond now aliases cond (same implementation)
+    # add_executable(patch_test_wcond test/patch_test.c fastcond/fastcond.c fastcond/gil.c)
+    # target_compile_definitions(patch_test_wcond PRIVATE 
+    #     PATCH_WCOND FASTCOND_TEST_INSTRUMENTATION)
+    # target_include_directories(patch_test_wcond PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/fastcond)
+    # target_link_libraries(patch_test_wcond PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${MATH_LIBRARY})
 
     # Debug test for native condition variable behavior
     add_executable(test_native_cond test/test_native_cond.c)
@@ -193,15 +194,17 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     # Add CTest tests with appropriate arguments
     if(FASTCOND_BUILD_TESTS)
         if(NOT WIN32)
-            # Patch validation tests (POSIX only)
+            # Patch validation test (POSIX only)
             add_test(NAME patch_test_strong
                      COMMAND patch_test_cond)
-            add_test(NAME patch_test_weak
-                     COMMAND patch_test_wcond)
             set_tests_properties(patch_test_strong PROPERTIES
                 PASS_REGULAR_EXPRESSION "Patch test PASSED")
-            set_tests_properties(patch_test_weak PROPERTIES
-                PASS_REGULAR_EXPRESSION "Patch test PASSED")
+            
+            # Legacy patch_test_weak disabled - wcond now identical to cond
+            # add_test(NAME patch_test_weak
+            #          COMMAND patch_test_wcond)
+            # set_tests_properties(patch_test_weak PROPERTIES
+            #     PASS_REGULAR_EXPRESSION "Patch test PASSED")
         endif()
         
         # Quick smoke tests (small data count for fast CI)
@@ -209,19 +212,15 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
                  COMMAND qtest_native 100 2 5)
         add_test(NAME qtest_fastcond_smoke 
                  COMMAND qtest_fc 100 2 5)
-        add_test(NAME qtest_weak_smoke 
-                 COMMAND qtest_wcond 100 2 5)
+        
+        # Legacy qtest_weak_smoke disabled - wcond is now just an alias
+        # add_test(NAME qtest_weak_smoke 
+        #          COMMAND qtest_wcond 100 2 5)
         
         add_test(NAME strongtest_native_smoke 
                  COMMAND strongtest_native 100 5)
         add_test(NAME strongtest_fastcond_smoke 
                  COMMAND strongtest_fc 100 5)
-        
-        # NOTE: strongtest_weak is NOT tested because strongtest specifically
-        # validates strong semantics (no wakeup stealing). The weak variant
-        # allows wakeup stealing and will deadlock in this test scenario.
-        # This is expected behavior - weak variant should only be used when
-        # all waiting threads are interchangeable.
 
         # GIL correctness and fairness tests (smoke tests)
         add_test(NAME gil_test_fastcond_smoke 

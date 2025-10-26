@@ -59,26 +59,6 @@ following restrictions:
 * They don't provide *cancellation points*.
 * They cannot be initialized with a static initializer
 
-## The Weak vs Strong Showdown 🥊
-
-Two flavours of excellence, each with their own character:
-
-### 💪 **Strong Condition Variables** (`fastcond_cond_t`)
-*The meticulous one of the family*
-- **Strict POSIX semantics** — Only wakes threads that are already waiting (as is proper!)
-- **Lower latency** — Rather surprisingly, being particular makes it faster
-- **Drop-in replacement** — Your pthread code will feel quite at home
-- **The popular choice** — Most applications favour this one
-
-### 🏃 **Weak Condition Variables** (`fastcond_wcond_t`) 
-*The cheeky variant*
-- **Relaxed semantics** — Might wake a thread that's just turned up
-- **Still faster than pthread** — Because even our "weak" is rather strong
-- **Use when** — All your waiting threads are equivalent and interchangeable
-- **For the bold** — When you know precisely what you're about
-
-> **Rather amusing twist:** Both versions consistently outperform dreary old `pthread_cond_t` on multicore systems. The "strong" version actually has *lower* latency despite doing more work. Quite remarkable, really! 🤷‍♂️
-
 ## Why Choose Fastcond? 
 
 Because life's rather too short for sluggish condition variables, wouldn't you say? 🐌→🚀
