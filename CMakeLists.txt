@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(fastcond VERSION 1.0.0 LANGUAGES C)
+project(fastcond VERSION 0.2.0 LANGUAGES C)
 
 # Project options
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)

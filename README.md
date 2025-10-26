@@ -89,6 +89,7 @@ Because life's rather too short for sluggish condition variables, wouldn't you s
 
 **Platform Compatibility:**
 - ✅ **Linux** - Thoroughly tested and production-ready
+- ✅ **Windows** - Full support with native CONDITION_VARIABLE implementation (v0.2.0+)
 - ⚠️ **macOS** - Nearly there (missing `*_timedwait` due to platform limitations)
 - ❓ **Other POSIX** - Should work perfectly well if you have proper semaphore support
 
