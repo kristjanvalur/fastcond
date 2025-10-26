@@ -108,9 +108,12 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
     // Signal that this thread is ready and wait for synchronized start
     test_mutex_lock(&ctx->start_mutex);
     ctx->threads_ready++;
+    // Signal main thread that we've incremented the counter
+    test_cond_broadcast(&ctx->start_cond);
+    
     if (ctx->threads_ready == ctx->num_threads) {
-        // Last thread to arrive - signal all to start
-        test_cond_broadcast(&ctx->start_cond);
+        // Last thread to arrive - all threads are ready
+        // (main thread will see threads_ready == num_threads and proceed)
     } else {
         // Wait for all threads to be ready
         while (ctx->threads_ready < ctx->num_threads && !ctx->stop_flag) {
