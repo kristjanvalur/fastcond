@@ -797,9 +797,10 @@ int main(int argc, char *argv[])
     fflush(stdout);
 
     // Run yield API test first
-    // TEMPORARILY DISABLED FOR DEBUGGING
-    // test_gil_yield();
-    printf("=== SKIPPED test_gil_yield for debugging ===\n");
+    fprintf(stderr, "=== STDERR: Calling test_gil_yield ===\n");
+    test_gil_yield();
+    fprintf(stderr, "=== STDERR: test_gil_yield returned ===\n");
+    printf("=== test_gil_yield completed ===\n");
     fflush(stdout);
 
     fprintf(stderr, "=== STDERR: Yield test completed, initializing random seed ===\n");
