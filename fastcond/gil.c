@@ -32,7 +32,6 @@
 
 void fastcond_gil_init(struct fastcond_gil *gil)
 {
-    // Re-enable full initialization - we've isolated the issue to NATIVE_THREAD_SELF()
     // Always initialize condition variables (even if NAIVE mode won't use them)
 #if FASTCOND_GIL_USE_NATIVE_COND
     NATIVE_COND_INIT(&gil->cond);
@@ -45,10 +44,6 @@ void fastcond_gil_init(struct fastcond_gil *gil)
     // Always initialize tracking variables (minimal overhead)
     gil->held = 0;
     gil->n_waiting = 0;
-    
-    // ISSUE IDENTIFIED: This line causes heap corruption on Windows Debug builds
-    // GetCurrentThreadId() appears safe but something about storing it here
-    // causes problems that manifest during free()
     gil->last_owner = NATIVE_THREAD_SELF();
 }
 

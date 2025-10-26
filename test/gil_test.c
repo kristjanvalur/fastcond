@@ -152,6 +152,19 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
 
     // INITIALIZE: Acquire GIL at thread startup (Python-like behavior)
     fastcond_gil_acquire(&ctx->gil);
+    
+    // Mark that we're holding the GIL
+    int current_holders = __sync_add_and_fetch(&ctx->holder_count, 1);
+    if (current_holders > 1) {
+        int violation = current_holders;
+        // Update max violation atomically
+        int current_max;
+        do {
+            current_max = ctx->max_holder_violation;
+        } while (
+            current_max < violation &&
+            !__sync_bool_compare_and_swap(&ctx->max_holder_violation, current_max, violation));
+    }
 
     int local_acquisitions = 0;
     int yields_since_io = 0;
@@ -174,19 +187,6 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
             if (seq_idx < ctx->total_acquisitions_target) {
                 ctx->acquisition_sequence[seq_idx] = thread_idx;
             }
-        }
-
-        // Critical section - verify mutual exclusion
-        int current_holders = __sync_add_and_fetch(&ctx->holder_count, 1);
-        if (current_holders > 1) {
-            int violation = current_holders;
-            // Update max violation atomically
-            int current_max;
-            do {
-                current_max = ctx->max_holder_violation;
-            } while (
-                current_max < violation &&
-                !__sync_bool_compare_and_swap(&ctx->max_holder_violation, current_max, violation));
         }
 
         // Track fairness statistics
@@ -246,19 +246,30 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
 
             // Reacquire GIL after I/O
             fastcond_gil_acquire(&ctx->gil);
+            
+            // Re-enter critical section - verify mutual exclusion
+            current_holders = __sync_add_and_fetch(&ctx->holder_count, 1);
+            if (current_holders > 1) {
+                int violation = current_holders;
+                // Update max violation atomically
+                int current_max;
+                do {
+                    current_max = ctx->max_holder_violation;
+                } while (
+                    current_max < violation &&
+                    !__sync_bool_compare_and_swap(&ctx->max_holder_violation, current_max, violation));
+            }
+            
             yields_since_io = 0; // Reset counter
         } else {
             // REGULAR YIELD: Cooperative yielding for fairness
-            // NOTE: yield() is atomic and maintains GIL ownership, but for
-            // holder_count bookkeeping we treat it like a temporary release
-            // to keep the counting consistent with the loop structure
-            __sync_sub_and_fetch(&ctx->holder_count, 1);
+            // NOTE: yield() maintains GIL ownership, so holder_count stays unchanged
             fastcond_gil_yield(&ctx->gil);
-            __sync_add_and_fetch(&ctx->holder_count, 1);
         }
     }
 
     // FINALIZE: Release GIL at thread shutdown (Python-like behavior)
+    __sync_sub_and_fetch(&ctx->holder_count, 1);
     fastcond_gil_release(&ctx->gil);
 
     if (thread_idx >= 0) {
