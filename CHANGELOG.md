@@ -15,12 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Windows CI integration with MSVC compiler in Debug and Release configurations
 - Native baseline test variants (`_native` suffix) for all platforms
 - Cross-platform `gil_benchmark` tool for GIL-specific performance testing
+- **Windows API patching support** in `fastcond_patch.h` for CONDITION_VARIABLE macros
 
 ### Changed
 - Renamed `_pt` (pthread) suffix to `_native` for platform-neutral baseline comparisons
 - API redesigned to expose native mutex types per platform for optimal performance
 - Improved GIL test synchronization and bookkeeping around `yield()` operations
 - Applied consistent code formatting across all test files
+- **Enhanced `fastcond_patch.h`** to support both Windows and POSIX APIs with platform detection
 
 ### Fixed
 - ODR (One Definition Rule) violation in `gil_test_native` targets
