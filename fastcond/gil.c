@@ -36,9 +36,10 @@ void fastcond_gil_init(struct fastcond_gil *gil)
     NATIVE_MUTEX_INIT(&gil->mutex);
     gil->held = 0;
     gil->n_waiting = 0;
-
-    // TEMPORARILY DISABLED TO ISOLATE HANG
-    // gil->last_owner = NATIVE_THREAD_SELF();
+    
+    // FINAL TEST: Add NATIVE_THREAD_SELF() call
+    // This is the suspected culprit - GetCurrentThreadId() on Windows
+    gil->last_owner = NATIVE_THREAD_SELF();
 }
 
 void fastcond_gil_destroy(struct fastcond_gil *gil)
