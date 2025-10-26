@@ -1,0 +1,179 @@
+[
+  {
+    "benchmark": "qtest",
+    "implementation": "fastcond_strong",
+    "timestamp": "2025-10-26T19:07:12.395654",
+    "system": {
+      "os": "Linux",
+      "arch": "x86_64",
+      "python_version": "3.12.3",
+      "cores": 4
+    },
+    "config": {
+      "total_items": 10000,
+      "num_senders": 4,
+      "num_receivers": 4,
+      "queue_size": 10,
+      "total_time_sec": 0.021547,
+      "throughput_items_per_sec": 464103.37
+    },
+    "results": {
+      "overall": {
+        "total_items": 10000,
+        "num_senders": 4,
+        "num_receivers": 4,
+        "queue_size": 10,
+        "total_time_sec": 0.021547,
+        "throughput_items_per_sec": 464103.37
+      },
+      "per_thread": [
+        {
+          "thread_id": 1,
+          "thread_type": "receiver",
+          "items": 2390,
+          "avg_latency_sec": 1.083607e-05,
+          "stdev_latency_sec": 1.155185e-05,
+          "min_latency_sec": 6.3e-08,
+          "max_latency_sec": 7.671599e-05
+        },
+        {
+          "thread_id": 2,
+          "thread_type": "receiver",
+          "items": 2525,
+          "avg_latency_sec": 1.207149e-05,
+          "stdev_latency_sec": 1.235755e-05,
+          "min_latency_sec": 7.4e-08,
+          "max_latency_sec": 8.9218e-05
+        },
+        {
+          "thread_id": 3,
+          "thread_type": "receiver",
+          "items": 2650,
+          "avg_latency_sec": 1.086758e-05,
+          "stdev_latency_sec": 1.095523e-05,
+          "min_latency_sec": 1.31e-07,
+          "max_latency_sec": 7.9597e-05
+        },
+        {
+          "thread_id": 0,
+          "thread_type": "receiver",
+          "items": 2435,
+          "avg_latency_sec": 1.101011e-05,
+          "stdev_latency_sec": 1.100642e-05,
+          "min_latency_sec": 7.1e-08,
+          "max_latency_sec": 7.9851e-05
+        }
+      ]
+    },
+    "description": "Producer-consumer queue test (10K items, 4 threads, queue size 10)"
+  },
+  {
+    "benchmark": "qtest",
+    "implementation": "fastcond_weak",
+    "timestamp": "2025-10-26T19:07:12.416664",
+    "system": {
+      "os": "Linux",
+      "arch": "x86_64",
+      "python_version": "3.12.3",
+      "cores": 4
+    },
+    "config": {
+      "total_items": 10000,
+      "num_senders": 4,
+      "num_receivers": 4,
+      "queue_size": 10,
+      "total_time_sec": 0.01988,
+      "throughput_items_per_sec": 503013.71
+    },
+    "results": {
+      "overall": {
+        "total_items": 10000,
+        "num_senders": 4,
+        "num_receivers": 4,
+        "queue_size": 10,
+        "total_time_sec": 0.01988,
+        "throughput_items_per_sec": 503013.71
+      },
+      "per_thread": [
+        {
+          "thread_id": 0,
+          "thread_type": "receiver",
+          "items": 2424,
+          "avg_latency_sec": 9.163072e-06,
+          "stdev_latency_sec": 9.865811e-06,
+          "min_latency_sec": 6.4e-08,
+          "max_latency_sec": 5.3999e-05
+        },
+        {
+          "thread_id": 2,
+          "thread_type": "receiver",
+          "items": 2715,
+          "avg_latency_sec": 1.018889e-05,
+          "stdev_latency_sec": 1.091409e-05,
+          "min_latency_sec": 5.1e-08,
+          "max_latency_sec": 5.8623e-05
+        },
+        {
+          "thread_id": 1,
+          "thread_type": "receiver",
+          "items": 2616,
+          "avg_latency_sec": 9.149888e-06,
+          "stdev_latency_sec": 9.491721e-06,
+          "min_latency_sec": 1.2e-07,
+          "max_latency_sec": 5.7349e-05
+        },
+        {
+          "thread_id": 3,
+          "thread_type": "receiver",
+          "items": 2245,
+          "avg_latency_sec": 9.73493e-06,
+          "stdev_latency_sec": 1.014603e-05,
+          "min_latency_sec": 1.25e-07,
+          "max_latency_sec": 6.4093e-05
+        }
+      ]
+    },
+    "description": "Producer-consumer queue test (10K items, 4 threads, queue size 10)"
+  },
+  {
+    "benchmark": "strongtest",
+    "implementation": "fastcond_strong",
+    "timestamp": "2025-10-26T19:07:12.438213",
+    "system": {
+      "os": "Linux",
+      "arch": "x86_64",
+      "python_version": "3.12.3",
+      "cores": 4
+    },
+    "config": {
+      "total_items": 10000,
+      "num_senders": 1,
+      "num_receivers": 1,
+      "queue_size": 5,
+      "total_time_sec": 0.020566,
+      "throughput_items_per_sec": 486236.14
+    },
+    "results": {
+      "overall": {
+        "total_items": 10000,
+        "num_senders": 1,
+        "num_receivers": 1,
+        "queue_size": 5,
+        "total_time_sec": 0.020566,
+        "throughput_items_per_sec": 486236.14
+      },
+      "per_thread": [
+        {
+          "thread_id": 0,
+          "thread_type": "receiver",
+          "items": 10000,
+          "avg_latency_sec": 5.371664e-06,
+          "stdev_latency_sec": 2.432582e-05,
+          "min_latency_sec": 9e-08,
+          "max_latency_sec": 0.001463163
+        }
+      ]
+    },
+    "description": "Strong semantics test (10K items, queue size 5)"
+  }
+]
