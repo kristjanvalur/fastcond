@@ -19,7 +19,9 @@ Fast, reliable POSIX condition variable alternatives forged during Iceland's lon
 
 **🎯 [See Live Performance Dashboard →](https://kristjanvalur.github.io/fastcond/)**
 
-**🎭 [Explore GIL Fairness Analysis →](https://kristjanvalur.github.io/fastcond/gil-fairness.html)**
+**� [Cross-Platform Performance Comparison →](https://kristjanvalur.github.io/fastcond/performance/)**
+
+**�🎭 [Explore GIL Fairness Analysis →](https://kristjanvalur.github.io/fastcond/gil-fairness.html)**
 
 ## Quick Start
 
@@ -93,7 +95,9 @@ Because life's rather too short for sluggish condition variables, wouldn't you s
 - ⚠️ **macOS** - Nearly there (missing `*_timedwait` due to platform limitations)
 - ❓ **Other POSIX** - Should work perfectly well if you have proper semaphore support
 
-**🎯 [Explore the Interactive Performance Dashboard →](https://kristjanvalur.github.io/fastcond/)**
+**� [View Cross-Platform Performance Comparison →](https://kristjanvalur.github.io/fastcond/performance/)**
+
+**�🎯 [Explore the Interactive Performance Dashboard →](https://kristjanvalur.github.io/fastcond/)**
 
 *Featuring benchmarks crafted during Nordic winter nights, proper charts, and all the performance data needed to free you for poetry and cocoa.*
 

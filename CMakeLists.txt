@@ -66,12 +66,12 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
         
         # Fastcond weak version (all platforms)
         add_executable(${TEST_NAME}_wcond ${SOURCE_FILE})
-        target_compile_definitions(${TEST_NAME}_wcond PRIVATE FASTCOND_PATCH_WCOND)
+        target_compile_definitions(${TEST_NAME}_wcond PRIVATE FASTCOND_PATCH_WCOND TEST_WCOND)
         target_link_libraries(${TEST_NAME}_wcond PRIVATE fastcond ${MATH_LIBRARY})
         
         # Fastcond strong version (default) (all platforms)
         add_executable(${TEST_NAME}_fc ${SOURCE_FILE})
-        target_compile_definitions(${TEST_NAME}_fc PRIVATE FASTCOND_PATCH_COND)
+        target_compile_definitions(${TEST_NAME}_fc PRIVATE FASTCOND_PATCH_COND TEST_COND)
         target_link_libraries(${TEST_NAME}_fc PRIVATE fastcond ${MATH_LIBRARY})
     endfunction()
 

@@ -624,7 +624,14 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
         if (csv_file) {
             const char *platform = getenv("FASTCOND_PLATFORM");
             const char *os_version = getenv("FASTCOND_OS_VERSION");
-            const char *variant = "fastcond_gil";
+            const char *variant;
+            
+            /* Determine variant based on compile-time configuration */
+#if FASTCOND_GIL_USE_NATIVE_COND
+            variant = "native_gil";
+#else
+            variant = "fastcond_gil";
+#endif
 
             /* Default values if env vars not set */
             if (!platform)
