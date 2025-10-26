@@ -118,76 +118,44 @@ jobs:
         echo "tarball=${DIST_NAME}.tar.gz" >> $GITHUB_OUTPUT
         echo "zipfile=${DIST_NAME}.zip" >> $GITHUB_OUTPUT
 
-    - name: Generate changelog
+    - name: Extract changelog
       id: changelog
       run: |
         TAG=${{ steps.version.outputs.tag }}
-        echo "📝 Generating changelog for $TAG..."
+        VERSION=${{ steps.version.outputs.version }}
+        echo "📝 Extracting changelog for ${VERSION} from CHANGELOG.md..."
         
-        # Find previous release tag
-        PREV_TAG=$(git tag --sort=-version:refname | grep -A1 "^${TAG}$" | tail -1)
+        # Extract the section for this version from CHANGELOG.md
+        # Format: ## [0.2.0] - 2025-10-26
+        awk -v version="$VERSION" '
+          /^## \[/ {
+            if (found) exit;
+            if ($0 ~ "\\[" version "\\]") {
+              found=1;
+              next;
+            }
+          }
+          found && /^## \[/ { exit }
+          found { print }
+        ' CHANGELOG.md > EXTRACTED_CHANGELOG.md
         
-        if [ -z "$PREV_TAG" ] || [ "$PREV_TAG" = "$TAG" ]; then
-          echo "ℹ️  No previous release found, showing all commits"
-          COMMIT_RANGE="${TAG}"
+        if [ ! -s EXTRACTED_CHANGELOG.md ]; then
+          echo "⚠️  No changelog entry found for version ${VERSION}"
+          echo "📝 Creating generic changelog message..."
+          echo "Release ${VERSION}" > EXTRACTED_CHANGELOG.md
+          echo "" >> EXTRACTED_CHANGELOG.MD
+          echo "See [CHANGELOG.md](https://github.com/kristjanvalur/fastcond/blob/master/CHANGELOG.md) for details." >> EXTRACTED_CHANGELOG.md
         else
-          echo "ℹ️  Previous release: ${PREV_TAG}"
-          COMMIT_RANGE="${PREV_TAG}..${TAG}"
+          echo "✅ Found changelog entry for ${VERSION}"
         fi
         
-        # Generate changelog with categorized commits
-        cat > CHANGELOG.md << 'EOF_HEADER'
-        ## What's Changed
-        
-        EOF_HEADER
-        
-        # Features
-        FEATURES=$(git log ${COMMIT_RANGE} --pretty=format:"- %s (%h)" --grep="^feat" --grep="^feature" -i)
-        if [ -n "$FEATURES" ]; then
-          echo "### ✨ Features" >> CHANGELOG.md
-          echo "$FEATURES" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-        fi
-        
-        # Performance improvements
-        PERF=$(git log ${COMMIT_RANGE} --pretty=format:"- %s (%h)" --grep="^perf" --grep="performance" -i)
-        if [ -n "$PERF" ]; then
-          echo "### 🚀 Performance" >> CHANGELOG.md
-          echo "$PERF" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-        fi
-        
-        # Bug fixes
-        FIXES=$(git log ${COMMIT_RANGE} --pretty=format:"- %s (%h)" --grep="^fix" --grep="^bug" -i)
-        if [ -n "$FIXES" ]; then
-          echo "### 🐛 Bug Fixes" >> CHANGELOG.md
-          echo "$FIXES" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-        fi
-        
-        # Documentation
-        DOCS=$(git log ${COMMIT_RANGE} --pretty=format:"- %s (%h)" --grep="^docs" --grep="documentation" -i)
-        if [ -n "$DOCS" ]; then
-          echo "### 📚 Documentation" >> CHANGELOG.md
-          echo "$DOCS" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-        fi
-        
-        # Other changes (excluding merge commits)
-        OTHERS=$(git log ${COMMIT_RANGE} --pretty=format:"- %s (%h)" --invert-grep --grep="^feat" --grep="^fix" --grep="^perf" --grep="^docs" --grep="^Merge" -i)
-        if [ -n "$OTHERS" ]; then
-          echo "### 🔧 Other Changes" >> CHANGELOG.md
-          echo "$OTHERS" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-        fi
-        
-        echo "📄 Generated changelog:"
-        cat CHANGELOG.md
+        echo "📄 Extracted changelog:"
+        cat EXTRACTED_CHANGELOG.md
         
         # Export changelog for release body (GitHub Actions multiline output)
         {
           echo 'changelog<<EOF_CHANGELOG'
-          cat CHANGELOG.md
+          cat EXTRACTED_CHANGELOG.md
           echo 'EOF_CHANGELOG'
         } >> $GITHUB_OUTPUT
 
