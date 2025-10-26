@@ -377,3 +377,75 @@ fastcond_cond_broadcast(fastcond_cond_t *cond)
 {
     return _fastcond_cond_signal_n(cond, -1);
 }
+
+#ifdef FASTCOND_USE_WINDOWS
+/*
+ * Windows-specific millisecond-based wait functions.
+ * These bypass the timespec conversion and directly use WaitForSingleObject
+ * with the millisecond timeout, which is more efficient for Windows code.
+ */
+
+/* Helper: wait on semaphore with millisecond timeout */
+static int _sem_wait_ms(HANDLE sem, DWORD timeout_ms)
+{
+    DWORD result = WaitForSingleObject(sem, timeout_ms);
+    if (result == WAIT_OBJECT_0) {
+        return 0; /* Success */
+    } else if (result == WAIT_TIMEOUT) {
+        return ETIMEDOUT;
+    } else {
+        return EINVAL; /* Error */
+    }
+}
+
+FASTCOND_API(int)
+fastcond_wcond_wait_ms(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
+                       DWORD timeout_ms)
+{
+    int err1, err2;
+    cond->waiting++;
+    err1 = NATIVE_MUTEX_UNLOCK(mutex);
+    if (err1)
+        return err1;
+
+    err1 = _sem_wait_ms(cond->sem, timeout_ms);
+    err2 = NATIVE_MUTEX_LOCK(mutex);
+
+    if (err1)
+        /* wakeup did not adjust this, must do it ourselves */
+        --cond->waiting;
+
+    if (err1 == EINTR)
+        err1 = 0; /* signals, etc, cause spurious wakeup */
+
+    if (err2)
+        return err2;
+    return err1;
+}
+
+FASTCOND_API(int)
+fastcond_cond_wait_ms(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex,
+                      DWORD timeout_ms)
+{
+    int err;
+
+    /* Same logic as fastcond_cond_timedwait, but using millisecond timeout */
+    if (cond->n_wakeup == 0) {
+        cond->n_waiting++;
+        err = fastcond_wcond_wait_ms(&cond->wait, mutex, timeout_ms);
+        cond->n_waiting--;
+        if (err == 0)
+            cond->n_wakeup--;
+    } else {
+        /* n_wakeup > 0, must avoid stealing wakeup - generate spurious wakeup */
+        NATIVE_MUTEX_UNLOCK(mutex);
+#ifdef _MSC_VER
+        Sleep(0); /* Yield on Windows */
+#else
+        sched_yield();
+#endif
+        err = NATIVE_MUTEX_LOCK(mutex);
+    }
+    return err;
+}
+#endif /* FASTCOND_USE_WINDOWS */

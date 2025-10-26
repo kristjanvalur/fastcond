@@ -93,4 +93,23 @@ fastcond_cond_signal(fastcond_cond_t *cond);
 FASTCOND_API(int)
 fastcond_cond_broadcast(fastcond_cond_t *cond);
 
+#ifdef FASTCOND_USE_WINDOWS
+/*
+ * Windows-specific variants that take timeout in milliseconds directly,
+ * matching the Windows CONDITION_VARIABLE API signature.
+ * These are more efficient than the timespec variants on Windows as they
+ * avoid the absolute-to-relative time conversion overhead.
+ *
+ * timeout_ms: Timeout in milliseconds, or INFINITE for no timeout
+ * Returns: 0 on success, ETIMEDOUT on timeout, or other errno value on error
+ */
+FASTCOND_API(int)
+fastcond_wcond_wait_ms(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
+                       DWORD timeout_ms);
+
+FASTCOND_API(int)
+fastcond_cond_wait_ms(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex,
+                      DWORD timeout_ms);
+#endif /* FASTCOND_USE_WINDOWS */
+
 #endif /* ! defined _FASTCOND_H_ */

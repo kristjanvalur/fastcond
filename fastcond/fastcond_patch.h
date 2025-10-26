@@ -33,22 +33,20 @@
 
 /*
  * Windows API wrappers
- * Windows SleepConditionVariableCS has different signature, needs wrappers
+ * Windows uses the efficient *_wait_ms variants that take millisecond
+ * timeouts directly, avoiding timespec conversion overhead.
  */
 #ifdef FASTCOND_PATCH_WINDOWS
 
-/* Wrapper for SleepConditionVariableCS that matches fastcond signature */
-static inline int fastcond_patch_sleep_cs(void *cond, CRITICAL_SECTION *cs,
-                                          int (*wait_fn)(void *, native_mutex_t *)) {
-    return wait_fn((void *)cond, (native_mutex_t *)cs) ? 1 : 0;
-}
+/* Wrapper for SleepConditionVariableCS - uses millisecond timeout directly */
+#define FASTCOND_PATCH_SLEEP_WCOND(cond, cs, timeout_ms)                                          \
+    (fastcond_wcond_wait_ms((cond), (cs), (timeout_ms)) == 0 ? TRUE : FALSE)
 
-/* Define wrapper macros that will be used in the patch definitions */
-#define FASTCOND_PATCH_SLEEP_WCOND(cond, cs, timeout)                                             \
-    fastcond_patch_sleep_cs((cond), (cs), (int (*)(void *, native_mutex_t *))fastcond_wcond_wait)
+#define FASTCOND_PATCH_SLEEP_COND(cond, cs, timeout_ms)                                           \
+    (fastcond_cond_wait_ms((cond), (cs), (timeout_ms)) == 0 ? TRUE : FALSE)
 
-#define FASTCOND_PATCH_SLEEP_COND(cond, cs, timeout)                                              \
-    fastcond_patch_sleep_cs((cond), (cs), (int (*)(void *, native_mutex_t *))fastcond_cond_wait)
+#define FASTCOND_PATCH_SLEEP_COND(cond, cs, timeout_ms)                                           \
+    (fastcond_cond_wait_ms((cond), (cs), (timeout_ms)) == 0 ? TRUE : FALSE)
 
 #endif /* FASTCOND_PATCH_WINDOWS */
 
