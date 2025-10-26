@@ -6,13 +6,11 @@
 #endif
 
 #include "gil.h"
+#include "test_portability.h"
 #include <math.h>
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#include <unistd.h>
 
 /*
  * GIL Performance Benchmark
@@ -43,8 +41,8 @@ struct benchmark_context {
     int release_time_us; // Microseconds between acquisitions
 
     // Timing measurements (per thread)
-    struct timespec *acquire_times;
-    struct timespec *release_times;
+    test_timespec_t *acquire_times;
+    test_timespec_t *release_times;
     double *latencies; // Acquire latency in microseconds
     int sample_count;
     int max_samples;
@@ -54,19 +52,19 @@ struct benchmark_context {
     volatile long total_wait_time_ns;
     volatile long max_wait_time_ns;
 
-    pthread_mutex_t stats_mutex;
+    test_mutex_t stats_mutex;
 };
 
 // Get current time in nanoseconds
 static inline long long get_time_ns(void)
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
+    test_timespec_t ts;
+    test_clock_gettime(&ts);
     return ts.tv_sec * 1000000000LL + ts.tv_nsec;
 }
 
 // Calculate difference between two timespec values in microseconds
-static double timespec_diff_us(struct timespec *start, struct timespec *end)
+static double timespec_diff_us(test_timespec_t *start, test_timespec_t *end)
 {
     return (end->tv_sec - start->tv_sec) * 1e6 + (end->tv_nsec - start->tv_nsec) * 1e-3;
 }
@@ -77,20 +75,20 @@ static void busy_wait_us(int microseconds)
     if (microseconds <= 0)
         return;
 
-    struct timespec start, now;
-    clock_gettime(CLOCK_MONOTONIC, &start);
+    test_timespec_t start, now;
+    test_clock_gettime(&start);
     long long target_ns =
         start.tv_sec * 1000000000LL + start.tv_nsec + (long long) microseconds * 1000;
 
     do {
-        clock_gettime(CLOCK_MONOTONIC, &now);
+        test_clock_gettime(&now);
     } while (now.tv_sec * 1000000000LL + now.tv_nsec < target_ns);
 }
 
-void *benchmark_worker(void *arg)
+TEST_THREAD_FUNC_RETURN benchmark_worker(void *arg)
 {
     struct benchmark_context *ctx = (struct benchmark_context *) arg;
-    struct timespec acquire_start, acquire_end, release_time;
+    test_timespec_t acquire_start, acquire_end, release_time;
 
     // Wait for start signal
     while (!ctx->start_flag && !ctx->stop_flag) {
@@ -99,9 +97,9 @@ void *benchmark_worker(void *arg)
 
     for (int i = 0; i < ctx->iterations_per_thread && !ctx->stop_flag; i++) {
         // Measure acquire latency
-        clock_gettime(CLOCK_MONOTONIC, &acquire_start);
+        test_clock_gettime(&acquire_start);
         fastcond_gil_acquire(&ctx->gil);
-        clock_gettime(CLOCK_MONOTONIC, &acquire_end);
+        test_clock_gettime(&acquire_end);
 
         // Calculate acquire latency
         double latency_us = timespec_diff_us(&acquire_start, &acquire_end);
@@ -120,20 +118,20 @@ void *benchmark_worker(void *arg)
                  !__sync_bool_compare_and_swap(&ctx->max_wait_time_ns, current_max, wait_time_ns));
 
         // Store sample if we have space (thread-safe sampling)
-        pthread_mutex_lock(&ctx->stats_mutex);
+        test_mutex_lock(&ctx->stats_mutex);
         if (ctx->sample_count < ctx->max_samples) {
             int idx = ctx->sample_count++;
             ctx->acquire_times[idx] = acquire_start;
             ctx->release_times[idx] = acquire_end;
             ctx->latencies[idx] = latency_us;
         }
-        pthread_mutex_unlock(&ctx->stats_mutex);
+        test_mutex_unlock(&ctx->stats_mutex);
 
         // Simulate work while holding GIL
         busy_wait_us(ctx->hold_time_us);
 
         // Release GIL
-        clock_gettime(CLOCK_MONOTONIC, &release_time);
+        test_clock_gettime(&release_time);
         fastcond_gil_release(&ctx->gil);
 
         // Wait before next acquisition
@@ -141,7 +139,7 @@ void *benchmark_worker(void *arg)
     }
 
     __sync_sub_and_fetch(&ctx->active_threads, 1);
-    return NULL;
+    TEST_THREAD_RETURN;
 }
 
 static void print_latency_statistics(struct benchmark_context *ctx)
@@ -205,7 +203,7 @@ int run_benchmark(const char *test_name, int num_threads, int iterations_per_thr
                   int hold_time_us, int release_time_us)
 {
     struct benchmark_context ctx;
-    pthread_t threads[MAX_THREADS];
+    test_thread_t threads[MAX_THREADS];
 
     if (num_threads > MAX_THREADS) {
         fprintf(stderr, "Error: Maximum %d threads supported\n", MAX_THREADS);
@@ -221,7 +219,7 @@ int run_benchmark(const char *test_name, int num_threads, int iterations_per_thr
     // Initialize benchmark context
     memset(&ctx, 0, sizeof(ctx));
     fastcond_gil_init(&ctx.gil);
-    pthread_mutex_init(&ctx.stats_mutex, NULL);
+    test_mutex_init(&ctx.stats_mutex, NULL);
 
     ctx.num_threads = num_threads;
     ctx.iterations_per_thread = iterations_per_thread;
@@ -231,8 +229,8 @@ int run_benchmark(const char *test_name, int num_threads, int iterations_per_thr
     ctx.max_samples = MAX_SAMPLES;
 
     // Allocate memory for timing data
-    ctx.acquire_times = malloc(MAX_SAMPLES * sizeof(struct timespec));
-    ctx.release_times = malloc(MAX_SAMPLES * sizeof(struct timespec));
+    ctx.acquire_times = malloc(MAX_SAMPLES * sizeof(test_timespec_t));
+    ctx.release_times = malloc(MAX_SAMPLES * sizeof(test_timespec_t));
     ctx.latencies = malloc(MAX_SAMPLES * sizeof(double));
 
     if (!ctx.acquire_times || !ctx.release_times || !ctx.latencies) {
@@ -242,29 +240,28 @@ int run_benchmark(const char *test_name, int num_threads, int iterations_per_thr
 
     // Create worker threads
     for (int i = 0; i < num_threads; i++) {
-        if (pthread_create(&threads[i], NULL, benchmark_worker, &ctx) != 0) {
+        if (test_thread_create(&threads[i], NULL, benchmark_worker, &ctx) != 0) {
             fprintf(stderr, "Error creating thread %d\n", i);
             return 1;
         }
     }
 
     printf("Starting benchmark...\n");
-    struct timespec start_time, end_time;
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    test_timespec_t start_time, end_time;
+    test_clock_gettime(&start_time);
 
     // Start the benchmark
     ctx.start_flag = 1;
 
     // Wait for all threads to complete
     for (int i = 0; i < num_threads; i++) {
-        pthread_join(threads[i], NULL);
+        test_thread_join(threads[i], NULL);
     }
 
-    clock_gettime(CLOCK_MONOTONIC, &end_time);
+    test_clock_gettime(&end_time);
 
     // Calculate elapsed time
-    double elapsed =
-        (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) * 1e-9;
+    double elapsed = test_timespec_diff(&end_time, &start_time);
 
     printf("Benchmark completed in %.3f seconds\n", elapsed);
 
@@ -281,7 +278,7 @@ int run_benchmark(const char *test_name, int num_threads, int iterations_per_thr
 
     // Cleanup
     fastcond_gil_destroy(&ctx.gil);
-    pthread_mutex_destroy(&ctx.stats_mutex);
+    test_mutex_destroy(&ctx.stats_mutex);
     free(ctx.acquire_times);
     free(ctx.release_times);
     free(ctx.latencies);
