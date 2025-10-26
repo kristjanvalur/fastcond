@@ -300,9 +300,11 @@ jobs:
     - name: Analyze performance data
       run: |
         mkdir -p performance-output
-        uvx --from scripts/requirements.txt python scripts/analyze_performance.py \
-          combined-performance.csv \
-          --output-dir performance-output
+        cd scripts
+        uv sync
+        uv run python analyze_performance.py \
+          ../combined-performance.csv \
+          --output-dir ../performance-output
     
     - name: Create performance index page
       run: |
