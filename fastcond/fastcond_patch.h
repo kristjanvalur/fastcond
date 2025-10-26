@@ -39,13 +39,13 @@
 #ifdef FASTCOND_PATCH_WINDOWS
 
 /* Wrapper for SleepConditionVariableCS - uses millisecond timeout directly */
-#define FASTCOND_PATCH_SLEEP_WCOND(cond, cs, timeout_ms)                                          \
+#define FASTCOND_PATCH_SLEEP_WCOND(cond, cs, timeout_ms)                                           \
     (fastcond_wcond_wait_ms((cond), (cs), (timeout_ms)) == 0 ? TRUE : FALSE)
 
-#define FASTCOND_PATCH_SLEEP_COND(cond, cs, timeout_ms)                                           \
+#define FASTCOND_PATCH_SLEEP_COND(cond, cs, timeout_ms)                                            \
     (fastcond_cond_wait_ms((cond), (cs), (timeout_ms)) == 0 ? TRUE : FALSE)
 
-#define FASTCOND_PATCH_SLEEP_COND(cond, cs, timeout_ms)                                           \
+#define FASTCOND_PATCH_SLEEP_COND(cond, cs, timeout_ms)                                            \
     (fastcond_cond_wait_ms((cond), (cs), (timeout_ms)) == 0 ? TRUE : FALSE)
 
 #endif /* FASTCOND_PATCH_WINDOWS */
@@ -58,7 +58,8 @@
 /* Windows CONDITION_VARIABLE API */
 #define CONDITION_VARIABLE fastcond_wcond_t
 #define InitializeConditionVariable(cond) fastcond_wcond_init((cond), NULL)
-#define SleepConditionVariableCS(cond, cs, timeout) FASTCOND_PATCH_SLEEP_WCOND((cond), (cs), (timeout))
+#define SleepConditionVariableCS(cond, cs, timeout)                                                \
+    FASTCOND_PATCH_SLEEP_WCOND((cond), (cs), (timeout))
 #define WakeConditionVariable(cond) fastcond_wcond_signal(cond)
 #define WakeAllConditionVariable(cond) fastcond_wcond_broadcast(cond)
 /* Note: Windows CONDITION_VARIABLE has no destroy function, but fastcond does */
@@ -85,7 +86,8 @@
 /* Windows CONDITION_VARIABLE API */
 #define CONDITION_VARIABLE fastcond_cond_t
 #define InitializeConditionVariable(cond) fastcond_cond_init((cond), NULL)
-#define SleepConditionVariableCS(cond, cs, timeout) FASTCOND_PATCH_SLEEP_COND((cond), (cs), (timeout))
+#define SleepConditionVariableCS(cond, cs, timeout)                                                \
+    FASTCOND_PATCH_SLEEP_COND((cond), (cs), (timeout))
 #define WakeConditionVariable(cond) fastcond_cond_signal(cond)
 #define WakeAllConditionVariable(cond) fastcond_cond_broadcast(cond)
 /* Note: Windows CONDITION_VARIABLE has no destroy function, but fastcond does */

@@ -96,7 +96,7 @@ fastcond_cond_broadcast(fastcond_cond_t *cond);
 #ifdef FASTCOND_TEST_INSTRUMENTATION
 /*
  * Test instrumentation for validating fastcond_patch.h
- * 
+ *
  * When FASTCOND_TEST_INSTRUMENTATION is defined, fastcond functions will
  * call a registered callback on entry, allowing tests to verify that
  * patched code actually invokes fastcond implementations rather than

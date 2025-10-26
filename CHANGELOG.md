@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Native baseline test variants (`_native` suffix) for all platforms
 - Cross-platform `gil_benchmark` tool for GIL-specific performance testing
 - **Windows API patching support** in `fastcond_patch.h` for CONDITION_VARIABLE macros
+- **Windows-native millisecond wait functions** (`fastcond_*_wait_ms`) for zero-overhead timeout handling
+- **Test instrumentation API** with callback mechanism to verify patch functionality (testing only)
+- Comprehensive patch validation tests for both POSIX and Windows platforms
 
 ### Changed
 - Renamed `_pt` (pthread) suffix to `_native` for platform-neutral baseline comparisons
@@ -23,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved GIL test synchronization and bookkeeping around `yield()` operations
 - Applied consistent code formatting across all test files
 - **Enhanced `fastcond_patch.h`** to support both Windows and POSIX APIs with platform detection
+- Patch tests now compile fastcond.c directly with instrumentation for definitive verification
 
 ### Fixed
 - ODR (One Definition Rule) violation in `gil_test_native` targets

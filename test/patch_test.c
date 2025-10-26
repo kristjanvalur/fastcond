@@ -174,7 +174,8 @@ int main(void)
 
     printf("Cleaning up...\n");
 #ifdef _WIN32
-    /* Windows: DeleteConditionVariable (non-standard) will be replaced by fastcond_*_fini via patch */
+    /* Windows: DeleteConditionVariable (non-standard) will be replaced by fastcond_*_fini via patch
+     */
     /* Note: Native CONDITION_VARIABLE has no cleanup, but fastcond does */
     DeleteConditionVariable(&ctx.cond);
 #else
@@ -206,11 +207,10 @@ int main(void)
     int expected_min = 3;
 #endif
     if (callback_count >= expected_min) {
-        printf("   - ✅ Expected number of calls confirmed (%d >= %d)\n",
-               callback_count, expected_min);
+        printf("   - ✅ Expected number of calls confirmed (%d >= %d)\n", callback_count,
+               expected_min);
     } else {
-        printf("   - ⚠️  Fewer calls than expected (%d < %d)\n",
-               callback_count, expected_min);
+        printf("   - ⚠️  Fewer calls than expected (%d < %d)\n", callback_count, expected_min);
     }
 #else
 #ifdef _WIN32
