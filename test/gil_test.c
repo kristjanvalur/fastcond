@@ -32,6 +32,11 @@
  *
  * Fairness is measured statistically rather than as an absolute guarantee,
  * as scheduling and timing can affect fairness in practice.
+ *
+ * Environment variables:
+ *   FASTCOND_CSV_OUTPUT - If set, output results in CSV format to specified file
+ *   FASTCOND_PLATFORM - Platform name for CSV output (e.g., "linux", "macos", "windows")
+ *   FASTCOND_OS_VERSION - OS version for CSV output (e.g., "ubuntu-latest")
  */
 
 #define MAX_THREADS 16
@@ -612,6 +617,34 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     printf("Operations per second: %.0f\n", ctx.global_acquisitions_done / elapsed);
     printf("Average latency per operation: %.1f μs\n",
            (elapsed * 1e6) / ctx.global_acquisitions_done);
+
+    /* Check if CSV output is requested */
+    {
+        const char *csv_file = getenv("FASTCOND_CSV_OUTPUT");
+        if (csv_file) {
+            const char *platform = getenv("FASTCOND_PLATFORM");
+            const char *os_version = getenv("FASTCOND_OS_VERSION");
+            const char *variant = "fastcond_gil";
+
+            /* Default values if env vars not set */
+            if (!platform)
+                platform = "unknown";
+            if (!os_version)
+                os_version = "unknown";
+
+            FILE *fp = fopen(csv_file, "a");
+            if (fp) {
+                /* Write CSV row to match standard format:
+                 * platform,os_version,test,variant,threads,param,iterations,elapsed_sec,throughput
+                 * For gil_test: param=total_acquisitions, iterations=1 (single run)
+                 */
+                fprintf(fp, "%s,%s,gil_test,%s,%d,%d,%d,%.6f,%.2f\n", platform, os_version, variant,
+                        num_threads, ctx.global_acquisitions_done, 1, elapsed,
+                        ctx.global_acquisitions_done / elapsed);
+                fclose(fp);
+            }
+        }
+    }
 
     // Cleanup
     fastcond_gil_destroy(&ctx.gil);

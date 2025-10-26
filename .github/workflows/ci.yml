@@ -128,6 +128,40 @@ jobs:
     - name: Run benchmarks (Release only)
       if: matrix.build_type == 'Release' && runner.os != 'Windows'
       run: ./scripts/benchmark.sh
+    
+    - name: Run performance benchmarks and collect data (Release only)
+      if: matrix.build_type == 'Release'
+      run: |
+        # Set platform identifiers for CI
+        if [ "${{ runner.os }}" = "Linux" ]; then
+          export FASTCOND_PLATFORM="linux"
+          export FASTCOND_OS_VERSION="ubuntu-latest"
+        elif [ "${{ runner.os }}" = "macOS" ]; then
+          export FASTCOND_PLATFORM="macos"
+          export FASTCOND_OS_VERSION="macos-latest"
+        elif [ "${{ runner.os }}" = "Windows" ]; then
+          export FASTCOND_PLATFORM="windows"
+          export FASTCOND_OS_VERSION="windows-latest"
+        fi
+        
+        # Determine build directory
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          BUILD_DIR="build/${{ matrix.build_type }}"
+        else
+          BUILD_DIR="build"
+        fi
+        
+        # Run benchmark script
+        ./scripts/run_performance_benchmarks.sh "$BUILD_DIR" "performance-results.csv"
+      shell: bash
+    
+    - name: Upload performance results artifact
+      if: matrix.build_type == 'Release'
+      uses: actions/upload-artifact@v4
+      with:
+        name: perf-${{ runner.os }}-${{ matrix.compiler }}
+        path: performance-results.csv
+        retention-days: 30
 
   sanitizers:
     name: ${{ matrix.sanitizer }} sanitizer
