@@ -764,15 +764,26 @@ int main(int argc, char *argv[])
            argv[0]);
     fflush(stdout);  /* Ensure output appears on Windows */
 
+    printf("=== About to call test_gil_yield ===\n");
+    fflush(stdout);
+
     // Run yield API test first
     test_gil_yield();
 
+    fprintf(stderr, "=== STDERR: Yield test completed, initializing random seed ===\n");
     printf("=== Yield test completed, initializing random seed ===\n");
     fflush(stdout);
 
     // Initialize random seed for release delay variance
+    fprintf(stderr, "=== STDERR: Calling srand(time(NULL)) ===\n");
+    printf("=== Calling srand(time(NULL)) ===\n");
+    fflush(stdout);
     srand(time(NULL));
+    fprintf(stderr, "=== STDERR: srand completed ===\n");
+    printf("=== srand completed ===\n");
+    fflush(stdout);
 
+    fprintf(stderr, "=== STDERR: Calling run_gil_test ===\n");
     printf("=== Calling run_gil_test ===\n");
     fflush(stdout);
 
