@@ -32,12 +32,13 @@
 
 void fastcond_gil_init(struct fastcond_gil *gil)
 {
+    // TEMPORARILY DISABLE COND INIT TO ISOLATE HANG
     // Always initialize condition variables (even if NAIVE mode won't use them)
-#if FASTCOND_GIL_USE_NATIVE_COND
-    NATIVE_COND_INIT(&gil->cond);
-#else
-    fastcond_cond_init(&gil->cond, NULL);
-#endif
+// #if FASTCOND_GIL_USE_NATIVE_COND
+//     NATIVE_COND_INIT(&gil->cond);
+// #else
+//     fastcond_cond_init(&gil->cond, NULL);
+// #endif
 
     NATIVE_MUTEX_INIT(&gil->mutex);
 
