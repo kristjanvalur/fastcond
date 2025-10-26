@@ -18,6 +18,11 @@
  *   (none)      - Use native condition variables (pthread_cond_t or CONDITION_VARIABLE)
  *   -DTEST_COND - Use fastcond strong condition variable
  *   -DTEST_WCOND - Use fastcond weak condition variable (will deadlock!)
+ *
+ * Environment variables:
+ *   FASTCOND_CSV_OUTPUT - If set, output results in CSV format to specified file
+ *   FASTCOND_PLATFORM - Platform name for CSV output (e.g., "linux", "macos", "windows")
+ *   FASTCOND_OS_VERSION - OS version for CSV output (e.g., "ubuntu-latest")
  */
 
 #if defined(TEST_WCOND)
@@ -228,6 +233,37 @@ int main(int argc, char *argv[])
 
     /* Calculate elapsed time */
     elapsed_sec = test_timespec_diff(&end_time, &start_time);
+
+    /* Determine variant name */
+    const char *variant;
+#if defined(TEST_WCOND)
+    variant = "fastcond_wcond";
+#elif defined(TEST_COND)
+    variant = "fastcond_cond";
+#else
+    variant = "native";
+#endif
+
+    /* Check if CSV output is requested */
+    const char *csv_file = getenv("FASTCOND_CSV_OUTPUT");
+    if (csv_file) {
+        const char *platform = getenv("FASTCOND_PLATFORM");
+        const char *os_version = getenv("FASTCOND_OS_VERSION");
+        
+        /* Default values if env vars not set */
+        if (!platform) platform = "unknown";
+        if (!os_version) os_version = "unknown";
+        
+        FILE *fp = fopen(csv_file, "a");
+        if (fp) {
+            /* Write CSV row: platform,os_version,test,variant,threads,queue_size,iterations,elapsed_sec,throughput_items_per_sec */
+            fprintf(fp, "%s,%s,strongtest,%s,%d,%d,%d,%.6f,%.2f\n",
+                    platform, os_version, variant,
+                    n_senders, max_queue, n_data,
+                    elapsed_sec, n_data / elapsed_sec);
+            fclose(fp);
+        }
+    }
 
     /* Print overall statistics */
     printf("=== Overall Statistics ===\n");

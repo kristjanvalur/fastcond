@@ -1,28 +1,404 @@
-name: Performance Benchmarks
+name: Performance Benchmarksname: Performance Benchmarks
 
-on:
-  push:
-    branches: [ master, main ]
-  pull_request:
-    branches: [ master, main ]
-  workflow_dispatch:  # Allow manual trigger
-  schedule:
-    # Run weekly on Monday at 00:00 UTC to track performance over time
-    - cron: '0 0 * * 1'
-  # Also trigger when PRs are merged to master
-  pull_request_target:
-    branches: [ master, main ]
-    types: [ closed ]
 
-jobs:
-  benchmark:
-    name: Run Performance Benchmarks
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Fetch all history for performance tracking
+
+on:on:
+
+  # Trigger after CI workflow completes (will have artifacts)  # Trigger after CI workflow completes (will have artifacts)
+
+  workflow_run:  workflow_run:
+
+    workflows: ["CI"]    workflows: ["CI"]
+
+    types:    types:
+
+      - completed      - completed
+
+    branches: [ master, main ]    branches: [ master, main ]
+
+  push:  push:
+
+    branches: [ master, main ]    branches: [ master, main ]
+
+  pull_request:  pull_request:
+
+    branches: [ master, main ]    branches: [ master, main ]
+
+  workflow_dispatch:  # Allow manual trigger  workflow_dispatch:  # Allow manual trigger
+
+  schedule:  schedule:
+
+    # Run weekly on Monday at 00:00 UTC to track performance over time    # Run weekly on Monday at 00:00 UTC to track performance over time
+
+    - cron: '0 0 * * 1'    - cron: '0 0 * * 1'
+
+
+
+jobs:jobs:
+
+  # New approach: Collect performance data from CI artifacts or run locally  # Job 1: Collect performance data from CI artifacts or run locally
+
+  collect-performance-data:  collect-performance-data:
+
+    name: Collect Performance Data    name: Collect Performance Data
+
+    runs-on: ubuntu-latest    runs-on: ubuntu-latest
+
+        
+
+    steps:    steps:
+
+    - uses: actions/checkout@v4    - uses: actions/checkout@v4
+
+      with:      with:
+
+        fetch-depth: 0        fetch-depth: 0
+
+        
+
+    # Try to download artifacts from CI workflow    # Try to download artifacts from CI workflow
+
+    - name: Download CI performance artifacts    - name: Download CI performance artifacts
+
+      if: github.event_name == 'workflow_run'      if: github.event_name == 'workflow_run'
+
+      uses: actions/download-artifact@v4      uses: actions/download-artifact@v4
+
+      with:      with:
+
+        pattern: perf-*        pattern: perf-*
+
+        path: artifacts/        path: artifacts/
+
+        merge-multiple: false        merge-multiple: false
+
+      continue-on-error: true      continue-on-error: true
+
+        
+
+    # If no artifacts available, run benchmarks locally    # If no artifacts available, run benchmarks locally
+
+    - name: Check if artifacts were downloaded    - name: Check if artifacts were downloaded
+
+      id: check_artifacts      id: check_artifacts
+
+      run: |      run: |
+
+        if [ -d "artifacts" ] && [ "$(find artifacts -name '*.csv' | wc -l)" -gt 0 ]; then        if [ -d "artifacts" ] && [ "$(find artifacts -name '*.csv' | wc -l)" -gt 0 ]; then
+
+          echo "has_artifacts=true" >> $GITHUB_OUTPUT          echo "has_artifacts=true" >> $GITHUB_OUTPUT
+
+          echo "✅ Found CI artifacts, will use them"          echo "✅ Found CI artifacts, will use them"
+
+        else        else
+
+          echo "has_artifacts=false" >> $GITHUB_OUTPUT          echo "has_artifacts=false" >> $GITHUB_OUTPUT
+
+          echo "⚠️  No CI artifacts found, will run benchmarks locally"          echo "⚠️  No CI artifacts found, will run benchmarks locally"
+
+        fi        fi
+
+        
+
+    - name: Install build dependencies (if running locally)    - name: Install build dependencies (if running locally)
+
+      if: steps.check_artifacts.outputs.has_artifacts == 'false'      if: steps.check_artifacts.outputs.has_artifacts == 'false'
+
+      run: |      run: |
+
+        sudo apt-get update        sudo apt-get update
+
+        sudo apt-get install -y build-essential cmake        sudo apt-get install -y build-essential cmake
+
+        
+
+    - name: Build and run benchmarks locally (fallback)    - name: Build and run benchmarks locally (fallback)
+
+      if: steps.check_artifacts.outputs.has_artifacts == 'false'      if: steps.check_artifacts.outputs.has_artifacts == 'false'
+
+      run: |      run: |
+
+        # Build tests        # Build tests
+
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DFASTCOND_BUILD_TESTS=ON        cmake -B build -DCMAKE_BUILD_TYPE=Release -DFASTCOND_BUILD_TESTS=ON
+
+        cmake --build build -j$(nproc)        cmake --build build -j$(nproc)
+
+                
+
+        # Create artifacts directory structure        # Create artifacts directory structure
+
+        mkdir -p artifacts/perf-Linux-gcc        mkdir -p artifacts/perf-Linux-gcc
+
+                mkdir -p artifacts/perf-Linux-clang
+
+        # Run benchmarks with local build        
+
+        ./scripts/run_performance_benchmarks.sh build artifacts/perf-Linux-gcc/performance-results.csv        # Run benchmarks with GCC build (primary)
+
+                ./scripts/run_performance_benchmarks.sh build artifacts/perf-Linux-gcc/performance-results.csv
+
+        echo "✅ Local benchmarks complete"        
+
+            echo "✅ Local benchmarks complete"
+
+    - name: Merge all performance data    
+
+      run: |    - name: Merge all performance data
+
+        # Combine all CSV files into one      run: |
+
+        mkdir -p combined        # Combine all CSV files into one
+
+                mkdir -p combined
+
+        # Write header        
+
+        echo "platform,os_version,test,variant,threads,param,iterations,elapsed_sec,throughput" > combined/all-performance-data.csv        # Write header
+
+                echo "platform,os_version,test,variant,threads,param,iterations,elapsed_sec,throughput" > combined/all-performance-data.csv
+
+        # Append all data (skip headers from individual files)        
+
+        find artifacts -name 'performance-results.csv' -exec tail -n +2 {} \; >> combined/all-performance-data.csv        # Append all data (skip headers from individual files)
+
+                find artifacts -name 'performance-results.csv' -exec tail -n +2 {} \; >> combined/all-performance-data.csv
+
+        echo "✅ Merged performance data:"        
+
+        wc -l combined/all-performance-data.csv        echo "✅ Merged performance data:"
+
+        head -20 combined/all-performance-data.csv        wc -l combined/all-performance-data.csv
+
+            head -20 combined/all-performance-data.csv
+
+    - name: Upload combined performance data    
+
+      uses: actions/upload-artifact@v4    - name: Upload combined performance data
+
+      with:      uses: actions/upload-artifact@v4
+
+        name: combined-performance-data      with:
+
+        path: combined/all-performance-data.csv        name: combined-performance-data
+
+        retention-days: 90        path: combined/all-performance-data.csv
+
+          retention-days: 90
+
+  # Analyze performance data and generate reports  
+
+  analyze-performance:  # Job 2: Analyze performance data and generate reports
+
+    name: Analyze Performance Results  analyze-performance:
+
+    runs-on: ubuntu-latest    name: Analyze Performance Results
+
+    needs: collect-performance-data    runs-on: ubuntu-latest
+
+        needs: collect-performance-data
+
+    steps:    
+
+    - uses: actions/checkout@v4    steps:
+
+        - uses: actions/checkout@v4
+
+    - name: Install uv    
+
+      uses: astral-sh/setup-uv@v5    - name: Install uv
+
+      with:      uses: astral-sh/setup-uv@v5
+
+        enable-cache: true      with:
+
+            enable-cache: true
+
+    - name: Install Python dependencies    
+
+      run: |    - name: Install Python dependencies
+
+        cd scripts      run: |
+
+        uv sync        cd scripts
+
+            uv sync
+
+    - name: Download combined performance data    
+
+      uses: actions/download-artifact@v4    - name: Download combined performance data
+
+      with:      uses: actions/download-artifact@v4
+
+        name: combined-performance-data      with:
+
+        path: data/        name: combined-performance-data
+
+            path: data/
+
+    - name: Run performance analysis    
+
+      run: |    - name: Run performance analysis
+
+        mkdir -p docs/performance      run: |
+
+        cd scripts        mkdir -p docs
+
+        uv run python analyze_performance.py ../data/all-performance-data.csv --output-dir ../docs/performance        cd scripts
+
+            uv run python analyze_performance.py ../data/all-performance-data.csv --output-dir ../docs
+
+    - name: Generate index page    
+
+      run: |    - name: Generate index page
+
+        cat > docs/performance/index.html << 'EOF'      run: |
+
+        <!DOCTYPE html>        cat > docs/index.html << 'EOF'
+
+        <html lang="en">        <!DOCTYPE html>
+
+        <head>        <html lang="en">
+
+            <meta charset="UTF-8">        <head>
+
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">            <meta charset="UTF-8">
+
+            <title>fastcond Performance Results</title>            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+            <style>            <title>fastcond Performance Results</title>
+
+                body {            <style>
+
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;                body {
+
+                    max-width: 1200px;                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+                    margin: 0 auto;                    max-width: 1200px;
+
+                    padding: 20px;                    margin: 0 auto;
+
+                    line-height: 1.6;                    padding: 20px;
+
+                }                    line-height: 1.6;
+
+                h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }                }
+
+                h2 { color: #34495e; margin-top: 30px; }                h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+
+                img { max-width: 100%; height: auto; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }                h2 { color: #34495e; margin-top: 30px; }
+
+                .chart-container { margin: 30px 0; }                img { max-width: 100%; height: auto; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+                table { border-collapse: collapse; width: 100%; margin: 20px 0; }                .chart-container { margin: 30px 0; }
+
+                th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }                table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+
+                th { background-color: #3498db; color: white; }                th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+
+                tr:nth-child(even) { background-color: #f2f2f2; }                th { background-color: #3498db; color: white; }
+
+                .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; color: #7f8c8d; }                tr:nth-child(even) { background-color: #f2f2f2; }
+
+            </style>                .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; color: #7f8c8d; }
+
+        </head>            </style>
+
+        <body>        </head>
+
+            <h1>🚀 fastcond Performance Benchmarks</h1>        <body>
+
+            <p>Cross-platform performance comparison of fastcond synchronization primitives vs native implementations.</p>            <h1>🚀 fastcond Performance Benchmarks</h1>
+
+                        <p>Cross-platform performance comparison of fastcond synchronization primitives vs native implementations.</p>
+
+            <h2>📊 Performance Comparison Charts</h2>            
+
+            <div class="chart-container">            <h2>📊 Performance Comparison Charts</h2>
+
+                <h3>Throughput Comparison</h3>            <div class="chart-container">
+
+                <img src="performance-comparison.png" alt="Performance Comparison Across Platforms">                <h3>Throughput Comparison</h3>
+
+            </div>                <img src="performance-comparison.png" alt="Performance Comparison Across Platforms">
+
+                        </div>
+
+            <div class="chart-container">            
+
+                <h3>Speedup vs Native</h3>            <div class="chart-container">
+
+                <img src="speedup-comparison.png" alt="Speedup Comparison">                <h3>Speedup vs Native</h3>
+
+            </div>                <img src="speedup-comparison.png" alt="Speedup Comparison">
+
+                        </div>
+
+            <h2>📈 Detailed Results</h2>            
+
+            <p>See <a href="performance-comparison.md">performance-comparison.md</a> for detailed benchmark results.</p>            <h2>📈 Detailed Results</h2>
+
+            <p>Download raw data: <a href="performance-summary.json">performance-summary.json</a></p>            <p>See <a href="performance-comparison.md">performance-comparison.md</a> for detailed benchmark results.</p>
+
+                        <p>Download raw data: <a href="performance-summary.json">performance-summary.json</a></p>
+
+            <div class="footer">            
+
+                <p>Generated: ${date -u +"%Y-%m-%d %H:%M:%S UTC"}</p>            <div class="footer">
+
+                <p>Repository: <a href="https://github.com/kristjanvalur/fastcond">kristjanvalur/fastcond</a></p>                <p>Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")</p>
+
+            </div>                <p>Repository: <a href="https://github.com/kristjanvalur/fastcond">kristjanvalur/fastcond</a></p>
+
+        </body>            </div>
+
+        </html>        </body>
+
+        EOF        </html>
+
+            EOF
+
+    - name: Upload analysis results    
+
+      uses: actions/upload-artifact@v4    - name: Upload analysis results
+
+      with:      uses: actions/upload-artifact@v4
+
+        name: performance-analysis      with:
+
+        path: |        name: performance-analysis
+
+          docs/performance/performance-comparison.md        path: |
+
+          docs/performance/performance-summary.json          docs/performance-comparison.md
+
+          docs/performance/performance-comparison.png          docs/performance-summary.json
+
+          docs/performance/speedup-comparison.png          docs/performance-comparison.png
+
+          docs/performance/index.html          docs/speedup-comparison.png
+
+        retention-days: 90          docs/index.html
+
+            retention-days: 90
+
+    - name: Deploy to GitHub Pages    
+
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'    - name: Deploy to GitHub Pages
+
+      uses: peaceiris/actions-gh-pages@v4      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+      with:      uses: peaceiris/actions-gh-pages@v4
+
+        github_token: ${{ secrets.GITHUB_TOKEN }}      with:
+
+        publish_dir: ./docs/performance        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+        keep_files: true        publish_dir: ./docs
+
+        destination_dir: performance        keep_files: true
+
+        destination_dir: performance
     
     - name: Install uv
       uses: astral-sh/setup-uv@v5
