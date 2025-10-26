@@ -32,11 +32,11 @@
 
 void fastcond_gil_init(struct fastcond_gil *gil)
 {
-    // STEP-BY-STEP ISOLATION: Test ONLY mutex init
+    // STEP-BY-STEP ISOLATION: Add back one field at a time
     NATIVE_MUTEX_INIT(&gil->mutex);
+    gil->held = 0;
 
     // TEMPORARILY DISABLED TO ISOLATE HANG
-    // gil->held = 0;
     // gil->n_waiting = 0;
     // gil->last_owner = NATIVE_THREAD_SELF();
 }
