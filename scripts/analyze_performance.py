@@ -156,95 +156,144 @@ def generate_comparison_table(data: List[PerformanceData]) -> str:
 
 
 def generate_charts(data: List[PerformanceData], output_dir: Path):
-    """Generate comparative performance charts"""
+    """Generate per-platform comparative performance charts"""
     if not HAS_MATPLOTLIB:
         print("Skipping chart generation (matplotlib not available)")
         return
 
     grouped = group_by_configuration(data)
-
-    # Chart 1: Throughput comparison by platform
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-    fig.suptitle("fastcond Performance Across Platforms", fontsize=16)
-
     platforms = sorted(set(d.platform for d in data))
     tests = ["qtest", "strongtest", "gil_test"]
-
-    for idx, test in enumerate(tests):
+    
+    # Chart 1: Per-platform speedup comparison (most important)
+    num_platforms = len(platforms)
+    fig, axes = plt.subplots(1, num_platforms, figsize=(6 * num_platforms, 6))
+    if num_platforms == 1:
+        axes = [axes]  # Make it iterable
+    
+    fig.suptitle("fastcond Speedup vs Native (per platform)", fontsize=16, fontweight='bold')
+    
+    for idx, platform in enumerate(platforms):
         ax = axes[idx]
-        ax.set_title(f"{test} Throughput")
-        ax.set_xlabel("Variant")
-        ax.set_ylabel("Throughput (ops/sec)")
-
-        # Collect data for this test across platforms
-        test_data = [d for d in data if d.test == test]
-        if not test_data:
-            continue
-
-        variants = sorted(set(d.variant for d in test_data))
-        x_pos = range(len(variants))
-
-        for platform in platforms:
-            platform_data = [d for d in test_data if d.platform == platform]
-            throughputs = []
-            for variant in variants:
-                variant_data = [d for d in platform_data if d.variant == variant]
-                avg_throughput = (
-                    sum(d.throughput for d in variant_data) / len(variant_data)
-                    if variant_data
-                    else 0
-                )
-                throughputs.append(avg_throughput)
-
-            ax.plot(x_pos, throughputs, marker="o", label=platform, linewidth=2)
-
-        ax.set_xticks(x_pos)
-        ax.set_xticklabels(variants, rotation=45, ha="right")
-        ax.legend()
-        ax.grid(True, alpha=0.3)
-
-    plt.tight_layout()
-    chart_path = output_dir / "performance-comparison.png"
-    plt.savefig(chart_path, dpi=150, bbox_inches="tight")
-    print(f"Saved chart: {chart_path}")
-    plt.close()
-
-    # Chart 2: Speedup over native
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.set_title("Speedup vs Native Implementation")
-    ax.set_xlabel("Test Configuration")
-    ax.set_ylabel("Speedup (x times faster)")
-    ax.axhline(y=1.0, color="red", linestyle="--", label="Native baseline")
-
-    speedups = []
-    labels = []
-
-    for key in sorted(grouped.keys()):
-        platform, test, threads, param = key
-        results = grouped[key]
-
-        native = next((r for r in results if r.variant == "native"), None)
-        if not native:
-            continue
-
-        for result in results:
-            if result.variant != "native":
-                speedup = calculate_speedup(native.throughput, result.throughput)
-                speedups.append(speedup)
-                labels.append(f"{platform}\n{test}\n{result.variant}")
-
-    x_pos = range(len(speedups))
-    colors = ["green" if s > 1.0 else "orange" for s in speedups]
-    ax.bar(x_pos, speedups, color=colors, alpha=0.7)
-    ax.set_xticks(x_pos)
-    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
-    ax.grid(True, alpha=0.3, axis="y")
-    ax.legend()
-
+        ax.set_title(f"{platform.capitalize()}", fontsize=14)
+        ax.set_xlabel("Test", fontsize=12)
+        ax.set_ylabel("Speedup (×)", fontsize=12)
+        ax.axhline(y=1.0, color="red", linestyle="--", linewidth=2, label="Native baseline", alpha=0.7)
+        
+        # Collect speedups for this platform
+        speedup_data = {}  # {test: {variant: speedup}}
+        
+        for key in grouped.keys():
+            plat, test, threads, param = key
+            if plat != platform:
+                continue
+                
+            results = grouped[key]
+            native = next((r for r in results if "native" in r.variant), None)
+            if not native:
+                continue
+            
+            if test not in speedup_data:
+                speedup_data[test] = {}
+            
+            for result in results:
+                if "native" not in result.variant:  # Skip native, only show fastcond variants
+                    speedup = calculate_speedup(native.throughput, result.throughput)
+                    # Use simpler variant names for chart
+                    variant_name = result.variant.replace("fastcond_", "").replace("_gil", "")
+                    speedup_data[test][variant_name] = speedup
+        
+        # Plot grouped bars per test
+        if speedup_data:
+            test_names = sorted(speedup_data.keys())
+            variants = sorted(set(v for test_variants in speedup_data.values() for v in test_variants.keys()))
+            
+            x = range(len(test_names))
+            width = 0.8 / max(len(variants), 1)
+            
+            for i, variant in enumerate(variants):
+                speedups = [speedup_data[test].get(variant, 0) for test in test_names]
+                offset = (i - len(variants) / 2) * width + width / 2
+                colors = ["green" if s >= 1.0 else "orange" for s in speedups]
+                ax.bar([xi + offset for xi in x], speedups, width, 
+                      label=variant, color=colors, alpha=0.7, edgecolor='black')
+            
+            ax.set_xticks(x)
+            ax.set_xticklabels(test_names, fontsize=10)
+            ax.legend(fontsize=10)
+            ax.grid(True, alpha=0.3, axis="y")
+            ax.set_ylim(bottom=0)
+    
     plt.tight_layout()
     speedup_chart = output_dir / "speedup-comparison.png"
     plt.savefig(speedup_chart, dpi=150, bbox_inches="tight")
     print(f"Saved chart: {speedup_chart}")
+    plt.close()
+    
+    # Chart 2: Per-platform throughput comparison (secondary, for absolute numbers)
+    fig, axes = plt.subplots(1, num_platforms, figsize=(6 * num_platforms, 6))
+    if num_platforms == 1:
+        axes = [axes]
+    
+    fig.suptitle("Throughput by Variant (per platform)", fontsize=16, fontweight='bold')
+    
+    for idx, platform in enumerate(platforms):
+        ax = axes[idx]
+        ax.set_title(f"{platform.capitalize()}", fontsize=14)
+        ax.set_xlabel("Test", fontsize=12)
+        ax.set_ylabel("Throughput (ops/sec)", fontsize=12)
+        
+        # Collect throughput for this platform
+        throughput_data = {}  # {test: {variant: throughput}}
+        
+        for key in grouped.keys():
+            plat, test, threads, param = key
+            if plat != platform:
+                continue
+                
+            results = grouped[key]
+            if test not in throughput_data:
+                throughput_data[test] = {}
+            
+            for result in results:
+                # Average multiple runs
+                variant_name = result.variant.replace("fastcond_", "").replace("_gil", "")
+                if variant_name in throughput_data[test]:
+                    throughput_data[test][variant_name].append(result.throughput)
+                else:
+                    throughput_data[test][variant_name] = [result.throughput]
+        
+        # Average the throughputs
+        for test in throughput_data:
+            for variant in throughput_data[test]:
+                throughput_data[test][variant] = sum(throughput_data[test][variant]) / len(throughput_data[test][variant])
+        
+        # Plot grouped bars per test
+        if throughput_data:
+            test_names = sorted(throughput_data.keys())
+            variants = sorted(set(v for test_variants in throughput_data.values() for v in test_variants.keys()))
+            
+            x = range(len(test_names))
+            width = 0.8 / max(len(variants), 1)
+            
+            for i, variant in enumerate(variants):
+                throughputs = [throughput_data[test].get(variant, 0) for test in test_names]
+                offset = (i - len(variants) / 2) * width + width / 2
+                ax.bar([xi + offset for xi in x], throughputs, width, 
+                      label=variant, alpha=0.7, edgecolor='black')
+            
+            ax.set_xticks(x)
+            ax.set_xticklabels(test_names, fontsize=10)
+            ax.legend(fontsize=10)
+            ax.grid(True, alpha=0.3, axis="y")
+            ax.set_ylim(bottom=0)
+            # Use scientific notation for large numbers
+            ax.ticklabel_format(style='scientific', axis='y', scilimits=(0,0))
+    
+    plt.tight_layout()
+    throughput_chart = output_dir / "performance-comparison.png"
+    plt.savefig(throughput_chart, dpi=150, bbox_inches="tight")
+    print(f"Saved chart: {throughput_chart}")
     plt.close()
 
 
