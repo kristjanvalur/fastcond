@@ -381,18 +381,47 @@ jobs:
             <h1>🚀 fastcond Cross-Platform Performance Benchmarks</h1>
             <p>Performance comparison of fastcond synchronization primitives vs native implementations across Linux, macOS, and Windows platforms.</p>
             
-            <h2>📊 Performance Comparison Charts</h2>
+            <h2>📊 qtest - Producer-Consumer Queue Test</h2>
+            <p>Tests producer-consumer patterns using separate not_empty/not_full conditions with 4 threads and queue size 10.</p>
             
             <div class="chart-container">
-                <h3>Throughput Comparison Across Platforms</h3>
-                <img src="performance-comparison.png" alt="Performance Comparison Across Platforms">
-                <p><em>Higher throughput is better. Shows operations per second for each test variant across all platforms.</em></p>
+                <h3>Speedup vs Native</h3>
+                <img src="qtest-speedup.png" alt="qtest Speedup Comparison">
+                <p><em>Values > 1.0 indicate fastcond outperforms native implementation on that platform.</em></p>
             </div>
             
             <div class="chart-container">
-                <h3>Speedup vs Native Implementation</h3>
-                <img src="speedup-comparison.png" alt="Speedup Comparison">
-                <p><em>Values > 1.0 indicate fastcond outperforms native implementation. Grouped by platform and test.</em></p>
+                <h3>Absolute Throughput</h3>
+                <img src="qtest-throughput.png" alt="qtest Throughput Comparison">
+            </div>
+            
+            <h2>📊 strongtest - Single Condition Variable Test</h2>
+            <p>Validates strong semantics using a single condition variable for both producer and consumer threads.</p>
+            
+            <div class="chart-container">
+                <h3>Speedup vs Native</h3>
+                <img src="strongtest-speedup.png" alt="strongtest Speedup Comparison">
+                <p><em>This test specifically validates that only already-waiting threads are woken up.</em></p>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Absolute Throughput</h3>
+                <img src="strongtest-throughput.png" alt="strongtest Throughput Comparison">
+            </div>
+            
+            <h2>📊 gil_test - GIL Contention Simulation</h2>
+            <p>Simulates Python's Global Interpreter Lock with high contention across 4 threads and 1,000 acquisitions.</p>
+            
+            <div class="chart-container">
+                <h3>Speedup vs Native</h3>
+                <img src="gil_test-speedup.png" alt="gil_test Speedup Comparison">
+                <p><em>GIL patterns have different performance characteristics due to high lock contention.</em></p>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Absolute Throughput</h3>
+                <img src="gil_test-throughput.png" alt="gil_test Throughput Comparison">
+            </div>
             </div>
             
             <h2>📈 Detailed Results</h2>
