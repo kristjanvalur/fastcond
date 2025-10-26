@@ -91,29 +91,33 @@ jobs:
       run: |
         cd build
         if [ "${{ runner.os }}" = "Windows" ]; then
-          # On Windows, run debug tests first
-          echo "=== Running atomic operations test ==="
-          ./${{ matrix.build_type }}/test_atomics.exe
-          echo ""
-          echo "=== Running native condition variable test ==="
-          ./${{ matrix.build_type }}/test_native_cond.exe
-          echo ""
-          echo "=== Running minimal GIL mutual exclusion test ==="
-          ./${{ matrix.build_type }}/test_gil_exclusion_native.exe
-          ./${{ matrix.build_type }}/test_gil_exclusion_fc.exe
-          echo ""
-          
-          echo "=== Running GIL tests on Windows with native CONDITION_VARIABLE ==="
+          # TEMPORARY: Only run gil_test_native.exe to isolate the hang
+          echo "=== Running ONLY gil_test_native.exe to isolate hang ==="
           ./${{ matrix.build_type }}/gil_test_native.exe 4 1000
-          echo ""
-          echo "=== Running GIL tests with fastcond ==="
-          ./${{ matrix.build_type }}/gil_test_fc.exe 4 1000
-          echo ""
           
-          echo "=== Running qtest/strongtest ==="
-          ./${{ matrix.build_type }}/qtest_fc.exe 10000 4 10
-          ./${{ matrix.build_type }}/qtest_wcond.exe 10000 4 10
-          ./${{ matrix.build_type }}/strongtest_fc.exe 10000 5
+          # DISABLED temporarily for debugging
+          # echo "=== Running atomic operations test ==="
+          # ./${{ matrix.build_type }}/test_atomics.exe
+          # echo ""
+          # echo "=== Running native condition variable test ==="
+          # ./${{ matrix.build_type }}/test_native_cond.exe
+          # echo ""
+          # echo "=== Running minimal GIL mutual exclusion test ==="
+          # ./${{ matrix.build_type }}/test_gil_exclusion_native.exe
+          # ./${{ matrix.build_type }}/test_gil_exclusion_fc.exe
+          # echo ""
+          # 
+          # echo "=== Running GIL tests on Windows with native CONDITION_VARIABLE ==="
+          # ./${{ matrix.build_type }}/gil_test_native.exe 4 1000
+          # echo ""
+          # echo "=== Running GIL tests with fastcond ==="
+          # ./${{ matrix.build_type }}/gil_test_fc.exe 4 1000
+          # echo ""
+          # 
+          # echo "=== Running qtest/strongtest ==="
+          # ./${{ matrix.build_type }}/qtest_fc.exe 10000 4 10
+          # ./${{ matrix.build_type }}/qtest_wcond.exe 10000 4 10
+          # ./${{ matrix.build_type }}/strongtest_fc.exe 10000 5
         else
           # On POSIX systems, run full test suite via CTest
           ctest --output-on-failure --build-config ${{ matrix.build_type }}
