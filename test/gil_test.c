@@ -529,6 +529,9 @@ static void print_fairness_statistics(struct test_context *ctx, int num_threads)
 int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int work_cycles,
                  int release_delay_us, int release_delay_variance_us)
 {
+    printf("=== ENTERED run_gil_test ===\n");
+    fflush(stdout);
+    
     struct test_context ctx;
     test_thread_t threads[MAX_THREADS];
     struct thread_arg thread_args[MAX_THREADS]; // Pass index safely
@@ -539,6 +542,7 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     }
 
     printf("=== GIL Correctness and Fairness Test ===\n");
+    fflush(stdout);
     printf("Backend: %s\n", FASTCOND_GIL_USE_NATIVE_COND ? "Native pthread" : "fastcond");
     printf("Fairness: %s\n", FASTCOND_GIL_DISABLE_FAIRNESS ? "DISABLED (plain mutex)" : "ENABLED");
     printf("Configuration: %d threads competing for %d total acquisitions\n", num_threads,
@@ -760,8 +764,14 @@ int main(int argc, char *argv[])
     // Run yield API test first
     test_gil_yield();
 
+    printf("=== Yield test completed, initializing random seed ===\n");
+    fflush(stdout);
+
     // Initialize random seed for release delay variance
     srand(time(NULL));
+
+    printf("=== Calling run_gil_test ===\n");
+    fflush(stdout);
 
     return run_gil_test(num_threads, total_acquisitions, hold_time_us, work_cycles,
                         release_delay_us, release_delay_variance_us);
