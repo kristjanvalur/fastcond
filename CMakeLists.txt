@@ -57,14 +57,12 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
     endif()
 
     # Helper function to create test variants
-    # On Windows: only fastcond variants (no pthread baseline)
-    # On POSIX: all three variants (pthread baseline + fastcond weak/strong)
+    # All platforms: native baseline + fastcond weak/strong
+    # Native baseline uses pthread on POSIX, CONDITION_VARIABLE on Windows
     function(add_test_variant TEST_NAME SOURCE_FILE)
-        if(NOT WIN32)
-            # Pthread version (baseline) - POSIX only
-            add_executable(${TEST_NAME}_pt ${SOURCE_FILE})
-            target_link_libraries(${TEST_NAME}_pt PRIVATE fastcond ${MATH_LIBRARY})
-        endif()
+        # Native version (baseline) - uses pthread on POSIX, CONDITION_VARIABLE on Windows
+        add_executable(${TEST_NAME}_native ${SOURCE_FILE})
+        target_link_libraries(${TEST_NAME}_native PRIVATE fastcond ${MATH_LIBRARY})
         
         # Fastcond weak version (all platforms)
         add_executable(${TEST_NAME}_wcond ${SOURCE_FILE})
@@ -202,15 +200,15 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
         endif()
         
         # Quick smoke tests (small data count for fast CI)
-        add_test(NAME qtest_pthread_smoke 
-                 COMMAND qtest_pt 100 2 5)
+        add_test(NAME qtest_native_smoke 
+                 COMMAND qtest_native 100 2 5)
         add_test(NAME qtest_fastcond_smoke 
                  COMMAND qtest_fc 100 2 5)
         add_test(NAME qtest_weak_smoke 
                  COMMAND qtest_wcond 100 2 5)
         
-        add_test(NAME strongtest_pthread_smoke 
-                 COMMAND strongtest_pt 100 5)
+        add_test(NAME strongtest_native_smoke 
+                 COMMAND strongtest_native 100 5)
         add_test(NAME strongtest_fastcond_smoke 
                  COMMAND strongtest_fc 100 5)
         
@@ -235,11 +233,11 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
                  COMMAND gil_test_native_naive 4 100 50 50)
 
         # Verify output contains expected patterns
-        set_tests_properties(qtest_pthread_smoke PROPERTIES
+        set_tests_properties(qtest_native_smoke PROPERTIES
             PASS_REGULAR_EXPRESSION "sender.*sent|receiver.*got")
         set_tests_properties(qtest_fastcond_smoke PROPERTIES
             PASS_REGULAR_EXPRESSION "sender.*sent|receiver.*got")
-        set_tests_properties(strongtest_pthread_smoke PROPERTIES
+        set_tests_properties(strongtest_native_smoke PROPERTIES
             PASS_REGULAR_EXPRESSION "sender.*sent|receiver.*got")
         set_tests_properties(strongtest_fastcond_smoke PROPERTIES
             PASS_REGULAR_EXPRESSION "sender.*sent|receiver.*got")
@@ -259,7 +257,7 @@ if(FASTCOND_BUILD_TESTS OR FASTCOND_BUILD_BENCHMARKS)
         add_custom_target(benchmark
             COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Running benchmarks via scripts/benchmark.sh"
             COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/benchmark.sh
-            DEPENDS qtest_pt qtest_fc strongtest_pt strongtest_fc 
+            DEPENDS qtest_native qtest_fc strongtest_native strongtest_fc 
                     gil_benchmark_fc gil_benchmark_native
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Running performance benchmarks..."

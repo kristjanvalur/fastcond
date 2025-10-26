@@ -85,16 +85,33 @@ jobs:
       run: |
         cd build
         if [ "${{ runner.os }}" = "Windows" ]; then
-          # Windows: Run GIL tests (now working with test_portability.h)
-          # qtest/strongtest still require pthread, so skip those
-          echo "=== Running GIL tests on Windows with native CONDITION_VARIABLE ==="
+          # Windows: Run portable tests with native CONDITION_VARIABLE baseline
+          echo "=== Running GIL tests on Windows ==="
+          echo "Native CONDITION_VARIABLE:"
           ./${{ matrix.build_type }}/gil_test_native.exe 4 1000
           echo ""
-          echo "=== Running GIL tests with fastcond ==="
+          echo "Fastcond:"
           ./${{ matrix.build_type }}/gil_test_fc.exe 4 1000
           echo ""
-          echo "=== Running GIL fairness disabled test ==="
+          echo "Fairness disabled (native):"
           ./${{ matrix.build_type }}/gil_test_native_unfair.exe 4 1000
+          echo ""
+          echo "=== Running qtest (producer-consumer) on Windows ==="
+          echo "Native CONDITION_VARIABLE:"
+          ./${{ matrix.build_type }}/qtest_native.exe 10000 4 10
+          echo ""
+          echo "Fastcond strong:"
+          ./${{ matrix.build_type }}/qtest_fc.exe 10000 4 10
+          echo ""
+          echo "Fastcond weak:"
+          ./${{ matrix.build_type }}/qtest_wcond.exe 10000 4 10
+          echo ""
+          echo "=== Running strongtest (single condition) on Windows ==="
+          echo "Native CONDITION_VARIABLE:"
+          ./${{ matrix.build_type }}/strongtest_native.exe 10000 5
+          echo ""
+          echo "Fastcond strong:"
+          ./${{ matrix.build_type }}/strongtest_fc.exe 10000 5
         else
           # On POSIX systems, run full test suite via CTest
           ctest --output-on-failure --build-config ${{ matrix.build_type }}
