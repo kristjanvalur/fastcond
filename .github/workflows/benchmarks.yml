@@ -1,19 +1,18 @@
 name: Performance Benchmarks
 
-# TEMPORARILY DISABLED - Re-enable after Windows support is complete
 on:
-  workflow_dispatch:  # Only allow manual trigger for now
-  # push:
-  #   branches: [ master, main ]
-  # pull_request:
-  #   branches: [ master, main ]
-  # schedule:
-  #   # Run weekly on Monday at 00:00 UTC to track performance over time
-  #   - cron: '0 0 * * 1'
-  # # Also trigger when PRs are merged to master
-  # pull_request_target:
-  #   branches: [ master, main ]
-  #   types: [ closed ]
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:  # Allow manual trigger
+  schedule:
+    # Run weekly on Monday at 00:00 UTC to track performance over time
+    - cron: '0 0 * * 1'
+  # Also trigger when PRs are merged to master
+  pull_request_target:
+    branches: [ master, main ]
+    types: [ closed ]
 
 jobs:
   benchmark:
