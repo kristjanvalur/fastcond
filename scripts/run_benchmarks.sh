@@ -32,9 +32,9 @@ fi
 
 # Check if executables exist
 REQUIRED_EXES=(
-    "$BUILD_DIR/qtest_pt"
+    "$BUILD_DIR/qtest_native"
     "$BUILD_DIR/qtest_fc"
-    "$BUILD_DIR/strongtest_pt"
+    "$BUILD_DIR/strongtest_native"
     "$BUILD_DIR/strongtest_fc"
 )
 

@@ -1,28 +1,34 @@
-/* Copyright (c) 2017 Kristján Valur Jónsson */
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 
 #ifndef _FASTCOND_H_
 #define _FASTCOND_H_
 
 /* Version information */
 #define FASTCOND_VERSION_MAJOR 0
-#define FASTCOND_VERSION_MINOR 1
+#define FASTCOND_VERSION_MINOR 2
 #define FASTCOND_VERSION_PATCH 0
 
 /* Semantic version string */
-#define FASTCOND_VERSION "0.1.0"
+#define FASTCOND_VERSION "0.2.0"
 
 /* Numeric version for compile-time comparisons: MAJOR*10000 + MINOR*100 + PATCH */
-#define FASTCOND_VERSION_NUM (FASTCOND_VERSION_MAJOR * 10000 + \
-                              FASTCOND_VERSION_MINOR * 100 + \
-                              FASTCOND_VERSION_PATCH)
+#define FASTCOND_VERSION_NUM                                                                       \
+    (FASTCOND_VERSION_MAJOR * 10000 + FASTCOND_VERSION_MINOR * 100 + FASTCOND_VERSION_PATCH)
 
-#include <pthread.h> /* for the pthread mutex that we use */
+/* Use native primitives abstraction for platform-specific mutex types */
+#include "native_primitives.h"
 
-/* Platform detection and semaphore selection */
-#if defined(__APPLE__) || defined(__MACH__)
+/* Platform detection and synchronization primitive selection */
+#if defined(_WIN32) || defined(_WIN64)
+/* Windows platform */
+#define FASTCOND_USE_WINDOWS 1
+#include <windows.h>
+#elif defined(__APPLE__) || defined(__MACH__)
+/* macOS platform - use GCD dispatch semaphores */
 #include <dispatch/dispatch.h>
 #define FASTCOND_USE_GCD 1
 #else
+/* POSIX platforms (Linux, BSD, etc.) */
 #include <semaphore.h>
 #endif
 
@@ -31,7 +37,9 @@
 /* The _weak_ condition variable.  See fastcond.c for details */
 
 typedef struct _fastcond_wcond_t {
-#ifdef FASTCOND_USE_GCD
+#ifdef FASTCOND_USE_WINDOWS
+    HANDLE sem; /* Windows semaphore handle */
+#elif defined(FASTCOND_USE_GCD)
     dispatch_semaphore_t sem;
 #else
     sem_t sem;
@@ -40,16 +48,16 @@ typedef struct _fastcond_wcond_t {
 } fastcond_wcond_t;
 
 FASTCOND_API(int)
-fastcond_wcond_init(fastcond_wcond_t *restrict cond, const pthread_condattr_t *restrict attr);
+fastcond_wcond_init(fastcond_wcond_t *restrict cond, const void *restrict attr);
 
 FASTCOND_API(int)
 fastcond_wcond_fini(fastcond_wcond_t *cond);
 
 FASTCOND_API(int)
-fastcond_wcond_wait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex);
+fastcond_wcond_wait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex);
 
 FASTCOND_API(int)
-fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex,
+fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
                          const struct timespec *restrict abstime);
 
 FASTCOND_API(int)
@@ -67,16 +75,16 @@ typedef struct _fastcond_cond_t {
 } fastcond_cond_t;
 
 FASTCOND_API(int)
-fastcond_cond_init(fastcond_cond_t *restrict cond, const pthread_condattr_t *restrict attr);
+fastcond_cond_init(fastcond_cond_t *restrict cond, const void *restrict attr);
 
 FASTCOND_API(int)
 fastcond_cond_fini(fastcond_cond_t *cond);
 
 FASTCOND_API(int)
-fastcond_cond_wait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex);
+fastcond_cond_wait(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex);
 
 FASTCOND_API(int)
-fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex,
+fastcond_cond_timedwait(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex,
                         const struct timespec *restrict abstime);
 
 FASTCOND_API(int)
@@ -84,5 +92,44 @@ fastcond_cond_signal(fastcond_cond_t *cond);
 
 FASTCOND_API(int)
 fastcond_cond_broadcast(fastcond_cond_t *cond);
+
+#ifdef FASTCOND_TEST_INSTRUMENTATION
+/*
+ * Test instrumentation for validating fastcond_patch.h
+ *
+ * When FASTCOND_TEST_INSTRUMENTATION is defined, fastcond functions will
+ * call a registered callback on entry, allowing tests to verify that
+ * patched code actually invokes fastcond implementations rather than
+ * native condition variable functions.
+ *
+ * This is only for testing - never define in production code.
+ */
+typedef void (*fastcond_test_callback_t)(const char *function_name);
+
+FASTCOND_API(void)
+fastcond_set_test_callback(fastcond_test_callback_t callback);
+
+FASTCOND_API(fastcond_test_callback_t)
+fastcond_get_test_callback(void);
+#endif /* FASTCOND_TEST_INSTRUMENTATION */
+
+#ifdef FASTCOND_USE_WINDOWS
+/*
+ * Windows-specific variants that take timeout in milliseconds directly,
+ * matching the Windows CONDITION_VARIABLE API signature.
+ * These are more efficient than the timespec variants on Windows as they
+ * avoid the absolute-to-relative time conversion overhead.
+ *
+ * timeout_ms: Timeout in milliseconds, or INFINITE for no timeout
+ * Returns: 0 on success, ETIMEDOUT on timeout, or other errno value on error
+ */
+FASTCOND_API(int)
+fastcond_wcond_wait_ms(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
+                       DWORD timeout_ms);
+
+FASTCOND_API(int)
+fastcond_cond_wait_ms(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex,
+                      DWORD timeout_ms);
+#endif /* FASTCOND_USE_WINDOWS */
 
 #endif /* ! defined _FASTCOND_H_ */

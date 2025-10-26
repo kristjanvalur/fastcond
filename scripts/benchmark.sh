@@ -23,7 +23,7 @@ elif [ -d "test" ]; then
     TEST_DIR="test"
 else
     # Try to find from current directory
-    if [ -f "./qtest_pt" ]; then
+    if [ -f "./qtest_native" ]; then
         TEST_DIR="."
     else
         echo "Error: Cannot find test executables"
@@ -35,12 +35,12 @@ fi
 cd "$TEST_DIR" 2>/dev/null || true
 
 # Find executables
-QTEST_PT=$(find . -name "qtest_pt" -type f 2>/dev/null | head -1)
+QTEST_NATIVE=$(find . -name "qtest_native" -type f 2>/dev/null | head -1)
 QTEST_FC=$(find . -name "qtest_fc" -type f 2>/dev/null | head -1)
-STRONGTEST_PT=$(find . -name "strongtest_pt" -type f 2>/dev/null | head -1)
+STRONGTEST_NATIVE=$(find . -name "strongtest_native" -type f 2>/dev/null | head -1)
 STRONGTEST_FC=$(find . -name "strongtest_fc" -type f 2>/dev/null | head -1)
 
-if [ -z "$QTEST_PT" ] || [ -z "$QTEST_FC" ]; then
+if [ -z "$QTEST_NATIVE" ] || [ -z "$QTEST_FC" ]; then
     echo "Error: Test executables not found. Build them first."
     exit 1
 fi
@@ -59,8 +59,8 @@ echo ""
 # qtest benchmark
 echo -e "${BLUE}--- Producer-Consumer Latency Test ---${NC}"
 echo ""
-echo "Pthread implementation:"
-$QTEST_PT $DATA_COUNT $NUM_THREADS $QUEUE_SIZE
+echo "Native implementation:"
+$QTEST_NATIVE $DATA_COUNT $NUM_THREADS $QUEUE_SIZE
 echo ""
 echo "Fastcond (strong) implementation:"
 $QTEST_FC $DATA_COUNT $NUM_THREADS $QUEUE_SIZE
@@ -69,8 +69,8 @@ echo ""
 # strongtest benchmark
 echo -e "${BLUE}--- Single Condition Variable Test ---${NC}"
 echo ""
-echo "Pthread implementation:"
-$STRONGTEST_PT $DATA_COUNT $QUEUE_SIZE
+echo "Native implementation:"
+$STRONGTEST_NATIVE $DATA_COUNT $QUEUE_SIZE
 echo ""
 echo "Fastcond (strong) implementation:"
 $STRONGTEST_FC $DATA_COUNT $QUEUE_SIZE

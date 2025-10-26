@@ -1,3 +1,4 @@
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 /* Test to check structure sizes */
 
 #include "fastcond.h"

@@ -1,13 +1,101 @@
-/* Copyright (c) 2017 Kristján Valur Jónsson */
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 
 #include "fastcond.h"
 
 #include <assert.h>
 #include <errno.h>
+
+/* Windows needs time.h for struct timespec (C11) */
+#ifdef FASTCOND_USE_WINDOWS
+#include <time.h>
+#endif
+
+/* Include sched.h for sched_yield() on POSIX platforms */
+#ifndef FASTCOND_USE_WINDOWS
 #include <sched.h>
+#endif
+
+#ifdef FASTCOND_TEST_INSTRUMENTATION
+/*
+ * Test instrumentation callback
+ * This global callback is invoked by fastcond functions when
+ * FASTCOND_TEST_INSTRUMENTATION is defined, allowing tests to verify
+ * that patched code actually calls fastcond implementations.
+ */
+static fastcond_test_callback_t _test_callback = NULL;
+
+FASTCOND_API(void)
+fastcond_set_test_callback(fastcond_test_callback_t callback)
+{
+    _test_callback = callback;
+}
+
+FASTCOND_API(fastcond_test_callback_t)
+fastcond_get_test_callback(void)
+{
+    return _test_callback;
+}
+
+/* Helper macro to invoke test callback if registered */
+#define TEST_CALLBACK(func_name)                                                                   \
+    do {                                                                                           \
+        if (_test_callback)                                                                        \
+            _test_callback(func_name);                                                             \
+    } while (0)
+#else
+/* No-op when instrumentation disabled */
+#define TEST_CALLBACK(func_name) ((void) 0)
+#endif /* FASTCOND_TEST_INSTRUMENTATION */
 
 /* Platform-specific semaphore wrapper macros for cleaner code */
-#ifdef FASTCOND_USE_GCD
+#ifdef FASTCOND_USE_WINDOWS
+/* Windows Semaphore Objects
+ * CreateSemaphore creates a semaphore with initial count 0, max count LONG_MAX
+ * WaitForSingleObject waits for semaphore to be signaled (count > 0)
+ * ReleaseSemaphore increments semaphore count, waking waiting threads
+ */
+#define SEM_INIT(sem) (((sem) = CreateSemaphoreW(NULL, 0, LONG_MAX, NULL)) ? 0 : ENOMEM)
+#define SEM_DESTROY(sem) (CloseHandle(sem) ? 0 : EINVAL)
+#define SEM_WAIT(sem) (WaitForSingleObject((sem), INFINITE) == WAIT_OBJECT_0 ? 0 : EINVAL)
+#define SEM_TIMEDWAIT(sem, abstime) _sem_timedwait_windows((sem), (abstime))
+#define SEM_POST(sem) (ReleaseSemaphore((sem), 1, NULL) ? 0 : EINVAL)
+
+/* Helper function to convert absolute timespec to relative timeout and wait */
+static int _sem_timedwait_windows(HANDLE sem, const struct timespec *abstime)
+{
+    DWORD timeout_ms;
+
+    if (!abstime) {
+        /* NULL means infinite wait */
+        return (WaitForSingleObject(sem, INFINITE) == WAIT_OBJECT_0) ? 0 : EINVAL;
+    }
+
+    /* Convert absolute timespec to relative timeout in milliseconds */
+    struct timespec now;
+    timespec_get(&now, TIME_UTC); /* C11 standard, widely supported */
+
+    long long ns_diff =
+        (abstime->tv_sec - now.tv_sec) * 1000000000LL + (abstime->tv_nsec - now.tv_nsec);
+
+    if (ns_diff <= 0) {
+        /* Already timed out */
+        timeout_ms = 0;
+    } else {
+        /* Convert nanoseconds to milliseconds, rounding up */
+        timeout_ms = (DWORD) ((ns_diff + 999999) / 1000000);
+    }
+
+    DWORD result = WaitForSingleObject(sem, timeout_ms);
+    if (result == WAIT_OBJECT_0) {
+        return 0; /* Success */
+    } else if (result == WAIT_TIMEOUT) {
+        return ETIMEDOUT;
+    } else {
+        return EINVAL; /* Error */
+    }
+}
+
+#elif defined(FASTCOND_USE_GCD)
 /* GCD semaphores for macOS
  * dispatch_semaphore_wait returns 0 on success (semaphore decremented)
  * dispatch_semaphore_wait returns non-zero on timeout
@@ -55,6 +143,26 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
 #define SEM_TIMEDWAIT(sem, abstime)                                                                \
     ((abstime) ? (sem_timedwait(&(sem), (abstime)) ? errno : 0) : SEM_WAIT(sem))
 #define SEM_POST(sem) (sem_post(&(sem)) ? errno : 0)
+#endif
+
+/* Platform-specific thread yield */
+#ifdef FASTCOND_USE_WINDOWS
+#define YIELD() Sleep(0) /* Windows: Sleep(0) yields to other ready threads */
+#else
+#define YIELD() sched_yield() /* POSIX: sched_yield() */
+#endif
+
+/* Optional: disable yield in strong condition variable spurious wakeup path
+ * Set FASTCOND_NO_YIELD=1 to test performance without scheduler yield.
+ * The yield is used when n_wakeup > 0 to give already-signaled threads
+ * a better chance to wake up before this thread re-acquires the mutex.
+ * Removing it may slightly improve latency but could theoretically increase
+ * wakeup unfairness under heavy contention.
+ */
+#ifndef FASTCOND_NO_YIELD
+#define MAYBE_YIELD() YIELD()
+#else
+#define MAYBE_YIELD() ((void) 0) /* No-op */
 #endif
 
 /*  The fastcond_wcond_t code - weak condition variable (see below for `weak`)
@@ -126,8 +234,9 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
 */
 
 FASTCOND_API(int)
-fastcond_wcond_init(fastcond_wcond_t *restrict cond, const pthread_condattr_t *attr)
+fastcond_wcond_init(fastcond_wcond_t *restrict cond, const void *restrict attr)
 {
+    TEST_CALLBACK("fastcond_wcond_init");
     (void) attr; /* Unused - condattr not supported */
     cond->waiting = 0;
     return SEM_INIT(cond->sem);
@@ -140,23 +249,24 @@ fastcond_wcond_fini(fastcond_wcond_t *cond)
 }
 
 FASTCOND_API(int)
-fastcond_wcond_wait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex)
+fastcond_wcond_wait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex)
 {
+    TEST_CALLBACK("fastcond_wcond_wait");
     return fastcond_wcond_timedwait(cond, mutex, 0);
 }
 
 FASTCOND_API(int)
-fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restrict mutex,
+fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
                          const struct timespec *restrict abstime)
 {
     int err1, err2;
     cond->waiting++;
-    err1 = pthread_mutex_unlock(mutex);
+    err1 = NATIVE_MUTEX_UNLOCK(mutex);
     if (err1)
         return err1;
 
     err1 = SEM_TIMEDWAIT(cond->sem, abstime);
-    err2 = pthread_mutex_lock(mutex);
+    err2 = NATIVE_MUTEX_LOCK(mutex);
 
     if (err1)
         /* wakeup did not adjust this, must do it ourselves */
@@ -173,6 +283,7 @@ fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, pthread_mutex_t *restr
 FASTCOND_API(int)
 fastcond_wcond_signal(fastcond_wcond_t *cond)
 {
+    TEST_CALLBACK("fastcond_wcond_signal");
     if (cond->waiting > 0) {
         int err = SEM_POST(cond->sem);
         if (err)
@@ -219,8 +330,9 @@ fastcond_wcond_broadcast(fastcond_wcond_t *cond)
  */
 
 FASTCOND_API(int)
-fastcond_cond_init(fastcond_cond_t *restrict cond, const pthread_condattr_t *restrict attr)
+fastcond_cond_init(fastcond_cond_t *restrict cond, const void *restrict attr)
 {
+    TEST_CALLBACK("fastcond_cond_init");
     int err;
     cond->n_waiting = cond->n_wakeup = 0;
     err = fastcond_wcond_init(&cond->wait, attr);
@@ -235,13 +347,14 @@ fastcond_cond_fini(fastcond_cond_t *cond)
 }
 
 FASTCOND_API(int)
-fastcond_cond_wait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex)
+fastcond_cond_wait(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex)
 {
-    return fastcond_cond_timedwait(cond, mutex, NULL);
+    TEST_CALLBACK("fastcond_cond_wait");
+    return fastcond_cond_timedwait(cond, mutex, 0);
 }
 
 FASTCOND_API(int)
-fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restrict mutex,
+fastcond_cond_timedwait(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex,
                         const struct timespec *restrict abstime)
 {
     int err;
@@ -255,11 +368,11 @@ fastcond_cond_timedwait(fastcond_cond_t *restrict cond, pthread_mutex_t *restric
          * We must yield the lock to allow the other threads a chance to
          * wake up as well, throwing in a scheduler yield for good measure.
          */
-        err = pthread_mutex_unlock(mutex);
+        err = NATIVE_MUTEX_UNLOCK(mutex);
         if (err)
             return err;
-        sched_yield();
-        return pthread_mutex_lock(mutex);
+        MAYBE_YIELD();
+        return NATIVE_MUTEX_LOCK(mutex);
     }
     cond->n_waiting++;
     err = fastcond_wcond_timedwait(&cond->wait, mutex, abstime);
@@ -294,6 +407,7 @@ static int _fastcond_cond_signal_n(fastcond_cond_t *cond, int n)
 FASTCOND_API(int)
 fastcond_cond_signal(fastcond_cond_t *cond)
 {
+    TEST_CALLBACK("fastcond_cond_signal");
     return _fastcond_cond_signal_n(cond, 1);
 }
 FASTCOND_API(int)
@@ -301,3 +415,77 @@ fastcond_cond_broadcast(fastcond_cond_t *cond)
 {
     return _fastcond_cond_signal_n(cond, -1);
 }
+
+#ifdef FASTCOND_USE_WINDOWS
+/*
+ * Windows-specific millisecond-based wait functions.
+ * These bypass the timespec conversion and directly use WaitForSingleObject
+ * with the millisecond timeout, which is more efficient for Windows code.
+ */
+
+/* Helper: wait on semaphore with millisecond timeout */
+static int _sem_wait_ms(HANDLE sem, DWORD timeout_ms)
+{
+    DWORD result = WaitForSingleObject(sem, timeout_ms);
+    if (result == WAIT_OBJECT_0) {
+        return 0; /* Success */
+    } else if (result == WAIT_TIMEOUT) {
+        return ETIMEDOUT;
+    } else {
+        return EINVAL; /* Error */
+    }
+}
+
+FASTCOND_API(int)
+fastcond_wcond_wait_ms(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
+                       DWORD timeout_ms)
+{
+    TEST_CALLBACK("fastcond_wcond_wait_ms");
+    int err1, err2;
+    cond->waiting++;
+    err1 = NATIVE_MUTEX_UNLOCK(mutex);
+    if (err1)
+        return err1;
+
+    err1 = _sem_wait_ms(cond->sem, timeout_ms);
+    err2 = NATIVE_MUTEX_LOCK(mutex);
+
+    if (err1)
+        /* wakeup did not adjust this, must do it ourselves */
+        --cond->waiting;
+
+    if (err1 == EINTR)
+        err1 = 0; /* signals, etc, cause spurious wakeup */
+
+    if (err2)
+        return err2;
+    return err1;
+}
+
+FASTCOND_API(int)
+fastcond_cond_wait_ms(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex,
+                      DWORD timeout_ms)
+{
+    TEST_CALLBACK("fastcond_cond_wait_ms");
+    int err;
+
+    /* Same logic as fastcond_cond_timedwait, but using millisecond timeout */
+    if (cond->n_wakeup == 0) {
+        cond->n_waiting++;
+        err = fastcond_wcond_wait_ms(&cond->wait, mutex, timeout_ms);
+        cond->n_waiting--;
+        if (err == 0)
+            cond->n_wakeup--;
+    } else {
+        /* n_wakeup > 0, must avoid stealing wakeup - generate spurious wakeup */
+        NATIVE_MUTEX_UNLOCK(mutex);
+#ifdef _MSC_VER
+        Sleep(0); /* Yield on Windows */
+#else
+        sched_yield();
+#endif
+        err = NATIVE_MUTEX_LOCK(mutex);
+    }
+    return err;
+}
+#endif /* FASTCOND_USE_WINDOWS */

@@ -14,13 +14,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         compiler: [gcc, clang]
         build_type: [Release, Debug]
         exclude:
           # macOS doesn't have gcc (uses Apple Clang)
           - os: macos-latest
             compiler: gcc
+          # Windows: use MSVC, not gcc/clang directly
+          - os: windows-latest
+            compiler: gcc
+          - os: windows-latest
+            compiler: clang
+        include:
+          # Add Windows with MSVC
+          - os: windows-latest
+            compiler: msvc
+            build_type: Release
+          - os: windows-latest
+            compiler: msvc
+            build_type: Debug
     
     steps:
     - uses: actions/checkout@v4
@@ -32,6 +45,7 @@ jobs:
         sudo apt-get install -y build-essential cmake
     
     - name: Set compiler
+      if: runner.os != 'Windows'
       run: |
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
           echo "CC=gcc" >> $GITHUB_ENV
@@ -41,22 +55,78 @@ jobs:
     
     - name: Configure CMake
       run: |
-        cmake -B build \
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-              -DCMAKE_C_COMPILER=${{ matrix.compiler }} \
-              -DFASTCOND_BUILD_TESTS=ON \
-              -DFASTCOND_BUILD_BENCHMARKS=ON
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          # Windows with MSVC - GIL tests now supported with test_portability.h
+          # Other tests (qtest, strongtest) still need pthread, so skip those
+          cmake -B build \
+                -G "Visual Studio 17 2022" \
+                -DFASTCOND_BUILD_TESTS=ON \
+                -DFASTCOND_BUILD_BENCHMARKS=OFF
+        else
+          # Unix-like systems - specify compiler and build type
+          cmake -B build \
+                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+                -DCMAKE_C_COMPILER=${{ matrix.compiler }} \
+                -DFASTCOND_BUILD_TESTS=ON \
+                -DFASTCOND_BUILD_BENCHMARKS=ON
+        fi
+      shell: bash
     
     - name: Build
-      run: cmake --build build --config ${{ matrix.build_type }} -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
+      run: |
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          cmake --build build --config ${{ matrix.build_type }} --parallel
+        else
+          cmake --build build --config ${{ matrix.build_type }} -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
+        fi
+      shell: bash
     
     - name: Run tests
       run: |
         cd build
-        ctest --output-on-failure --build-config ${{ matrix.build_type }}
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          # Windows: Run portable tests with native CONDITION_VARIABLE baseline
+          echo "=== Running GIL tests on Windows ==="
+          echo "Native CONDITION_VARIABLE:"
+          ./${{ matrix.build_type }}/gil_test_native.exe 4 1000
+          echo ""
+          echo "Fastcond:"
+          ./${{ matrix.build_type }}/gil_test_fc.exe 4 1000
+          echo ""
+          echo "Fairness disabled (native):"
+          ./${{ matrix.build_type }}/gil_test_native_unfair.exe 4 1000
+          echo ""
+          echo "=== Running qtest (producer-consumer) on Windows ==="
+          echo "Native CONDITION_VARIABLE:"
+          ./${{ matrix.build_type }}/qtest_native.exe 10000 4 10
+          echo ""
+          echo "Fastcond strong:"
+          ./${{ matrix.build_type }}/qtest_fc.exe 10000 4 10
+          echo ""
+          echo "Fastcond weak:"
+          ./${{ matrix.build_type }}/qtest_wcond.exe 10000 4 10
+          echo ""
+          echo "=== Running strongtest (single condition) on Windows ==="
+          echo "Native CONDITION_VARIABLE:"
+          ./${{ matrix.build_type }}/strongtest_native.exe 10000 5
+          echo ""
+          echo "Fastcond strong:"
+          ./${{ matrix.build_type }}/strongtest_fc.exe 10000 5
+          echo ""
+          echo "=== Running patch tests on Windows ==="
+          echo "Patch test (strong):"
+          ./${{ matrix.build_type }}/patch_test_cond.exe
+          echo ""
+          echo "Patch test (weak):"
+          ./${{ matrix.build_type }}/patch_test_wcond.exe
+        else
+          # On POSIX systems, run full test suite via CTest
+          ctest --output-on-failure --build-config ${{ matrix.build_type }}
+        fi
+      shell: bash
     
     - name: Run benchmarks (Release only)
-      if: matrix.build_type == 'Release'
+      if: matrix.build_type == 'Release' && runner.os != 'Windows'
       run: ./scripts/benchmark.sh
 
   sanitizers:

@@ -1,3 +1,4 @@
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 
 #include "gil.h"
 #include <assert.h>
@@ -33,19 +34,16 @@ void fastcond_gil_init(struct fastcond_gil *gil)
 {
     // Always initialize condition variables (even if NAIVE mode won't use them)
 #if FASTCOND_GIL_USE_NATIVE_COND
-    NATIVE_COND_INIT(gil->cond);
+    NATIVE_COND_INIT(&gil->cond);
 #else
     fastcond_cond_init(&gil->cond, NULL);
 #endif
 
-    NATIVE_MUTEX_INIT(gil->mutex);
+    NATIVE_MUTEX_INIT(&gil->mutex);
 
     // Always initialize tracking variables (minimal overhead)
     gil->held = 0;
     gil->n_waiting = 0;
-    // we can initialize this to self, fairness check will not
-    // be made in the first acquisition by a thread because
-    // n_waiting is 0
     gil->last_owner = NATIVE_THREAD_SELF();
 }
 
@@ -53,11 +51,11 @@ void fastcond_gil_destroy(struct fastcond_gil *gil)
 {
     // Always destroy condition variables (even if NAIVE mode didn't use them)
 #if FASTCOND_GIL_USE_NATIVE_COND
-    NATIVE_COND_DESTROY(gil->cond);
+    NATIVE_COND_DESTROY(&gil->cond);
 #else
     fastcond_cond_fini(&gil->cond);
 #endif
-    NATIVE_MUTEX_DESTROY(gil->mutex);
+    NATIVE_MUTEX_DESTROY(&gil->mutex);
 }
 
 // Implement the GIL logic.  A Thread can acquire the gil if
@@ -71,14 +69,14 @@ void fastcond_gil_acquire(struct fastcond_gil *gil)
 #if FASTCOND_GIL_MODE_NAIVE
     // NAIVE mode: Simple mutex lock - no condition variables or state tracking
     // This provides the absolute minimal baseline for comparison
-    NATIVE_MUTEX_LOCK(gil->mutex);
+    NATIVE_MUTEX_LOCK(&gil->mutex);
     // In naive mode, mutex lock provides all synchronization
     // No state tracking, no condition variables
 #else
     // UNFAIR and FAIR modes: Identical except for the while condition
     // Always get thread ID for state tracking (even in UNFAIR mode)
     native_thread_t self = NATIVE_THREAD_SELF();
-    NATIVE_MUTEX_LOCK(gil->mutex);
+    NATIVE_MUTEX_LOCK(&gil->mutex);
 
     // Fairness control: use ACQUIRE_GREEDY setting
 #if FASTCOND_GIL_ACQUIRE_GREEDY
@@ -90,7 +88,7 @@ void fastcond_gil_acquire(struct fastcond_gil *gil)
 #endif
         gil->n_waiting++;
 #if FASTCOND_GIL_USE_NATIVE_COND
-        NATIVE_COND_WAIT(gil->cond, gil->mutex);
+        NATIVE_COND_WAIT(&gil->cond, &gil->mutex);
 #else
         fastcond_cond_wait(&gil->cond, &gil->mutex);
 #endif
@@ -101,7 +99,7 @@ void fastcond_gil_acquire(struct fastcond_gil *gil)
     // Always update state tracking (even in UNFAIR mode)
     gil->last_owner = self;
     gil->held = 1;
-    NATIVE_MUTEX_UNLOCK(gil->mutex);
+    NATIVE_MUTEX_UNLOCK(&gil->mutex);
 #endif
 }
 
@@ -109,21 +107,21 @@ void fastcond_gil_release(struct fastcond_gil *gil)
 {
 #if FASTCOND_GIL_MODE_NAIVE
     // NAIVE mode: Simple mutex unlock - no state tracking or signaling
-    NATIVE_MUTEX_UNLOCK(gil->mutex);
+    NATIVE_MUTEX_UNLOCK(&gil->mutex);
 #else
     // UNFAIR and FAIR modes: Identical behavior
-    NATIVE_MUTEX_LOCK(gil->mutex);
+    NATIVE_MUTEX_LOCK(&gil->mutex);
     assert(gil->held);
 
     if (gil->n_waiting > 0) {
 #if FASTCOND_GIL_USE_NATIVE_COND
-        NATIVE_COND_SIGNAL(gil->cond);
+        NATIVE_COND_SIGNAL(&gil->cond);
 #else
         fastcond_cond_signal(&gil->cond);
 #endif
     }
     gil->held = 0;
-    NATIVE_MUTEX_UNLOCK(gil->mutex);
+    NATIVE_MUTEX_UNLOCK(&gil->mutex);
 #endif
 }
 
@@ -145,8 +143,8 @@ void fastcond_gil_yield(struct fastcond_gil *gil)
 #if FASTCOND_GIL_MODE_NAIVE
     // NAIVE mode: Simple release + acquire with mutex operations
     // No optimization possible since we just have a plain mutex
-    NATIVE_MUTEX_UNLOCK(gil->mutex);
-    NATIVE_MUTEX_LOCK(gil->mutex);
+    NATIVE_MUTEX_UNLOCK(&gil->mutex);
+    NATIVE_MUTEX_LOCK(&gil->mutex);
 #else
     // OPTIMIZED IMPLEMENTATION: Combine release + acquire with shared mutex lock
 
@@ -154,14 +152,14 @@ void fastcond_gil_yield(struct fastcond_gil *gil)
     native_thread_t self = NATIVE_THREAD_SELF();
 
     // Single mutex lock for entire yield operation
-    NATIVE_MUTEX_LOCK(gil->mutex);
+    NATIVE_MUTEX_LOCK(&gil->mutex);
 
     // RELEASE PHASE: Same logic as fastcond_gil_release() but no mutex unlock
     assert(gil->held);
 
     if (gil->n_waiting > 0) {
 #if FASTCOND_GIL_USE_NATIVE_COND
-        NATIVE_COND_SIGNAL(gil->cond);
+        NATIVE_COND_SIGNAL(&gil->cond);
 #else
         fastcond_cond_signal(&gil->cond);
 #endif
@@ -184,7 +182,7 @@ void fastcond_gil_yield(struct fastcond_gil *gil)
 #endif
         gil->n_waiting++;
 #if FASTCOND_GIL_USE_NATIVE_COND
-        NATIVE_COND_WAIT(gil->cond, gil->mutex);
+        NATIVE_COND_WAIT(&gil->cond, &gil->mutex);
 #else
         fastcond_cond_wait(&gil->cond, &gil->mutex);
 #endif
@@ -197,6 +195,6 @@ void fastcond_gil_yield(struct fastcond_gil *gil)
     gil->held = 1;
 
     // Single mutex unlock for entire yield operation
-    NATIVE_MUTEX_UNLOCK(gil->mutex);
+    NATIVE_MUTEX_UNLOCK(&gil->mutex);
 #endif
 }

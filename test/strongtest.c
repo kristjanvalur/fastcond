@@ -1,82 +1,104 @@
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 
 #include <math.h>
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 #include "fastcond.h"
-#ifdef TEST_WCOND
-#define FASTCOND_PATCH_WCOND
-#endif
-#ifdef TEST_COND
-#define FASTCOND_PATCH_COND
-#endif
-#include "fastcond_patch.h"
+#include "native_primitives.h"
+#include "test_portability.h"
 
 /*
  * Similar to the qtest, this version has only one condition variable, and
  * a single producer and server.  It tests how a `strong` condition variable wakes up
  * at least one of the threads already waiting, i.e. that the wakeup cannot be
  * stolen by the other thread.
+ *
+ * Compile-time options:
+ *   (none)      - Use native condition variables (pthread_cond_t or CONDITION_VARIABLE)
+ *   -DTEST_COND - Use fastcond strong condition variable
+ *   -DTEST_WCOND - Use fastcond weak condition variable (will deadlock!)
  */
 
+#if defined(TEST_WCOND)
+typedef fastcond_wcond_t cond_t;
+#define COND_INIT(c) fastcond_wcond_init(&(c), NULL)
+#define COND_DESTROY(c) fastcond_wcond_fini(&(c))
+#define COND_WAIT(c, m) fastcond_wcond_wait(&(c), &(m))
+#define COND_SIGNAL(c) fastcond_wcond_signal(&(c))
+#define COND_BROADCAST(c) fastcond_wcond_broadcast(&(c))
+#elif defined(TEST_COND)
+typedef fastcond_cond_t cond_t;
+#define COND_INIT(c) fastcond_cond_init(&(c), NULL)
+#define COND_DESTROY(c) fastcond_cond_fini(&(c))
+#define COND_WAIT(c, m) fastcond_cond_wait(&(c), &(m))
+#define COND_SIGNAL(c) fastcond_cond_signal(&(c))
+#define COND_BROADCAST(c) fastcond_cond_broadcast(&(c))
+#else
+typedef native_cond_t cond_t;
+#define COND_INIT(c) NATIVE_COND_INIT(&(c))
+#define COND_DESTROY(c) NATIVE_COND_DESTROY(&(c))
+#define COND_WAIT(c, m) NATIVE_COND_WAIT(&(c), &(m))
+#define COND_SIGNAL(c) NATIVE_COND_SIGNAL(&(c))
+#define COND_BROADCAST(c) NATIVE_COND_BROADCAST(&(c))
+#endif
+
 typedef struct _queue {
-    pthread_mutex_t mutex;
+    native_mutex_t mutex;
     int n_data; /* current size of queue */
-    pthread_cond_t cond;
+    cond_t cond;
     int max_queue;               /* how much fits in the queue */
     int max_send;                /* how many packets to send? (termination test) */
     int n_sent;                  /* total amount sent */
-    struct timespec *timestamps; /* track enqueue times for latency measurement */
+    test_timespec_t *timestamps; /* track enqueue times for latency measurement */
 } queue_t;
 
 typedef struct _args {
     queue_t *queue;
     int id;
-    pthread_t pid;
+    test_thread_t pid;
 } args_t;
 
-void *sender(void *arg)
+TEST_THREAD_FUNC_RETURN sender(void *arg)
 {
     args_t *args = (args_t *) arg;
     queue_t *q = args->queue;
     int n_sent = 0;
     int have_data = 0;
-    pthread_mutex_lock(&q->mutex);
+    NATIVE_MUTEX_LOCK(&q->mutex);
     while (q->n_sent < q->max_send) {
         if (!have_data) {
             /* simulate getting of the data */
-            pthread_mutex_unlock(&q->mutex);
-            sched_yield();
-            pthread_mutex_lock(&q->mutex);
+            NATIVE_MUTEX_UNLOCK(&q->mutex);
+            test_sched_yield();
+            NATIVE_MUTEX_LOCK(&q->mutex);
             have_data = 1;
         }
         while (q->n_sent < q->max_send && q->n_data >= q->max_queue)
             /* queue is active and full, wake wait */
-            pthread_cond_wait(&q->cond, &q->mutex);
+            COND_WAIT(q->cond, q->mutex);
         if (q->n_sent < q->max_send) {
             /* Enqueue: record timestamp */
             if (q->timestamps && q->n_data < q->max_queue) {
-                clock_gettime(CLOCK_MONOTONIC, &q->timestamps[q->n_data]);
+                test_clock_gettime(&q->timestamps[q->n_data]);
             }
             q->n_data++;
             q->n_sent++;
             n_sent++;
             have_data = 0;
-            pthread_cond_signal(&q->cond); /* wake up other thread */
+            COND_SIGNAL(q->cond); /* wake up other thread */
             /* wake up rest of senders and receivers if we trigger end condition */
             if (q->n_sent == q->max_send) {
-                pthread_cond_broadcast(&q->cond);
+                COND_BROADCAST(q->cond);
             }
         }
     }
-    pthread_mutex_unlock(&q->mutex);
+    NATIVE_MUTEX_UNLOCK(&q->mutex);
     printf("sender %d sent %d\n", args->id, n_sent);
-    return NULL;
+    TEST_THREAD_RETURN;
 }
 
-void *receiver(void *arg)
+TEST_THREAD_FUNC_RETURN receiver(void *arg)
 {
     args_t *args = (args_t *) arg;
     queue_t *q = args->queue;
@@ -84,12 +106,12 @@ void *receiver(void *arg)
     int have_data = 0;
     float sum_time = 0.0, sum_time2 = 0.0;
     float min_time = 1e9, max_time = 0.0;
-    struct timespec now, enqueue_time;
-    pthread_mutex_lock(&q->mutex);
+    test_timespec_t now, enqueue_time;
+    NATIVE_MUTEX_LOCK(&q->mutex);
     while (q->n_sent < q->max_send || q->n_data) {
         if (have_data) {
             /* simulate getting rid of the data */
-            pthread_mutex_unlock(&q->mutex);
+            NATIVE_MUTEX_UNLOCK(&q->mutex);
 
             /* Compute latency if we have timestamp data */
             if (q->timestamps) {
@@ -108,26 +130,26 @@ void *receiver(void *arg)
                     max_time = time;
             }
 
-            sched_yield();
-            pthread_mutex_lock(&q->mutex);
+            test_sched_yield();
+            NATIVE_MUTEX_LOCK(&q->mutex);
             have_data = 0;
         }
         while (q->n_sent < q->max_send && !q->n_data)
             /* queue is active and empty */
-            pthread_cond_wait(&q->cond, &q->mutex);
+            COND_WAIT(q->cond, q->mutex);
         if (q->n_data) {
             /* Dequeue: capture current time and get enqueue timestamp */
-            clock_gettime(CLOCK_MONOTONIC, &now);
+            test_clock_gettime(&now);
             if (q->timestamps && q->n_data > 0) {
                 enqueue_time = q->timestamps[q->n_data - 1];
             }
             q->n_data--;
             n_got++;
             have_data = 1;
-            pthread_cond_signal(&q->cond); /* wake up sender */
+            COND_SIGNAL(q->cond); /* wake up sender */
         }
     }
-    pthread_mutex_unlock(&q->mutex);
+    NATIVE_MUTEX_UNLOCK(&q->mutex);
 
     /* Compute and print stats */
     if (q->timestamps) {
@@ -148,7 +170,7 @@ void *receiver(void *arg)
     } else {
         printf("receiver %d got %d\n", args->id, n_got);
     }
-    return NULL;
+    TEST_THREAD_RETURN;
 }
 
 int main(int argc, char *argv[])
@@ -161,7 +183,7 @@ int main(int argc, char *argv[])
     int i;
     args_t *senders, *receivers;
     void *retval;
-    struct timespec start_time, end_time;
+    test_timespec_t start_time, end_time;
     double elapsed_sec;
 
     if (argc > 1)
@@ -172,19 +194,19 @@ int main(int argc, char *argv[])
     q.n_data = q.n_sent = 0;
     q.max_queue = max_queue;
     q.max_send = n_data;
-    q.timestamps = (struct timespec *) malloc(max_queue * sizeof(struct timespec));
-    pthread_mutex_init(&q.mutex, NULL);
-    pthread_cond_init(&q.cond, NULL);
+    q.timestamps = (test_timespec_t *) malloc(max_queue * sizeof(test_timespec_t));
+    NATIVE_MUTEX_INIT(&q.mutex);
+    COND_INIT(q.cond);
 
     /* Start timing */
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    test_clock_gettime(&start_time);
 
     /* create receivers */
     receivers = (args_t *) malloc(n_receivers * sizeof(args_t));
     for (i = 0; i < n_receivers; i++) {
         receivers[i].id = i;
         receivers[i].queue = &q;
-        pthread_create(&receivers[i].pid, NULL, &receiver, (void *) &receivers[i]);
+        test_thread_create(&receivers[i].pid, NULL, &receiver, (void *) &receivers[i]);
     }
 
     /* create senders */
@@ -192,21 +214,20 @@ int main(int argc, char *argv[])
     for (i = 0; i < n_senders; i++) {
         senders[i].id = i;
         senders[i].queue = &q;
-        pthread_create(&senders[i].pid, NULL, &sender, (void *) &senders[i]);
+        test_thread_create(&senders[i].pid, NULL, &sender, (void *) &senders[i]);
     }
 
     /* wait for senders and receivers to end */
     for (i = 0; i < n_receivers; i++)
-        pthread_join(receivers[i].pid, &retval);
+        test_thread_join(receivers[i].pid, &retval);
     for (i = 0; i < n_senders; i++)
-        pthread_join(senders[i].pid, &retval);
+        test_thread_join(senders[i].pid, &retval);
 
     /* End timing */
-    clock_gettime(CLOCK_MONOTONIC, &end_time);
+    test_clock_gettime(&end_time);
 
     /* Calculate elapsed time */
-    elapsed_sec =
-        (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) * 1e-9;
+    elapsed_sec = test_timespec_diff(&end_time, &start_time);
 
     /* Print overall statistics */
     printf("=== Overall Statistics ===\n");
@@ -217,9 +238,9 @@ int main(int argc, char *argv[])
     printf("Throughput: %.2f items/sec\n", n_data / elapsed_sec);
     printf("==========================\n");
 
-    /* cleanup */
-    pthread_cond_destroy(&q.cond);
-    pthread_mutex_destroy(&q.mutex);
+    /* Cleanup */
+    COND_DESTROY(q.cond);
+    NATIVE_MUTEX_DESTROY(&q.mutex);
     free(q.timestamps);
     free(receivers);
     free(senders);

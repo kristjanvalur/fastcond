@@ -1,4 +1,4 @@
-/* Copyright (c) 2017 Kristján Valur Jónsson */
+/* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 
 // Fairness mechanism control - matches definition in gil.c
 #ifndef FASTCOND_GIL_DISABLE_FAIRNESS
@@ -6,13 +6,11 @@
 #endif
 
 #include "gil.h"
+#include "test_portability.h"
 #include <math.h>
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#include <unistd.h>
 
 /*
  * Comprehensive GIL correctness and fairness test with Python-like behavior simulation
@@ -47,13 +45,13 @@ struct test_context {
     volatile int max_holder_violation; // Track worst case violation
 
     // Thread startup synchronization
-    pthread_mutex_t start_mutex;
-    pthread_cond_t start_cond;
+    test_mutex_t start_mutex;
+    test_cond_t start_cond;
     volatile int threads_ready; // Number of threads waiting to start
 
     // Fairness tracking - competitive acquisition model
     int thread_acquisitions[MAX_THREADS];
-    pthread_t thread_ids[MAX_THREADS];
+    test_thread_t thread_ids[MAX_THREADS];
     int num_threads;
     int total_acquisitions_target; // Total acquisitions to perform across all threads
     int hold_time_us;              // Time to sleep while holding GIL
@@ -71,7 +69,7 @@ struct test_context {
     // Statistics
     volatile int consecutive_reacquisitions;
     volatile int max_consecutive_same_thread;
-    volatile pthread_t last_holder;
+    volatile test_thread_t last_holder;
     volatile int last_holder_count;
 
     // Test control
@@ -100,38 +98,42 @@ struct thread_arg {
     int thread_idx;
 };
 
-void *worker_thread(void *arg)
+TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
 {
     struct thread_arg *targ = (struct thread_arg *) arg;
     struct test_context *ctx = targ->ctx;
     int thread_idx = targ->thread_idx;
-    pthread_t self = pthread_self();
+    test_thread_t self = test_thread_self();
 
     // Signal that this thread is ready and wait for synchronized start
-    pthread_mutex_lock(&ctx->start_mutex);
+    test_mutex_lock(&ctx->start_mutex);
     ctx->threads_ready++;
+
+    // Signal main thread that we've incremented the counter
+    test_cond_broadcast(&ctx->start_cond);
+
     if (ctx->threads_ready == ctx->num_threads) {
-        // Last thread to arrive - signal all to start
-        pthread_cond_broadcast(&ctx->start_cond);
+        // Last thread to arrive - all threads are ready
+        // (main thread will see threads_ready == num_threads and proceed)
     } else {
         // Wait for all threads to be ready
         while (ctx->threads_ready < ctx->num_threads && !ctx->stop_flag) {
-            pthread_cond_wait(&ctx->start_cond, &ctx->start_mutex);
+            test_cond_wait(&ctx->start_cond, &ctx->start_mutex);
         }
     }
-    pthread_mutex_unlock(&ctx->start_mutex);
+    test_mutex_unlock(&ctx->start_mutex);
 
     // Wait for explicit start signal using condition variable
-    pthread_mutex_lock(&ctx->start_mutex);
+    test_mutex_lock(&ctx->start_mutex);
     while (!ctx->start_flag && !ctx->stop_flag) {
-        pthread_cond_wait(&ctx->start_cond, &ctx->start_mutex);
+        test_cond_wait(&ctx->start_cond, &ctx->start_mutex);
     }
-    pthread_mutex_unlock(&ctx->start_mutex);
+    test_mutex_unlock(&ctx->start_mutex);
+
+    int local_acquisitions = 0;
 
     // INITIALIZE: Acquire GIL at thread startup (Python-like behavior)
     fastcond_gil_acquire(&ctx->gil);
-
-    int local_acquisitions = 0;
     int yields_since_io = 0;
     const int IO_PROBABILITY = 10; // Do I/O every ~10 yields on average
 
@@ -170,10 +172,10 @@ void *worker_thread(void *arg)
         // Track fairness statistics
         local_acquisitions++;
 
-        pthread_t prev_holder = ctx->last_holder;
+        test_thread_t prev_holder = ctx->last_holder;
         ctx->last_holder = self;
 
-        if (NATIVE_THREAD_EQUAL(prev_holder, self)) {
+        if (test_thread_equal(prev_holder, self)) {
             __sync_add_and_fetch(&ctx->consecutive_reacquisitions, 1);
             ctx->last_holder_count++;
 
@@ -191,13 +193,15 @@ void *worker_thread(void *arg)
         // Do work while holding the GIL
         do_work_with_sleep(ctx->work_cycles, ctx->hold_time_us);
 
-        // End critical section
-        __sync_sub_and_fetch(&ctx->holder_count, 1);
-
         // Check if we should stop before yielding/doing I/O
         if (acquisition_number >= ctx->total_acquisitions_target) {
+            // End critical section before exiting
+            __sync_sub_and_fetch(&ctx->holder_count, 1);
             break;
         }
+
+        // End critical section - decrement before giving up execution
+        __sync_sub_and_fetch(&ctx->holder_count, 1);
 
         // CORE PYTHON-LIKE BEHAVIOR: Decide between yield vs I/O
         yields_since_io++;
@@ -222,10 +226,14 @@ void *worker_thread(void *arg)
 
             // Reacquire GIL after I/O
             fastcond_gil_acquire(&ctx->gil);
+
             yields_since_io = 0; // Reset counter
+            // Next loop iteration will re-enter critical section with holder_count++
         } else {
             // REGULAR YIELD: Cooperative yielding for fairness
+            // yield() maintains GIL ownership but gives other threads a turn
             fastcond_gil_yield(&ctx->gil);
+            // Next loop iteration will re-enter critical section with holder_count++
         }
     }
 
@@ -237,7 +245,7 @@ void *worker_thread(void *arg)
     }
 
     __sync_sub_and_fetch(&ctx->active_threads, 1);
-    return NULL;
+    TEST_THREAD_RETURN;
 }
 
 static void print_fairness_statistics(struct test_context *ctx, int num_threads)
@@ -369,9 +377,8 @@ static void print_fairness_statistics(struct test_context *ctx, int num_threads)
             last_acquisition_index[thread_id] = i;
         }
 
-        // CRITICAL FIX: Add terminal wait depths for each thread
+        // Add terminal wait depths for each thread
         // This captures the wait depth that starved threads would experience
-        printf("Adding terminal wait analysis for threads that didn't get final turns...\n");
         for (int thread_id = 0; thread_id < num_threads; thread_id++) {
             if (last_acquisition_index[thread_id] != -1) {
                 // Calculate wait depth from this thread's last acquisition to sequence end
@@ -387,9 +394,6 @@ static void print_fairness_statistics(struct test_context *ctx, int num_threads)
                     if (terminal_wait_depth > max_wait_depth) {
                         max_wait_depth = terminal_wait_depth;
                     }
-                    printf("  Thread %d: terminal wait depth = %d (from position %d to end %d)\n",
-                           thread_id, terminal_wait_depth, last_acquisition_index[thread_id],
-                           ctx->sequence_index - 1);
                 }
             } else {
                 // Thread never acquired GIL - would wait through entire sequence
@@ -403,8 +407,6 @@ static void print_fairness_statistics(struct test_context *ctx, int num_threads)
                     if (full_wait_depth > max_wait_depth) {
                         max_wait_depth = full_wait_depth;
                     }
-                    printf("  Thread %d: never acquired GIL, full wait depth = %d\n", thread_id,
-                           full_wait_depth);
                 }
             }
         }
@@ -503,7 +505,7 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
                  int release_delay_us, int release_delay_variance_us)
 {
     struct test_context ctx;
-    pthread_t threads[MAX_THREADS];
+    test_thread_t threads[MAX_THREADS];
     struct thread_arg thread_args[MAX_THREADS]; // Pass index safely
 
     if (num_threads > MAX_THREADS) {
@@ -526,8 +528,8 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     // Initialize test context
     memset(&ctx, 0, sizeof(ctx));
     fastcond_gil_init(&ctx.gil);
-    pthread_mutex_init(&ctx.start_mutex, NULL);
-    pthread_cond_init(&ctx.start_cond, NULL);
+    test_mutex_init(&ctx.start_mutex, NULL);
+    test_cond_init(&ctx.start_cond, NULL);
 
     ctx.num_threads = num_threads;
     ctx.total_acquisitions_target = total_acquisitions;
@@ -544,14 +546,12 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
         return 1;
     }
 
-    printf("Creating %d threads...\n", num_threads);
-
     // Create worker threads with proper index passing
     for (int i = 0; i < num_threads; i++) {
         thread_args[i].ctx = &ctx;
         thread_args[i].thread_idx = i;
 
-        if (pthread_create(&threads[i], NULL, worker_thread, &thread_args[i]) != 0) {
+        if (test_thread_create(&threads[i], NULL, worker_thread, &thread_args[i]) != 0) {
             fprintf(stderr, "Error creating thread %d\n", i);
             return 1;
         }
@@ -559,32 +559,32 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     }
 
     // Wait for all threads to signal readiness
-    pthread_mutex_lock(&ctx.start_mutex);
-    while (ctx.threads_ready < num_threads) {
-        pthread_cond_wait(&ctx.start_cond, &ctx.start_mutex);
-    }
-    pthread_mutex_unlock(&ctx.start_mutex);
+    test_mutex_lock(&ctx.start_mutex);
 
-    printf("All threads ready. Starting synchronized test...\n");
-    struct timespec start_time, end_time;
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    while (ctx.threads_ready < num_threads) {
+        test_cond_wait(&ctx.start_cond, &ctx.start_mutex);
+    }
+    test_mutex_unlock(&ctx.start_mutex);
+
+    // Start the test
+    test_timespec_t start_time, end_time;
+    test_clock_gettime(&start_time);
 
     // Signal all threads to start simultaneously
-    pthread_mutex_lock(&ctx.start_mutex);
+    test_mutex_lock(&ctx.start_mutex);
     ctx.start_flag = 1;
-    pthread_cond_broadcast(&ctx.start_cond);
-    pthread_mutex_unlock(&ctx.start_mutex);
+    test_cond_broadcast(&ctx.start_cond);
+    test_mutex_unlock(&ctx.start_mutex);
 
     // Wait for all threads to complete
     for (int i = 0; i < num_threads; i++) {
-        pthread_join(threads[i], NULL);
+        test_thread_join(threads[i], NULL);
     }
 
-    clock_gettime(CLOCK_MONOTONIC, &end_time);
+    test_clock_gettime(&end_time);
 
     // Calculate elapsed time
-    double elapsed =
-        (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) * 1e-9;
+    double elapsed = test_timespec_diff(&end_time, &start_time);
 
     printf("Test completed in %.3f seconds\n", elapsed);
 
@@ -615,8 +615,8 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
 
     // Cleanup
     fastcond_gil_destroy(&ctx.gil);
-    pthread_mutex_destroy(&ctx.start_mutex);
-    pthread_cond_destroy(&ctx.start_cond);
+    test_mutex_destroy(&ctx.start_mutex);
+    test_cond_destroy(&ctx.start_cond);
     free(ctx.acquisition_sequence);
 
     return (ctx.max_holder_violation > 1) ? 1 : 0;
@@ -625,30 +625,24 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
 // Simple test to verify fastcond_gil_yield() functionality
 void test_gil_yield()
 {
-    struct fastcond_gil gil;
     printf("\n=== GIL Yield API Test ===\n");
 
+    struct fastcond_gil gil;
     fastcond_gil_init(&gil);
-
-    // Test basic yield functionality
-    printf("Testing fastcond_gil_yield()...\n");
 
     // Acquire GIL
     fastcond_gil_acquire(&gil);
-    printf("  ✅ GIL acquired successfully\n");
+    printf("  ✅ Acquired GIL\n");
 
-    // Yield should release and reacquire
+    // Test yield - should be a no-op when no waiters
     fastcond_gil_yield(&gil);
-    printf("  ✅ GIL yielded and reacquired successfully\n");
+    printf("  ✅ Yielded GIL (no waiters)\n");
 
     // Release GIL
     fastcond_gil_release(&gil);
-    printf("  ✅ GIL released successfully\n");
+    printf("  ✅ Released GIL\n");
 
-    // Cleanup
     fastcond_gil_destroy(&gil);
-    printf("  ✅ GIL destroyed successfully\n");
-
     printf("GIL yield API test completed successfully!\n");
 }
 
