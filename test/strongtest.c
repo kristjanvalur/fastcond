@@ -249,18 +249,20 @@ int main(int argc, char *argv[])
     if (csv_file) {
         const char *platform = getenv("FASTCOND_PLATFORM");
         const char *os_version = getenv("FASTCOND_OS_VERSION");
-        
+
         /* Default values if env vars not set */
-        if (!platform) platform = "unknown";
-        if (!os_version) os_version = "unknown";
-        
+        if (!platform)
+            platform = "unknown";
+        if (!os_version)
+            os_version = "unknown";
+
         FILE *fp = fopen(csv_file, "a");
         if (fp) {
-            /* Write CSV row: platform,os_version,test,variant,threads,queue_size,iterations,elapsed_sec,throughput_items_per_sec */
-            fprintf(fp, "%s,%s,strongtest,%s,%d,%d,%d,%.6f,%.2f\n",
-                    platform, os_version, variant,
-                    n_senders, max_queue, n_data,
-                    elapsed_sec, n_data / elapsed_sec);
+            /* Write CSV row:
+             * platform,os_version,test,variant,threads,queue_size,iterations,elapsed_sec,throughput_items_per_sec
+             */
+            fprintf(fp, "%s,%s,strongtest,%s,%d,%d,%d,%.6f,%.2f\n", platform, os_version, variant,
+                    n_senders, max_queue, n_data, elapsed_sec, n_data / elapsed_sec);
             fclose(fp);
         }
     }

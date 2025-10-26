@@ -30,13 +30,13 @@
  * This better simulates real interpreter behavior where threads mostly yield
  * for fairness but occasionally perform I/O operations that release the GIL.
  *
+ * Fairness is measured statistically rather than as an absolute guarantee,
+ * as scheduling and timing can affect fairness in practice.
+ *
  * Environment variables:
  *   FASTCOND_CSV_OUTPUT - If set, output results in CSV format to specified file
  *   FASTCOND_PLATFORM - Platform name for CSV output (e.g., "linux", "macos", "windows")
  *   FASTCOND_OS_VERSION - OS version for CSV output (e.g., "ubuntu-latest")
- */
- * Fairness is measured statistically rather than as an absolute guarantee,
- * as scheduling and timing can affect fairness in practice.
  */
 
 #define MAX_THREADS 16
@@ -618,25 +618,30 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     printf("Average latency per operation: %.1f μs\n",
            (elapsed * 1e6) / ctx.global_acquisitions_done);
 
-    // Check if CSV output is requested
-    const char *csv_file = getenv("FASTCOND_CSV_OUTPUT");
-    if (csv_file) {
-        const char *platform = getenv("FASTCOND_PLATFORM");
-        const char *os_version = getenv("FASTCOND_OS_VERSION");
-        const char *variant = "fastcond_gil";
-        
-        /* Default values if env vars not set */
-        if (!platform) platform = "unknown";
-        if (!os_version) os_version = "unknown";
-        
-        FILE *fp = fopen(csv_file, "a");
-        if (fp) {
-            /* Write CSV row: platform,os_version,test,variant,threads,operations,elapsed_sec,throughput_ops_per_sec */
-            fprintf(fp, "%s,%s,gil_test,%s,%d,%d,%.6f,%.2f\n",
-                    platform, os_version, variant,
-                    num_threads, ctx.global_acquisitions_done,
-                    elapsed, ctx.global_acquisitions_done / elapsed);
-            fclose(fp);
+    /* Check if CSV output is requested */
+    {
+        const char *csv_file = getenv("FASTCOND_CSV_OUTPUT");
+        if (csv_file) {
+            const char *platform = getenv("FASTCOND_PLATFORM");
+            const char *os_version = getenv("FASTCOND_OS_VERSION");
+            const char *variant = "fastcond_gil";
+
+            /* Default values if env vars not set */
+            if (!platform)
+                platform = "unknown";
+            if (!os_version)
+                os_version = "unknown";
+
+            FILE *fp = fopen(csv_file, "a");
+            if (fp) {
+                /* Write CSV row:
+                 * platform,os_version,test,variant,threads,operations,elapsed_sec,throughput_ops_per_sec
+                 */
+                fprintf(fp, "%s,%s,gil_test,%s,%d,%d,%.6f,%.2f\n", platform, os_version, variant,
+                        num_threads, ctx.global_acquisitions_done, elapsed,
+                        ctx.global_acquisitions_done / elapsed);
+                fclose(fp);
+            }
         }
     }
 
