@@ -89,10 +89,12 @@ Because life's rather too short for sluggish condition variables, wouldn't you s
 - **25% better tail latency** — Even your worst-case scenarios perform rather well
 - **Consistent improvements** — Not merely cherry-picked benchmarks, proper improvements across workloads
 
+> **🍎 macOS Performance Highlight:** Particularly striking improvements on macOS, where fastcond's direct use of GCD dispatch semaphores bypasses the pthread compatibility layer. While pthread condition variables on macOS go through translation overhead, fastcond speaks the platform's native tongue. Rather like the difference between a fluent local versus going through a translator! See the [cross-platform comparison](https://kristjanvalur.github.io/fastcond/performance/) for detailed metrics.
+
 **Platform Compatibility:**
 - ✅ **Linux** - Thoroughly tested and production-ready
+- ✅ **macOS** - Excellent performance with GCD semaphores (missing `*_timedwait` due to platform limitations)
 - ✅ **Windows** - Full support with native CONDITION_VARIABLE implementation (v0.2.0+)
-- ⚠️ **macOS** - Nearly there (missing `*_timedwait` due to platform limitations)
 - ❓ **Other POSIX** - Should work perfectly well if you have proper semaphore support
 
 **� [View Cross-Platform Performance Comparison →](https://kristjanvalur.github.io/fastcond/performance/)**
