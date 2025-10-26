@@ -703,6 +703,9 @@ void test_gil_yield()
 
     printf("GIL yield API test completed successfully!\n");
     fflush(stdout);
+    
+    printf("=== About to return from test_gil_yield ===\n");
+    fflush(stdout);
 }
 
 int main(int argc, char *argv[])
