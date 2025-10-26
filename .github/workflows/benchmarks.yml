@@ -126,58 +126,62 @@ jobs:
     
     - name: Generate index page
       run: |
-        cat > docs/index.html << 'EOF'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>fastcond Performance Results</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
-        h2 { color: #34495e; margin-top: 30px; }
-        img { max-width: 100%; height: auto; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .chart-container { margin: 30px 0; }
-        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #3498db; color: white; }
-        tr:nth-child(even) { background-color: #f2f2f2; }
-        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; color: #7f8c8d; }
-    </style>
-</head>
-<body>
-    <h1>🚀 fastcond Performance Benchmarks</h1>
-    <p>Cross-platform performance comparison of fastcond synchronization primitives vs native implementations.</p>
-    
-    <h2>📊 Performance Comparison Charts</h2>
-    <div class="chart-container">
-        <h3>Throughput Comparison</h3>
-        <img src="performance-comparison.png" alt="Performance Comparison Across Platforms">
-    </div>
-    
-    <div class="chart-container">
-        <h3>Speedup vs Native</h3>
-        <img src="speedup-comparison.png" alt="Speedup Comparison">
-    </div>
-    
-    <h2>📈 Detailed Results</h2>
-    <p>See <a href="performance-comparison.md">performance-comparison.md</a> for detailed benchmark results.</p>
-    <p>Download raw data: <a href="performance-summary.json">performance-summary.json</a></p>
-    
-    <div class="footer">
-        <p>Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")</p>
-        <p>Repository: <a href="https://github.com/kristjanvalur/fastcond">kristjanvalur/fastcond</a></p>
-    </div>
-</body>
-</html>
-EOF
+        python3 << 'PYSCRIPT'
+        import datetime
+        html = f"""<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>fastcond Performance Results</title>
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    line-height: 1.6;
+                }}
+                h1 {{ color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }}
+                h2 {{ color: #34495e; margin-top: 30px; }}
+                img {{ max-width: 100%; height: auto; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }}
+                .chart-container {{ margin: 30px 0; }}
+                table {{ border-collapse: collapse; width: 100%; margin: 20px 0; }}
+                th, td {{ border: 1px solid #ddd; padding: 12px; text-align: left; }}
+                th {{ background-color: #3498db; color: white; }}
+                tr:nth-child(even) {{ background-color: #f2f2f2; }}
+                .footer {{ margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; color: #7f8c8d; }}
+            </style>
+        </head>
+        <body>
+            <h1>🚀 fastcond Performance Benchmarks</h1>
+            <p>Cross-platform performance comparison of fastcond synchronization primitives vs native implementations.</p>
+            
+            <h2>📊 Performance Comparison Charts</h2>
+            <div class="chart-container">
+                <h3>Throughput Comparison</h3>
+                <img src="performance-comparison.png" alt="Performance Comparison Across Platforms">
+            </div>
+            
+            <div class="chart-container">
+                <h3>Speedup vs Native</h3>
+                <img src="speedup-comparison.png" alt="Speedup Comparison">
+            </div>
+            
+            <h2>📈 Detailed Results</h2>
+            <p>See <a href="performance-comparison.md">performance-comparison.md</a> for detailed benchmark results.</p>
+            <p>Download raw data: <a href="performance-summary.json">performance-summary.json</a></p>
+            
+            <div class="footer">
+                <p>Generated: {datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")}</p>
+                <p>Repository: <a href="https://github.com/kristjanvalur/fastcond">kristjanvalur/fastcond</a></p>
+            </div>
+        </body>
+        </html>
+        """
+        with open('docs/index.html', 'w') as f:
+            f.write(html)
+        PYSCRIPT
     
     - name: Upload analysis results
       uses: actions/upload-artifact@v4
