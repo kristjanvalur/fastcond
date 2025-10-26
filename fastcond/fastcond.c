@@ -452,25 +452,8 @@ fastcond_wcond_wait_ms(fastcond_wcond_t *restrict cond, native_mutex_t *restrict
                        DWORD timeout_ms)
 {
     TEST_CALLBACK("fastcond_wcond_wait_ms");
-    int err1, err2;
-    cond->waiting++;
-    err1 = NATIVE_MUTEX_UNLOCK(mutex);
-    if (err1)
-        return err1;
-
-    err1 = _sem_wait_ms(cond->sem, timeout_ms);
-    err2 = NATIVE_MUTEX_LOCK(mutex);
-
-    if (err1)
-        /* wakeup did not adjust this, must do it ourselves */
-        --cond->waiting;
-
-    if (err1 == EINTR)
-        err1 = 0; /* signals, etc, cause spurious wakeup */
-
-    if (err2)
-        return err2;
-    return err1;
+    /* wcond is now an alias for cond - just call the strong implementation */
+    return fastcond_cond_wait_ms(cond, mutex, timeout_ms);
 }
 
 FASTCOND_API(int)
@@ -480,23 +463,45 @@ fastcond_cond_wait_ms(fastcond_cond_t *restrict cond, native_mutex_t *restrict m
     TEST_CALLBACK("fastcond_cond_wait_ms");
     int err;
 
-    /* Same logic as fastcond_cond_timedwait, but using millisecond timeout */
-    if (cond->n_wakeup == 0) {
-        cond->n_waiting++;
-        err = fastcond_wcond_wait_ms(&cond->wait, mutex, timeout_ms);
-        cond->n_waiting--;
-        if (err == 0)
-            cond->n_wakeup--;
-    } else {
-        /* n_wakeup > 0, must avoid stealing wakeup - generate spurious wakeup */
-        NATIVE_MUTEX_UNLOCK(mutex);
+    assert(cond->n_wakeup <= cond->n_waiting);
+
+    if (cond->n_wakeup) {
+        /* Pending wakeups - perform spurious wakeup instead of stealing */
+        err = NATIVE_MUTEX_UNLOCK(mutex);
+        if (err)
+            return err;
 #ifdef _MSC_VER
         Sleep(0); /* Yield on Windows */
 #else
         sched_yield();
 #endif
-        err = NATIVE_MUTEX_LOCK(mutex);
+        return NATIVE_MUTEX_LOCK(mutex);
     }
-    return err;
+
+    /* No pending wakeups - use weak primitive with millisecond timeout */
+    int err1, err2;
+    cond->n_waiting++;
+    cond->w_waiting++;
+    err1 = NATIVE_MUTEX_UNLOCK(mutex);
+    if (err1)
+        return err1;
+
+    err1 = _sem_wait_ms(cond->sem, timeout_ms);
+    err2 = NATIVE_MUTEX_LOCK(mutex);
+
+    if (err1)
+        /* wakeup did not adjust counter, must do it ourselves */
+        --cond->w_waiting;
+
+    if (err1 == EINTR)
+        err1 = 0; /* signals, etc, cause spurious wakeup */
+
+    cond->n_waiting--;
+    if (cond->n_wakeup > 0)
+        cond->n_wakeup--;
+
+    if (err2)
+        return err2;
+    return err1;
 }
 #endif /* FASTCOND_USE_WINDOWS */
