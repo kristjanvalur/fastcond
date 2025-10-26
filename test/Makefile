@@ -31,7 +31,7 @@ gil_naive.o: ../fastcond/gil.c
 gil_native_unfair.o: ../fastcond/gil.c
 	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_USE_NATIVE_COND=1 -DFASTCOND_GIL_YIELD_FAIR=0 -DFASTCOND_GIL_ACQUIRE_GREEDY=1 -c -o $@ $^
 
-qtest_pt: qtest.c fastcond.o
+qtest_native: qtest.c fastcond.o
 	$(CC) $(INCLUDES) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 qtest_fc: qtest.c fastcond.o
@@ -40,7 +40,7 @@ qtest_fc: qtest.c fastcond.o
 qtest_wcond: qtest.c fastcond.o
 	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_PATCH_WCOND -o $@ $^ $(LDLIBS)
 
-strongtest_pt: strongtest.c fastcond.o 
+strongtest_native: strongtest.c fastcond.o 
 	$(CC) $(INCLUDES) $(CFLAGS) -o $@ $^ $(LDLIBS)
 strongtest_fc: strongtest.c fastcond.o
 	$(CC) $(INCLUDES) $(CFLAGS) $(DOPATCH) -o $@ $^ $(LDLIBS)
@@ -82,7 +82,7 @@ gil_benchmark_native_unfair: gil_benchmark.c gil_native_unfair.o
 	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_USE_NATIVE_COND=1 -DFASTCOND_GIL_YIELD_FAIR=0 -DFASTCOND_GIL_ACQUIRE_GREEDY=1 -o $@ $^ $(LDLIBS)
 
 
-ALL=qtest_pt qtest_fc qtest_wcond strongtest_pt strongtest_fc gil_test_fc gil_test_native gil_test_fc_unfair gil_test_fc_naive gil_test_native_unfair gil_benchmark_fc gil_benchmark_native gil_benchmark_fc_unfair gil_benchmark_native_unfair
+ALL=qtest_native qtest_fc qtest_wcond strongtest_native strongtest_fc gil_test_fc gil_test_native gil_test_fc_unfair gil_test_fc_naive gil_test_native_unfair gil_benchmark_fc gil_benchmark_native gil_benchmark_fc_unfair gil_benchmark_native_unfair
 
 .PHONY: all
 all: $(ALL)
