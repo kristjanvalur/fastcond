@@ -125,14 +125,9 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
     int thread_idx = targ->thread_idx;
     test_thread_t self = test_thread_self();
 
-    printf("  Worker %d: Started, acquiring start_mutex\n", thread_idx);
-    fflush(stdout);
-
     // Signal that this thread is ready and wait for synchronized start
     test_mutex_lock(&ctx->start_mutex);
     ctx->threads_ready++;
-    printf("  Worker %d: Incremented threads_ready to %d, broadcasting\n", thread_idx, ctx->threads_ready);
-    fflush(stdout);
     
     // Signal main thread that we've incremented the counter
     test_cond_broadcast(&ctx->start_cond);
@@ -140,32 +135,19 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
     if (ctx->threads_ready == ctx->num_threads) {
         // Last thread to arrive - all threads are ready
         // (main thread will see threads_ready == num_threads and proceed)
-        printf("  Worker %d: Last to arrive, all ready!\n", thread_idx);
-        fflush(stdout);
     } else {
         // Wait for all threads to be ready
-        printf("  Worker %d: Waiting for others (threads_ready=%d/%d)\n", thread_idx, ctx->threads_ready, ctx->num_threads);
-        fflush(stdout);
         while (ctx->threads_ready < ctx->num_threads && !ctx->stop_flag) {
             test_cond_wait(&ctx->start_cond, &ctx->start_mutex);
-            printf("  Worker %d: Woken from wait (threads_ready=%d/%d)\n", thread_idx, ctx->threads_ready, ctx->num_threads);
-            fflush(stdout);
         }
     }
-    printf("  Worker %d: Unlocking start_mutex after ready phase\n", thread_idx);
-    fflush(stdout);
     test_mutex_unlock(&ctx->start_mutex);
-
-    printf("  Worker %d: Waiting for start_flag\n", thread_idx);
-    fflush(stdout);
     
     // Wait for explicit start signal using condition variable
     test_mutex_lock(&ctx->start_mutex);
     while (!ctx->start_flag && !ctx->stop_flag) {
         test_cond_wait(&ctx->start_cond, &ctx->start_mutex);
     }
-    printf("  Worker %d: Got start_flag, beginning work\n", thread_idx);
-    fflush(stdout);
     test_mutex_unlock(&ctx->start_mutex);
 
     // INITIALIZE: Acquire GIL at thread startup (Python-like behavior)
@@ -549,9 +531,6 @@ static void print_fairness_statistics(struct test_context *ctx, int num_threads)
 int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int work_cycles,
                  int release_delay_us, int release_delay_variance_us)
 {
-    printf("=== ENTERED run_gil_test ===\n");
-    fflush(stdout);
-    
     struct test_context ctx;
     test_thread_t threads[MAX_THREADS];
     struct thread_arg thread_args[MAX_THREADS]; // Pass index safely
@@ -562,7 +541,6 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     }
 
     printf("=== GIL Correctness and Fairness Test ===\n");
-    fflush(stdout);
     printf("Backend: %s\n", FASTCOND_GIL_USE_NATIVE_COND ? "Native pthread" : "fastcond");
     printf("Fairness: %s\n", FASTCOND_GIL_DISABLE_FAIRNESS ? "DISABLED (plain mutex)" : "ENABLED");
     printf("Configuration: %d threads competing for %d total acquisitions\n", num_threads,
@@ -596,7 +574,6 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     }
 
     printf("Creating %d threads...\n", num_threads);
-    fflush(stdout);
 
     // Create worker threads with proper index passing
     for (int i = 0; i < num_threads; i++) {
@@ -608,31 +585,19 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
             return 1;
         }
         ctx.thread_ids[i] = threads[i]; // Store for cleanup only
-        printf("  Thread %d created\n", i);
-        fflush(stdout);
     }
 
     printf("Main: Waiting for all threads to signal readiness...\n");
-    fflush(stdout);
     
     // Wait for all threads to signal readiness
     test_mutex_lock(&ctx.start_mutex);
-    printf("Main: Acquired start_mutex, threads_ready=%d, num_threads=%d\n", ctx.threads_ready, num_threads);
-    fflush(stdout);
     
     while (ctx.threads_ready < num_threads) {
-        printf("Main: Waiting on start_cond (threads_ready=%d/%d)\n", ctx.threads_ready, num_threads);
-        fflush(stdout);
         test_cond_wait(&ctx.start_cond, &ctx.start_mutex);
-        printf("Main: Woken up, threads_ready=%d/%d\n", ctx.threads_ready, num_threads);
-        fflush(stdout);
     }
-    printf("Main: All threads ready! Unlocking start_mutex\n");
-    fflush(stdout);
     test_mutex_unlock(&ctx.start_mutex);
 
     printf("All threads ready. Starting synchronized test...\n");
-    fflush(stdout);
     test_timespec_t start_time, end_time;
     test_clock_gettime(&start_time);
 
@@ -692,34 +657,24 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
 void test_gil_yield()
 {
     printf("\n=== GIL Yield API Test ===\n");
-    fflush(stdout);
-
-    printf("Testing GIL init/destroy with pointer macro fix...\n");
-    fflush(stdout);
-
-    struct fastcond_gil *gil = malloc(sizeof(struct fastcond_gil));
-    printf("  ✅ malloc() successfully\n");
-    fflush(stdout);
-
-    // Now test the actual GIL init/destroy with fixed macros
-    fastcond_gil_init(gil);
-    printf("  ✅ GIL init successfully\n");
-    fflush(stdout);
-
-    // RE-ENABLE destroy now that we've isolated the init issue
-    fastcond_gil_destroy(gil);
-    printf("  ✅ GIL destroyed successfully\n");
-    fflush(stdout);
-
-    free(gil);
-    printf("  ✅ GIL freed successfully\n");
-    fflush(stdout);
-
-    printf("GIL init/destroy test completed successfully!\n");
-    fflush(stdout);
     
-    printf("=== About to return from test_gil_yield ===\n");
-    fflush(stdout);
+    struct fastcond_gil gil;
+    fastcond_gil_init(&gil);
+
+    // Acquire GIL
+    fastcond_gil_acquire(&gil);
+    printf("  ✅ Acquired GIL\n");
+
+    // Test yield - should be a no-op when no waiters
+    fastcond_gil_yield(&gil);
+    printf("  ✅ Yielded GIL (no waiters)\n");
+
+    // Release GIL
+    fastcond_gil_release(&gil);
+    printf("  ✅ Released GIL\n");
+
+    fastcond_gil_destroy(&gil);
+    printf("GIL yield API test completed successfully!\n");
 }
 
 int main(int argc, char *argv[])
@@ -785,44 +740,13 @@ int main(int argc, char *argv[])
     printf("Usage: %s [num_threads] [total_acquisitions] [hold_time_us] [work_cycles] "
            "[release_delay_us] [release_delay_variance_us]\n\n",
            argv[0]);
-    fflush(stdout);  /* Ensure output appears on Windows */
-
-    printf("=== About to call test_gil_yield ===\n");
-    fflush(stdout);
 
     // Run yield API test first
-    fprintf(stderr, "=== STDERR: Calling test_gil_yield ===\n");
     test_gil_yield();
-    fprintf(stderr, "=== STDERR: test_gil_yield returned ===\n");
-    printf("=== test_gil_yield completed ===\n");
-    fflush(stdout);
-
-    fprintf(stderr, "=== STDERR: About to return from main ===\n");
-    printf("=== Returning from main immediately (skipping run_gil_test) ===\n");
-    fflush(stdout);
-    
-    return 0;  // Exit immediately without calling run_gil_test
-
-    // DISABLED FOR TESTING: Skip run_gil_test entirely
-    /*
-    fprintf(stderr, "=== STDERR: Yield test completed, initializing random seed ===\n");
-    printf("=== Yield test completed, initializing random seed ===\n");
-    fflush(stdout);
 
     // Initialize random seed for release delay variance
-    fprintf(stderr, "=== STDERR: Calling srand(time(NULL)) ===\n");
-    printf("=== Calling srand(time(NULL)) ===\n");
-    fflush(stdout);
     srand(time(NULL));
-    fprintf(stderr, "=== STDERR: srand completed ===\n");
-    printf("=== srand completed ===\n");
-    fflush(stdout);
-
-    fprintf(stderr, "=== STDERR: Calling run_gil_test ===\n");
-    printf("=== Calling run_gil_test ===\n");
-    fflush(stdout);
 
     return run_gil_test(num_threads, total_acquisitions, hold_time_us, work_cycles,
                         release_delay_us, release_delay_variance_us);
-    */
 }
