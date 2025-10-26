@@ -5,11 +5,11 @@
 
 /* Version information */
 #define FASTCOND_VERSION_MAJOR 0
-#define FASTCOND_VERSION_MINOR 2
-#define FASTCOND_VERSION_PATCH 1
+#define FASTCOND_VERSION_MINOR 3
+#define FASTCOND_VERSION_PATCH 0
 
 /* Semantic version string */
-#define FASTCOND_VERSION "0.2.1"
+#define FASTCOND_VERSION "0.3.0"
 
 /* Numeric version for compile-time comparisons: MAJOR*10000 + MINOR*100 + PATCH */
 #define FASTCOND_VERSION_NUM                                                                       \

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-10-26
+
+### Changed
+- **API Unification (Phase 1)**: `fastcond_wcond_t` is now an alias for `fastcond_cond_t`
+  - Both variants now provide strong POSIX semantics (only wake already-waiting threads)
+  - Weak variant removed as separate offering - performance data showed strong variant is actually faster
+  - All `fastcond_wcond_*` functions are now wrappers calling `fastcond_cond_*` functions
+  - Backward compatible: existing wcond API code continues to work with better semantics
+- **Internal architecture**: Layered implementation with static inline `_weak_*` helper functions
+  - Separate counter tracking: `w_waiting` (semaphore level), `n_waiting` (wait level), `n_wakeup` (pending wakeups)
+  - Conceptually clear separation between weak primitive layer and strong bookkeeping layer
+
+### Removed
+- Weak variant documentation from README (no longer showcased as separate option)
+- `*_wcond` test executable variants (now redundant - wcond is just an alias)
+- Weak variant performance testing and CI test runs
+- "Weak vs Strong Showdown" section explaining semantic differences
+
+### Fixed
+- `strongtest` with wcond patch now passes (previously would deadlock with true weak semantics)
+
 ## [0.2.1] - 2025-10-26
 
 ### Added
