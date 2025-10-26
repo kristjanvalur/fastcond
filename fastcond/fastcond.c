@@ -165,102 +165,69 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
 #define MAYBE_YIELD() ((void) 0) /* No-op */
 #endif
 
-/*  The fastcond_wcond_t code - weak condition variable (see below for `weak`)
-
-    The following comes out of work to create a working CriticalSection
-    object on earlier versions of Windows.
-
-    Windows:
-    The mutex is a CriticalSection.
-    The condition variable is emulated with the help of a semaphore.
-    Semaphores are available on Windows XP (2003 server) and later.
-    We use a Semaphore rather than an auto-reset event, because although
-    an auto-resent event might appear to solve the lost-wakeup bug (race
-    condition between releasing the outer lock and waiting) because it
-    maintains state even though a wait hasn't happened, there is still
-    a lost wakeup problem if more than one thread are interrupted in the
-    critical place.  A semaphore solves that, because its state is counted,
-    not Boolean.
-    Because it is ok to signal a condition variable with no one
-    waiting, we need to keep track of the number of
-    waiting threads.  Otherwise, the semaphore's state could rise
-    without bound.  This also helps reduce the number of `spurious wakeups`
-    that would otherwise happen (see below).
-
-    Posix:
-    Here we stick to pthread_mutex_t as the mutex, but for fun and profit,
-    decide to emulate a condition variable in the same manner using the
-    posix semaphore.
-    Notice however that unlike `real` pthread semaphores, the wait
-    functions here are _not_ pthread cancellation points.  Perhaps it would
-    be possible to emulate that using pthread_checkcancel, and watching EINTR
-    result values.  But we won't go there.
-
-    `Weak` condition
-    This implementation still has the problem that the threads woken
-    with a "signal" aren't necessarily those that are already
-    waiting.  It corresponds to listing 2 in:
-    http://birrell.org/andrew/papers/ImplementingCVs.pdf
-    In particular, condition variables promise that a "signal" wakes
-    _at least_ one of the already waiting threads, and that a broadcast
-    wakes _all_ of the waiting threads.  This simple emulation cannot guarantee
-    that because a newly arriving thread may "steal" the semaphore from
-    the waiting threads.  In particular, the thread that makes the 'signal'
-    may subsequently 'wait', but wake itself up, rather than one of the
-    other threads.
-
-    For many cases, this is fine.  Whenever it is sufficient that _a_ thread is
-    indeed awoken, a weak condition variable works well.  This is the case if
-    all the threads that can wait are equivalent.
-    But for applications requiring the strict semantics of condition variables
-    we need to add additional features to guarantee that behaviour.
-    See PySCOND below for details.
-
-    `spurious wakeups`
-    The Condition Variable protocol sensible does not guarantee that when
-    a thread wakes up, Its predicate is true.  In other words, it may wake up
-    due to some unspecified reasons (such as signals) and the caller of wait functions
-    must always test that a predicate is true (and it can stop waiting) when returning
-    from wait functions.  This freedom makes implementation of condition variables
-    _much_ simpler and also the logic concerning their use.  Caller need not
-    reason about why he woke up, he simply tests the predicates.  Condition variables
-    provide a guarantee to wake up, but not a guarantee to sleep.
-
-    Generic emulations of the pthread_cond_* API using
-    earlier Win32 functions can be found on the Web.
-    The following read can be give background information to these issues,
-    but the implementations are all broken in some way.
-    http://www.cse.wustl.edu/~schmidt/win32-cv-1.html
+/*  fastcond_cond_t implementation - Unified strong condition variable
+    
+    Historical Note:
+    Earlier versions of this library provided two variants:
+    - fastcond_wcond_t: "weak" semantics (could wake signalling thread, violating POSIX)
+    - fastcond_cond_t: "strong" semantics (guarantees only waiting threads wake)
+    
+    Performance benchmarking showed the strong variant is actually FASTER than weak
+    despite additional bookkeeping, while also providing correct POSIX semantics.
+    Therefore, the API has been unified - fastcond_wcond_t is now an alias for
+    fastcond_cond_t, and both provide strong semantics.
+    
+    Implementation Strategy:
+    This implementation uses a layered approach for conceptual clarity:
+    1. Static inline helpers (_weak_*) provide the basic semaphore primitive layer
+    2. Public fastcond_cond_* functions add strong semantics via bookkeeping
+    3. Backward-compatible fastcond_wcond_* aliases call the strong implementation
+    
+    The weak primitive layer corresponds to the simple emulation in Birrell's paper
+    (listing 2: http://birrell.org/andrew/papers/ImplementingCVs.pdf).
+    It uses a semaphore + waiting counter but allows wakeup stealing.
+    
+    The strong layer adds n_wakeup tracking to prevent newly-arriving threads from
+    stealing wakeups intended for already-waiting threads, guaranteeing POSIX semantics
+    at the cost of occasional spurious wakeups.
+    
+    Background:
+    The semaphore-based emulation comes from work on Windows CriticalSection objects.
+    Semaphores (available Windows XP+, POSIX) provide counted state unlike auto-reset
+    events, preventing lost-wakeup race conditions when multiple threads are interrupted.
+    
+    Note: Unlike pthread_cond_*, these wait functions are NOT cancellation points.
+    Emulating that would require pthread_testcancel() and EINTR handling.
+    
+    Spurious Wakeups:
+    Condition variables do not guarantee the predicate is true on wakeup - threads may
+    wake due to signals, internal bookkeeping, etc. Callers must always retest their
+    predicate in a loop. This freedom simplifies both implementation and usage.
 */
 
-FASTCOND_API(int)
-fastcond_wcond_init(fastcond_wcond_t *restrict cond, const void *restrict attr)
+/* Static inline helpers implementing the basic weak primitive layer.
+ * These provide simple semaphore-based signaling with waiting counter,
+ * but allow wakeup stealing (signalling thread may wake itself).
+ * Used internally by the strong implementation below.
+ */
+
+static inline int _weak_init(fastcond_cond_t *cond)
 {
-    TEST_CALLBACK("fastcond_wcond_init");
-    (void) attr; /* Unused - condattr not supported */
-    cond->waiting = 0;
+    cond->w_waiting = 0;
     return SEM_INIT(cond->sem);
 }
 
-FASTCOND_API(int)
-fastcond_wcond_fini(fastcond_wcond_t *cond)
+static inline int _weak_fini(fastcond_cond_t *cond)
 {
     return SEM_DESTROY(cond->sem);
 }
 
-FASTCOND_API(int)
-fastcond_wcond_wait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex)
-{
-    TEST_CALLBACK("fastcond_wcond_wait");
-    return fastcond_wcond_timedwait(cond, mutex, 0);
-}
-
-FASTCOND_API(int)
-fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
-                         const struct timespec *restrict abstime)
+static inline int _weak_timedwait(fastcond_cond_t *cond,
+                                   native_mutex_t *restrict mutex,
+                                   const struct timespec *restrict abstime)
 {
     int err1, err2;
-    cond->waiting++;
+    cond->w_waiting++;
     err1 = NATIVE_MUTEX_UNLOCK(mutex);
     if (err1)
         return err1;
@@ -269,8 +236,8 @@ fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restri
     err2 = NATIVE_MUTEX_LOCK(mutex);
 
     if (err1)
-        /* wakeup did not adjust this, must do it ourselves */
-        --cond->waiting;
+        /* wakeup did not adjust counter, must do it ourselves */
+        --cond->w_waiting;
 
     if (err1 == EINTR)
         err1 = 0; /* signals, etc, cause spurious wakeup */
@@ -280,70 +247,52 @@ fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restri
     return err1;
 }
 
-FASTCOND_API(int)
-fastcond_wcond_signal(fastcond_wcond_t *cond)
+static inline int _weak_signal(fastcond_cond_t *cond)
 {
-    TEST_CALLBACK("fastcond_wcond_signal");
-    if (cond->waiting > 0) {
+    if (cond->w_waiting > 0) {
         int err = SEM_POST(cond->sem);
         if (err)
             return err;
-        cond->waiting--;
+        cond->w_waiting--;
     }
     return 0;
 }
 
-FASTCOND_API(int)
-fastcond_wcond_broadcast(fastcond_wcond_t *cond)
+static inline int _weak_broadcast(fastcond_cond_t *cond)
 {
-    while (cond->waiting > 0) {
+    while (cond->w_waiting > 0) {
         int err = SEM_POST(cond->sem);
         if (err)
             return err;
-        cond->waiting--;
+        cond->w_waiting--;
     }
     return 0;
 }
 
-/*  fastcond_cond_t code - the strong condition variable
-
-    The above emulated condition variable, as explained, does make the full
-    promise of the Condition Variable protocol, that a 'signal' wakes up at least
-    one of the waiting threads.  It will wake up a thread, but it may be one that
-    hasn't yet started waiting.
-    This can cause problems if not all of the potentially waiting threads are
-    equivalent, such as when servicing two ends of a pipe with a single condition
-    variable.
-
-    And so, we aim to provide a `strong` condition variable.
-    The approach taken here is to provide additional bookkeeping outside
-    keeping track of number of waiting threads
-    inside it, and the number of wakeups that are `pending`.
-    That is, threads that have been signalled to wake up but haven't yet exited.
-    If a new thread attempts to wait while there are pending wakeups, it
-    immediately returns without waiting, (but yields the cpu).  This prevents
-    it from `stealing` the wakeup from one of the other threads.
-
-    To the caller, this will look like a spurious wakeup, something that
-    he must expect.  We can thus guarantee correctness, at the cost of
-    some extra wakeups.
+/* Strong condition variable implementation using weak primitive helpers.
+ * Adds n_wakeup bookkeeping to ensure only already-waiting threads receive wakeups.
+ * 
+ * Key mechanism: If n_wakeup > 0 (pending wakeups), new waiters immediately return
+ * with spurious wakeup instead of stealing the semaphore from waiting threads.
+ * This preserves POSIX semantics: signal/broadcast only wakes existing waiters.
+ * 
+ * Invariant maintained: n_wakeup <= waiting (cannot have more pending wakeups than waiters)
  */
 
 FASTCOND_API(int)
 fastcond_cond_init(fastcond_cond_t *restrict cond, const void *restrict attr)
 {
     TEST_CALLBACK("fastcond_cond_init");
-    int err;
-    cond->n_waiting = cond->n_wakeup = 0;
-    err = fastcond_wcond_init(&cond->wait, attr);
-    return err;
+    (void) attr; /* Unused - condattr not supported */
+    cond->n_waiting = 0;
+    cond->n_wakeup = 0;
+    return _weak_init(cond);
 }
 
 FASTCOND_API(int)
 fastcond_cond_fini(fastcond_cond_t *cond)
 {
-    int err = fastcond_wcond_fini(&cond->wait);
-    return err;
+    return _weak_fini(cond);
 }
 
 FASTCOND_API(int)
@@ -359,14 +308,13 @@ fastcond_cond_timedwait(fastcond_cond_t *restrict cond, native_mutex_t *restrict
 {
     int err;
     assert(cond->n_wakeup <= cond->n_waiting);
+    
     if (cond->n_wakeup) {
-        /* there are signalled threads that haven't woken up.
-         * I cannot take the chance of pre-empting them, which would violate
-         * the strong condition that the threads already wating must be woken
-         * up.  Therefore, we will perform a spurious wakeup (which is allowed)
-         * while still allowing the waiting threads to wake up.
-         * We must yield the lock to allow the other threads a chance to
-         * wake up as well, throwing in a scheduler yield for good measure.
+        /* Pending wakeups exist for threads already waiting.
+         * Cannot enter wait state - would steal wakeup from them, violating
+         * strong semantics (only already-waiting threads should wake).
+         * Instead, perform spurious wakeup (allowed by CV protocol) while
+         * yielding lock to let signalled threads complete their wakeup.
          */
         err = NATIVE_MUTEX_UNLOCK(mutex);
         if (err)
@@ -374,32 +322,50 @@ fastcond_cond_timedwait(fastcond_cond_t *restrict cond, native_mutex_t *restrict
         MAYBE_YIELD();
         return NATIVE_MUTEX_LOCK(mutex);
     }
+    
+    /* No pending wakeups - safe to wait using weak primitive.
+     * Track at strong layer (n_waiting) separately from weak layer (waiting).
+     */
     cond->n_waiting++;
-    err = fastcond_wcond_timedwait(&cond->wait, mutex, abstime);
+    err = _weak_timedwait(cond, mutex, abstime);
     cond->n_waiting--;
+    
+    /* If we were woken by signal/broadcast, consume the pending wakeup marker */
     if (cond->n_wakeup > 0)
         cond->n_wakeup--;
+    
     return err;
 }
 
 static int _fastcond_cond_signal_n(fastcond_cond_t *cond, int n)
 {
-    int err = 0, unwoken = cond->n_waiting - cond->n_wakeup;
+    int err = 0;
+    int unwoken = cond->n_waiting - cond->n_wakeup; /* threads waiting without pending wakeup */
+    
     if (unwoken > 0) {
-        /* negative n means all, positive is the minimal amount to wake */
+        int to_wake;
+        
+        /* Determine how many threads to wake:
+         * n == 1: wake one thread (signal)
+         * n < 0: wake all (broadcast)
+         * n > 1: wake min(n, unwoken) threads
+         */
         if (n == 1 || unwoken == 1) {
-            err = fastcond_wcond_signal(&cond->wait);
-            n = 1;
+            err = _weak_signal(cond);
+            to_wake = 1;
         } else if (n > 0 && n < unwoken) {
             int i;
             for (i = 0; err == 0 && i < n; i++)
-                err = fastcond_wcond_signal(&cond->wait);
+                err = _weak_signal(cond);
+            to_wake = (err == 0) ? n : i;
         } else {
-            err = fastcond_wcond_broadcast(&cond->wait);
-            n = unwoken;
+            err = _weak_broadcast(cond);
+            to_wake = unwoken;
         }
+        
+        /* Track pending wakeups to prevent wakeup stealing by new waiters */
         if (err == 0)
-            cond->n_wakeup += n;
+            cond->n_wakeup += to_wake;
     }
     return err;
 }
@@ -410,10 +376,56 @@ fastcond_cond_signal(fastcond_cond_t *cond)
     TEST_CALLBACK("fastcond_cond_signal");
     return _fastcond_cond_signal_n(cond, 1);
 }
+
 FASTCOND_API(int)
 fastcond_cond_broadcast(fastcond_cond_t *cond)
 {
     return _fastcond_cond_signal_n(cond, -1);
+}
+
+/* Backward-compatible weak condition variable API.
+ * These are now simple aliases to the strong implementation.
+ * All fastcond_wcond_* functions now provide strong POSIX semantics.
+ */
+
+FASTCOND_API(int)
+fastcond_wcond_init(fastcond_wcond_t *restrict cond, const void *restrict attr)
+{
+    TEST_CALLBACK("fastcond_wcond_init");
+    return fastcond_cond_init(cond, attr);
+}
+
+FASTCOND_API(int)
+fastcond_wcond_fini(fastcond_wcond_t *cond)
+{
+    return fastcond_cond_fini(cond);
+}
+
+FASTCOND_API(int)
+fastcond_wcond_wait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex)
+{
+    TEST_CALLBACK("fastcond_wcond_wait");
+    return fastcond_cond_wait(cond, mutex);
+}
+
+FASTCOND_API(int)
+fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
+                         const struct timespec *restrict abstime)
+{
+    return fastcond_cond_timedwait(cond, mutex, abstime);
+}
+
+FASTCOND_API(int)
+fastcond_wcond_signal(fastcond_wcond_t *cond)
+{
+    TEST_CALLBACK("fastcond_wcond_signal");
+    return fastcond_cond_signal(cond);
+}
+
+FASTCOND_API(int)
+fastcond_wcond_broadcast(fastcond_wcond_t *cond)
+{
+    return fastcond_cond_broadcast(cond);
 }
 
 #ifdef FASTCOND_USE_WINDOWS

@@ -34,9 +34,11 @@
 
 #define FASTCOND_API(v) v
 
-/* The _weak_ condition variable.  See fastcond.c for details */
+/* The strong condition variable - primary implementation with full POSIX semantics
+ * This is the main condition variable type with correct wakeup guarantees.
+ */
 
-typedef struct _fastcond_wcond_t {
+typedef struct _fastcond_cond_t {
 #ifdef FASTCOND_USE_WINDOWS
     HANDLE sem; /* Windows semaphore handle */
 #elif defined(FASTCOND_USE_GCD)
@@ -44,34 +46,9 @@ typedef struct _fastcond_wcond_t {
 #else
     sem_t sem;
 #endif
-    volatile int waiting; /* to allow PyCOND_SIGNAL to be a no-op */
-} fastcond_wcond_t;
-
-FASTCOND_API(int)
-fastcond_wcond_init(fastcond_wcond_t *restrict cond, const void *restrict attr);
-
-FASTCOND_API(int)
-fastcond_wcond_fini(fastcond_wcond_t *cond);
-
-FASTCOND_API(int)
-fastcond_wcond_wait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex);
-
-FASTCOND_API(int)
-fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
-                         const struct timespec *restrict abstime);
-
-FASTCOND_API(int)
-fastcond_wcond_signal(fastcond_wcond_t *cond);
-
-FASTCOND_API(int)
-fastcond_wcond_broadcast(fastcond_wcond_t *cond);
-
-/* the _strong_ condition variable.  See fastcond.c for details */
-
-typedef struct _fastcond_cond_t {
-    fastcond_wcond_t wait;  /* the inner weak condition variable */
-    volatile int n_waiting; /* number of threads in 'wait' */
-    volatile int n_wakeup;  /* number of awoken threads in 'wait' that haven't exited yet. */
+    volatile int w_waiting; /* weak layer: threads blocked on semaphore */
+    volatile int n_waiting; /* strong layer: threads in wait (including spurious wakeups) */
+    volatile int n_wakeup;  /* strong layer: awoken threads that haven't exited yet */
 } fastcond_cond_t;
 
 FASTCOND_API(int)
@@ -92,6 +69,39 @@ fastcond_cond_signal(fastcond_cond_t *cond);
 
 FASTCOND_API(int)
 fastcond_cond_broadcast(fastcond_cond_t *cond);
+
+/* The weak condition variable API is now an alias for strong
+ * 
+ * Historical note: The original fastcond implementation (2017) used "weak"
+ * semantics that could wake threads not yet waiting (wakeup stealing).
+ * The strong variant was developed to fix this with spurious wakeup prevention.
+ * Performance testing showed strong is actually FASTER than weak, so we've
+ * unified on the strong implementation.
+ * 
+ * The wcond API is kept for backwards compatibility but now provides strong
+ * semantics - which is strictly better! Code using wcond will continue to work
+ * and will automatically get correct POSIX semantics.
+ */
+typedef fastcond_cond_t fastcond_wcond_t;
+
+FASTCOND_API(int)
+fastcond_wcond_init(fastcond_wcond_t *restrict cond, const void *restrict attr);
+
+FASTCOND_API(int)
+fastcond_wcond_fini(fastcond_wcond_t *cond);
+
+FASTCOND_API(int)
+fastcond_wcond_wait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex);
+
+FASTCOND_API(int)
+fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
+                         const struct timespec *restrict abstime);
+
+FASTCOND_API(int)
+fastcond_wcond_signal(fastcond_wcond_t *cond);
+
+FASTCOND_API(int)
+fastcond_wcond_broadcast(fastcond_wcond_t *cond);
 
 #ifdef FASTCOND_TEST_INSTRUMENTATION
 /*
