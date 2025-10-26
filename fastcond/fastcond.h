@@ -71,13 +71,13 @@ FASTCOND_API(int)
 fastcond_cond_broadcast(fastcond_cond_t *cond);
 
 /* The weak condition variable API is now an alias for strong
- * 
+ *
  * Historical note: The original fastcond implementation (2017) used "weak"
  * semantics that could wake threads not yet waiting (wakeup stealing).
  * The strong variant was developed to fix this with spurious wakeup prevention.
  * Performance testing showed strong is actually FASTER than weak, so we've
  * unified on the strong implementation.
- * 
+ *
  * The wcond API is kept for backwards compatibility but now provides strong
  * semantics - which is strictly better! Code using wcond will continue to work
  * and will automatically get correct POSIX semantics.
