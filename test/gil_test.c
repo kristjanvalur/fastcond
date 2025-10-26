@@ -694,24 +694,27 @@ void test_gil_yield()
     printf("\n=== GIL Yield API Test ===\n");
     fflush(stdout);
 
-    printf("Testing minimal malloc/free only (no GIL operations)...\n");
+    printf("Testing GIL init/destroy with pointer macro fix...\n");
     fflush(stdout);
 
     struct fastcond_gil *gil = malloc(sizeof(struct fastcond_gil));
     printf("  ✅ malloc() successfully\n");
     fflush(stdout);
 
-    // REMOVED: All GIL operations - testing ONLY malloc/free
-    // fastcond_gil_init(gil);
-    // fastcond_gil_destroy(gil);
-
-    printf("  About to free()...\n");
+    // Now test the actual GIL init/destroy with fixed macros
+    fastcond_gil_init(gil);
+    printf("  ✅ GIL init successfully\n");
     fflush(stdout);
+
+    fastcond_gil_destroy(gil);
+    printf("  ✅ GIL destroyed successfully\n");
+    fflush(stdout);
+
     free(gil);
-    printf("  ✅ free() successfully\n");
+    printf("  ✅ GIL freed successfully\n");
     fflush(stdout);
 
-    printf("Malloc/free test completed successfully!\n");
+    printf("GIL init/destroy test completed successfully!\n");
     fflush(stdout);
     
     printf("=== About to return from test_gil_yield ===\n");

@@ -34,11 +34,11 @@
     #define COND_BROADCAST(c) fastcond_cond_broadcast(&(c))
 #else
     typedef native_cond_t cond_t;
-    #define COND_INIT(c) NATIVE_COND_INIT(c)
-    #define COND_DESTROY(c) NATIVE_COND_DESTROY(c)
-    #define COND_WAIT(c, m) NATIVE_COND_WAIT(c, &(m))
-    #define COND_SIGNAL(c) NATIVE_COND_SIGNAL(c)
-    #define COND_BROADCAST(c) NATIVE_COND_BROADCAST(c)
+    #define COND_INIT(c) NATIVE_COND_INIT(&(c))
+    #define COND_DESTROY(c) NATIVE_COND_DESTROY(&(c))
+    #define COND_WAIT(c, m) NATIVE_COND_WAIT(&(c), &(m))
+    #define COND_SIGNAL(c) NATIVE_COND_SIGNAL(&(c))
+    #define COND_BROADCAST(c) NATIVE_COND_BROADCAST(&(c))
 #endif
 
 /*
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 
     q.n_sent = 0;
     q.max_send = n_data;
-    NATIVE_MUTEX_INIT(q.mutex);
+    NATIVE_MUTEX_INIT(&q.mutex);
     COND_INIT(q.not_empty);
     COND_INIT(q.not_full);
 
@@ -260,10 +260,10 @@ int main(int argc, char *argv[])
     printf("All threads completed, cleaning up\n");
     fflush(stdout);
 
-    /* cleanup */
+    /* Cleanup */
     COND_DESTROY(q.not_empty);
     COND_DESTROY(q.not_full);
-    NATIVE_MUTEX_DESTROY(q.mutex);
+    NATIVE_MUTEX_DESTROY(&q.mutex);
     free(q.queue);
     free(receivers);
     free(senders);

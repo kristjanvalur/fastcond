@@ -20,7 +20,7 @@ TEST_THREAD_FUNC_RETURN thread_func(void *arg) {
     
     printf("Thread: Waiting on condition (should release mutex)...\n");
     while (!ready) {
-        NATIVE_COND_WAIT(cond, &mutex);
+        NATIVE_COND_WAIT(&cond, &mutex);
     }
     printf("Thread: Woken up, checking counter...\n");
     
@@ -38,8 +38,8 @@ int main(void) {
     test_thread_t thread;
     
     printf("Initializing mutex and condition variable...\n");
-    NATIVE_MUTEX_INIT(mutex);
-    NATIVE_COND_INIT(cond);
+    NATIVE_MUTEX_INIT(&mutex);
+    NATIVE_COND_INIT(&cond);
     
     printf("Creating thread...\n");
     test_thread_create(&thread, NULL, thread_func, NULL);
@@ -64,7 +64,7 @@ int main(void) {
     
     printf("Main: Signaling condition...\n");
     ready = 1;
-    NATIVE_COND_SIGNAL(cond);
+    NATIVE_COND_SIGNAL(&cond);
     
     printf("Main: Unlocking mutex\n");
     NATIVE_MUTEX_UNLOCK(&mutex);
@@ -72,8 +72,8 @@ int main(void) {
     printf("Main: Waiting for thread to finish...\n");
     test_thread_join(thread, NULL);
     
-    NATIVE_COND_DESTROY(cond);
-    NATIVE_MUTEX_DESTROY(mutex);
+    NATIVE_COND_DESTROY(&cond);
+    NATIVE_MUTEX_DESTROY(&mutex);
     
     printf("✅ Test PASSED - mutex release/reacquire works correctly\n");
     return 0;

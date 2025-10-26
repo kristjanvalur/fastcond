@@ -44,18 +44,20 @@ typedef pthread_t native_thread_t;
  * POSIX: Use pthread_mutex_t
  * Note: GCD doesn't have a direct mutex - uses dispatch_queue serialization,
  *       but pthread_mutex_t works fine on macOS
+ *
+ * IMPORTANT: All macros take POINTERS to the mutex structure for consistency
  */
 #ifdef NATIVE_USE_WINDOWS
 typedef CRITICAL_SECTION native_mutex_t;
-#define NATIVE_MUTEX_INIT(mutex) InitializeCriticalSection(&(mutex))
-#define NATIVE_MUTEX_DESTROY(mutex) DeleteCriticalSection(&(mutex))
+#define NATIVE_MUTEX_INIT(mutex) InitializeCriticalSection(mutex)
+#define NATIVE_MUTEX_DESTROY(mutex) DeleteCriticalSection(mutex)
 /* Windows critical section functions return void, wrap to return 0 for success */
 #define NATIVE_MUTEX_LOCK(mutex) (EnterCriticalSection(mutex), 0)
 #define NATIVE_MUTEX_UNLOCK(mutex) (LeaveCriticalSection(mutex), 0)
 #else
 typedef pthread_mutex_t native_mutex_t;
-#define NATIVE_MUTEX_INIT(mutex) pthread_mutex_init(&(mutex), NULL)
-#define NATIVE_MUTEX_DESTROY(mutex) pthread_mutex_destroy(&(mutex))
+#define NATIVE_MUTEX_INIT(mutex) pthread_mutex_init(mutex, NULL)
+#define NATIVE_MUTEX_DESTROY(mutex) pthread_mutex_destroy(mutex)
 #define NATIVE_MUTEX_LOCK(mutex) pthread_mutex_lock(mutex)
 #define NATIVE_MUTEX_UNLOCK(mutex) pthread_mutex_unlock(mutex)
 #endif
@@ -73,31 +75,33 @@ typedef pthread_mutex_t native_mutex_t;
  * supported and remain the recommended approach for "native" condition variables.
  * The fastcond library uses GCD semaphores internally but provides its own
  * condition variable API on top.
+ *
+ * IMPORTANT: All macros take POINTERS to the condition variable structure for consistency
  */
 #ifdef NATIVE_USE_WINDOWS
 /* Windows: Use native CONDITION_VARIABLE with CRITICAL_SECTION */
 typedef CONDITION_VARIABLE native_cond_t;
-#define NATIVE_COND_INIT(cond) InitializeConditionVariable(&(cond))
+#define NATIVE_COND_INIT(cond) InitializeConditionVariable(cond)
 #define NATIVE_COND_DESTROY(cond) ((void) 0) /* No cleanup needed for CONDITION_VARIABLE */
-#define NATIVE_COND_WAIT(cond, mutex) SleepConditionVariableCS(&(cond), (mutex), INFINITE)
-#define NATIVE_COND_SIGNAL(cond) WakeConditionVariable(&(cond))
-#define NATIVE_COND_BROADCAST(cond) WakeAllConditionVariable(&(cond))
+#define NATIVE_COND_WAIT(cond, mutex) SleepConditionVariableCS((cond), (mutex), INFINITE)
+#define NATIVE_COND_SIGNAL(cond) WakeConditionVariable(cond)
+#define NATIVE_COND_BROADCAST(cond) WakeAllConditionVariable(cond)
 #elif defined(NATIVE_USE_GCD)
 /* macOS: Use pthread condition variables (GCD doesn't have them) */
 typedef pthread_cond_t native_cond_t;
-#define NATIVE_COND_INIT(cond) pthread_cond_init(&(cond), NULL)
-#define NATIVE_COND_DESTROY(cond) pthread_cond_destroy(&(cond))
-#define NATIVE_COND_WAIT(cond, mutex) pthread_cond_wait(&(cond), (mutex))
-#define NATIVE_COND_SIGNAL(cond) pthread_cond_signal(&(cond))
-#define NATIVE_COND_BROADCAST(cond) pthread_cond_broadcast(&(cond))
+#define NATIVE_COND_INIT(cond) pthread_cond_init(cond, NULL)
+#define NATIVE_COND_DESTROY(cond) pthread_cond_destroy(cond)
+#define NATIVE_COND_WAIT(cond, mutex) pthread_cond_wait(cond, mutex)
+#define NATIVE_COND_SIGNAL(cond) pthread_cond_signal(cond)
+#define NATIVE_COND_BROADCAST(cond) pthread_cond_broadcast(cond)
 #else
 /* Linux/POSIX: Use pthread condition variables */
 typedef pthread_cond_t native_cond_t;
-#define NATIVE_COND_INIT(cond) pthread_cond_init(&(cond), NULL)
-#define NATIVE_COND_DESTROY(cond) pthread_cond_destroy(&(cond))
-#define NATIVE_COND_WAIT(cond, mutex) pthread_cond_wait(&(cond), (mutex))
-#define NATIVE_COND_SIGNAL(cond) pthread_cond_signal(&(cond))
-#define NATIVE_COND_BROADCAST(cond) pthread_cond_broadcast(&(cond))
+#define NATIVE_COND_INIT(cond) pthread_cond_init(cond, NULL)
+#define NATIVE_COND_DESTROY(cond) pthread_cond_destroy(cond)
+#define NATIVE_COND_WAIT(cond, mutex) pthread_cond_wait(cond, mutex)
+#define NATIVE_COND_SIGNAL(cond) pthread_cond_signal(cond)
+#define NATIVE_COND_BROADCAST(cond) pthread_cond_broadcast(cond)
 #endif
 
 #endif /* ! defined _NATIVE_PRIMITIVES_H_ */

@@ -55,7 +55,7 @@ TEST_THREAD_FUNC_RETURN waiter_thread(void *arg)
     
     while (!ctx->ready) {
 #ifdef _WIN32
-        NATIVE_COND_WAIT(ctx->cond, &ctx->mutex);
+        NATIVE_COND_WAIT(&ctx->cond, &ctx->mutex);
 #else
         /* This pthread_cond_wait will be replaced by fastcond via patch */
         pthread_cond_wait(&ctx->cond, &ctx->mutex);
@@ -94,7 +94,8 @@ int main(void)
     printf("\nInitializing test context...\n");
     ctx.ready = 0;
     ctx.done = 0;
-    NATIVE_MUTEX_INIT(ctx.mutex);
+    /* Initialize test context */
+    NATIVE_MUTEX_INIT(&ctx.mutex);
     
     /* This will be replaced by fastcond_*_init via patch */
     pthread_cond_init(&ctx.cond, NULL);
@@ -127,7 +128,7 @@ int main(void)
     printf("Cleaning up...\n");
     /* This will be replaced by fastcond_*_fini via patch */
     pthread_cond_destroy(&ctx.cond);
-    NATIVE_MUTEX_DESTROY(ctx.mutex);
+    NATIVE_MUTEX_DESTROY(&ctx.mutex);
     
     printf("\n✅ Patch test PASSED\n");
     printf("   - init/wait/signal/destroy operations work\n");

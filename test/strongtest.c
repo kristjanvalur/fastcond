@@ -36,11 +36,11 @@
     #define COND_BROADCAST(c) fastcond_cond_broadcast(&(c))
 #else
     typedef native_cond_t cond_t;
-    #define COND_INIT(c) NATIVE_COND_INIT(c)
-    #define COND_DESTROY(c) NATIVE_COND_DESTROY(c)
-    #define COND_WAIT(c, m) NATIVE_COND_WAIT(c, &(m))
-    #define COND_SIGNAL(c) NATIVE_COND_SIGNAL(c)
-    #define COND_BROADCAST(c) NATIVE_COND_BROADCAST(c)
+    #define COND_INIT(c) NATIVE_COND_INIT(&(c))
+    #define COND_DESTROY(c) NATIVE_COND_DESTROY(&(c))
+    #define COND_WAIT(c, m) NATIVE_COND_WAIT(&(c), &(m))
+    #define COND_SIGNAL(c) NATIVE_COND_SIGNAL(&(c))
+    #define COND_BROADCAST(c) NATIVE_COND_BROADCAST(&(c))
 #endif
 
 typedef struct _queue {
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
     q.max_queue = max_queue;
     q.max_send = n_data;
     q.timestamps = (test_timespec_t *) malloc(max_queue * sizeof(test_timespec_t));
-    NATIVE_MUTEX_INIT(q.mutex);
+    NATIVE_MUTEX_INIT(&q.mutex);
     COND_INIT(q.cond);
 
     /* Start timing */
@@ -238,9 +238,9 @@ int main(int argc, char *argv[])
     printf("Throughput: %.2f items/sec\n", n_data / elapsed_sec);
     printf("==========================\n");
 
-    /* cleanup */
+    /* Cleanup */
     COND_DESTROY(q.cond);
-    NATIVE_MUTEX_DESTROY(q.mutex);
+    NATIVE_MUTEX_DESTROY(&q.mutex);
     free(q.timestamps);
     free(receivers);
     free(senders);
