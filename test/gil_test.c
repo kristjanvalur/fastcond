@@ -105,28 +105,47 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
     int thread_idx = targ->thread_idx;
     test_thread_t self = test_thread_self();
 
+    printf("  Worker %d: Started, acquiring start_mutex\n", thread_idx);
+    fflush(stdout);
+
     // Signal that this thread is ready and wait for synchronized start
     test_mutex_lock(&ctx->start_mutex);
     ctx->threads_ready++;
+    printf("  Worker %d: Incremented threads_ready to %d, broadcasting\n", thread_idx, ctx->threads_ready);
+    fflush(stdout);
+    
     // Signal main thread that we've incremented the counter
     test_cond_broadcast(&ctx->start_cond);
     
     if (ctx->threads_ready == ctx->num_threads) {
         // Last thread to arrive - all threads are ready
         // (main thread will see threads_ready == num_threads and proceed)
+        printf("  Worker %d: Last to arrive, all ready!\n", thread_idx);
+        fflush(stdout);
     } else {
         // Wait for all threads to be ready
+        printf("  Worker %d: Waiting for others (threads_ready=%d/%d)\n", thread_idx, ctx->threads_ready, ctx->num_threads);
+        fflush(stdout);
         while (ctx->threads_ready < ctx->num_threads && !ctx->stop_flag) {
             test_cond_wait(&ctx->start_cond, &ctx->start_mutex);
+            printf("  Worker %d: Woken from wait (threads_ready=%d/%d)\n", thread_idx, ctx->threads_ready, ctx->num_threads);
+            fflush(stdout);
         }
     }
+    printf("  Worker %d: Unlocking start_mutex after ready phase\n", thread_idx);
+    fflush(stdout);
     test_mutex_unlock(&ctx->start_mutex);
 
+    printf("  Worker %d: Waiting for start_flag\n", thread_idx);
+    fflush(stdout);
+    
     // Wait for explicit start signal using condition variable
     test_mutex_lock(&ctx->start_mutex);
     while (!ctx->start_flag && !ctx->stop_flag) {
         test_cond_wait(&ctx->start_cond, &ctx->start_mutex);
     }
+    printf("  Worker %d: Got start_flag, beginning work\n", thread_idx);
+    fflush(stdout);
     test_mutex_unlock(&ctx->start_mutex);
 
     // INITIALIZE: Acquire GIL at thread startup (Python-like behavior)
@@ -553,6 +572,7 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     }
 
     printf("Creating %d threads...\n", num_threads);
+    fflush(stdout);
 
     // Create worker threads with proper index passing
     for (int i = 0; i < num_threads; i++) {
@@ -564,16 +584,31 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
             return 1;
         }
         ctx.thread_ids[i] = threads[i]; // Store for cleanup only
+        printf("  Thread %d created\n", i);
+        fflush(stdout);
     }
 
+    printf("Main: Waiting for all threads to signal readiness...\n");
+    fflush(stdout);
+    
     // Wait for all threads to signal readiness
     test_mutex_lock(&ctx.start_mutex);
+    printf("Main: Acquired start_mutex, threads_ready=%d, num_threads=%d\n", ctx.threads_ready, num_threads);
+    fflush(stdout);
+    
     while (ctx.threads_ready < num_threads) {
+        printf("Main: Waiting on start_cond (threads_ready=%d/%d)\n", ctx.threads_ready, num_threads);
+        fflush(stdout);
         test_cond_wait(&ctx.start_cond, &ctx.start_mutex);
+        printf("Main: Woken up, threads_ready=%d/%d\n", ctx.threads_ready, num_threads);
+        fflush(stdout);
     }
+    printf("Main: All threads ready! Unlocking start_mutex\n");
+    fflush(stdout);
     test_mutex_unlock(&ctx.start_mutex);
 
     printf("All threads ready. Starting synchronized test...\n");
+    fflush(stdout);
     test_timespec_t start_time, end_time;
     test_clock_gettime(&start_time);
 
