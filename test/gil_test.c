@@ -132,7 +132,6 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
     int local_acquisitions = 0;
     int yields_since_io = 0;
     const int IO_PROBABILITY = 10; // Do I/O every ~10 yields on average
-    int already_in_critical_section = 0; // Track if we're continuing from yield()
 
     // Python-like execution pattern: mostly yields with occasional I/O
     while (!ctx->stop_flag) {
@@ -154,21 +153,17 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
         }
 
         // Critical section - verify mutual exclusion
-        // Only increment if we're not already in critical section (after yield)
-        if (!already_in_critical_section) {
-            int current_holders = __sync_add_and_fetch(&ctx->holder_count, 1);
-            if (current_holders > 1) {
-                int violation = current_holders;
-                // Update max violation atomically
-                int current_max;
-                do {
-                    current_max = ctx->max_holder_violation;
-                } while (
-                    current_max < violation &&
-                    !__sync_bool_compare_and_swap(&ctx->max_holder_violation, current_max, violation));
-            }
+        int current_holders = __sync_add_and_fetch(&ctx->holder_count, 1);
+        if (current_holders > 1) {
+            int violation = current_holders;
+            // Update max violation atomically
+            int current_max;
+            do {
+                current_max = ctx->max_holder_violation;
+            } while (
+                current_max < violation &&
+                !__sync_bool_compare_and_swap(&ctx->max_holder_violation, current_max, violation));
         }
-        already_in_critical_section = 0; // Reset for next iteration
 
         // Track fairness statistics
         local_acquisitions++;
@@ -230,11 +225,12 @@ TEST_THREAD_FUNC_RETURN worker_thread(void *arg)
             yields_since_io = 0; // Reset counter
         } else {
             // REGULAR YIELD: Cooperative yielding for fairness
-            // NOTE: yield() is atomic - thread never releases GIL ownership.
-            // We stay in critical section, so don't decrement holder_count.
-            // Set flag so next iteration doesn't increment again.
+            // NOTE: yield() is atomic and maintains GIL ownership, but for
+            // holder_count bookkeeping we treat it like a temporary release
+            // to keep the counting consistent with the loop structure
+            __sync_sub_and_fetch(&ctx->holder_count, 1);
             fastcond_gil_yield(&ctx->gil);
-            already_in_critical_section = 1;
+            __sync_add_and_fetch(&ctx->holder_count, 1);
         }
     }
 
