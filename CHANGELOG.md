@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - 2025-10-26
+## [0.2.1] - 2025-10-26
 
 ### Added
 - **Cross-platform performance data collection and analysis infrastructure**
@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Python-based analysis tool (`analyze_performance.py`) generating comparison tables, charts, and JSON summaries
   - Automated GitHub Pages deployment with performance comparison visualizations
   - Standardized CSV schema for consistent cross-platform benchmark data
+
+### Fixed
+- CSV output format in `gil_test` to match standard schema (iterations column was missing)
+
+## [0.2.0] - 2025-10-26
 - **Windows platform support** with native CONDITION_VARIABLE and CRITICAL_SECTION implementations
 - Native Windows semaphore implementation (CreateSemaphore/Wait/Release APIs)
 - Cross-platform test portability layer (`test_portability.h`) for unified test code
@@ -53,5 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Pages deployment for performance dashboards
 - CMake build system with test integration
 
+[0.2.1]: https://github.com/kristjanvalur/fastcond/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kristjanvalur/fastcond/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/kristjanvalur/fastcond/releases/tag/v0.1.0
