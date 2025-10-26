@@ -1,0 +1,91 @@
+{
+  "metadata": {
+    "total_benchmarks": 8,
+    "platforms": [
+      "linux"
+    ],
+    "tests": [
+      "gil_test",
+      "qtest",
+      "strongtest"
+    ],
+    "variants": [
+      "fastcond_gil",
+      "native"
+    ]
+  },
+  "results": [
+    {
+      "platform": "linux",
+      "test": "gil_test",
+      "threads": 4,
+      "param": 1000,
+      "variants": [
+        {
+          "variant": "fastcond_gil",
+          "throughput": 5744.23,
+          "elapsed_sec": 0.174088,
+          "speedup": 0.0
+        },
+        {
+          "variant": "fastcond_gil",
+          "throughput": 5716.32,
+          "elapsed_sec": 0.174938,
+          "speedup": 0.0
+        },
+        {
+          "variant": "fastcond_gil",
+          "throughput": 5992.73,
+          "elapsed_sec": 0.166869,
+          "speedup": 0.0
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "test": "qtest",
+      "threads": 4,
+      "param": 10,
+      "variants": [
+        {
+          "variant": "native",
+          "throughput": 403181.72,
+          "elapsed_sec": 0.024803,
+          "speedup": 1.0
+        },
+        {
+          "variant": "native",
+          "throughput": 592498.07,
+          "elapsed_sec": 0.016878,
+          "speedup": 1.4695558866111291
+        },
+        {
+          "variant": "native",
+          "throughput": 518650.06,
+          "elapsed_sec": 0.019281,
+          "speedup": 1.2863927957844914
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "test": "strongtest",
+      "threads": 1,
+      "param": 5,
+      "variants": [
+        {
+          "variant": "native",
+          "throughput": 1088503.02,
+          "elapsed_sec": 0.009187,
+          "speedup": 1.0
+        },
+        {
+          "variant": "native",
+          "throughput": 1314820.83,
+          "elapsed_sec": 0.007606,
+          "speedup": 1.2079165660008917
+        }
+      ]
+    }
+  ]
+}
