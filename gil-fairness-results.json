@@ -3,7 +3,7 @@
     "benchmark": "gil_test",
     "implementation": "fastcond_strong",
     "fairness_mode": "fair",
-    "timestamp": "2025-10-27T10:50:16.759894",
+    "timestamp": "2025-10-27T10:56:30.562353",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -21,44 +21,44 @@
         "thread_acquisitions": [
           {
             "thread_id": 0,
-            "acquisitions": 1241
+            "acquisitions": 1243
           },
           {
             "thread_id": 1,
-            "acquisitions": 1265
+            "acquisitions": 1250
           },
           {
             "thread_id": 2,
-            "acquisitions": 1258
+            "acquisitions": 1254
           },
           {
             "thread_id": 3,
-            "acquisitions": 1236
+            "acquisitions": 1250
           },
           {
             "thread_id": 4,
-            "acquisitions": 1236
+            "acquisitions": 1249
           },
           {
             "thread_id": 5,
-            "acquisitions": 1255
+            "acquisitions": 1248
           },
           {
             "thread_id": 6,
-            "acquisitions": 1251
+            "acquisitions": 1253
           },
           {
             "thread_id": 7,
-            "acquisitions": 1258
+            "acquisitions": 1253
           }
         ],
-        "coefficient_of_variation": 0.009,
+        "coefficient_of_variation": 0.003,
         "thread_transitions": 9999,
         "total_acquisitions": 10000,
         "transition_percentage": 100.0,
         "consecutive_reacquisitions": 0,
         "consecutive_percentage": 0.0,
-        "fairness_score": 0.9
+        "fairness_score": 0.3
       },
       "overall": {
         "operations_per_sec": 5791,
@@ -72,7 +72,7 @@
     "benchmark": "gil_test",
     "implementation": "fastcond_unfair",
     "fairness_mode": "unfair",
-    "timestamp": "2025-10-27T10:50:18.420669",
+    "timestamp": "2025-10-27T10:56:32.218962",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -80,76 +80,7 @@
       "cores": 4
     },
     "config": {
-      "operations_per_sec": 6028,
-      "avg_latency_us": 165.9,
-      "backend": "fastcond",
-      "fairness_enabled": true
-    },
-    "results": {
-      "fairness_stats": {
-        "thread_acquisitions": [
-          {
-            "thread_id": 0,
-            "acquisitions": 1250
-          },
-          {
-            "thread_id": 1,
-            "acquisitions": 1430
-          },
-          {
-            "thread_id": 2,
-            "acquisitions": 1234
-          },
-          {
-            "thread_id": 3,
-            "acquisitions": 1272
-          },
-          {
-            "thread_id": 4,
-            "acquisitions": 1137
-          },
-          {
-            "thread_id": 5,
-            "acquisitions": 1123
-          },
-          {
-            "thread_id": 6,
-            "acquisitions": 1207
-          },
-          {
-            "thread_id": 7,
-            "acquisitions": 1347
-          }
-        ],
-        "coefficient_of_variation": 0.082,
-        "thread_transitions": 1499,
-        "total_acquisitions": 10000,
-        "transition_percentage": 15.0,
-        "consecutive_reacquisitions": 8500,
-        "consecutive_percentage": 85.0,
-        "fairness_score": 8.2
-      },
-      "overall": {
-        "operations_per_sec": 6028,
-        "avg_latency_us": 165.9,
-        "backend": "fastcond",
-        "fairness_enabled": true
-      }
-    }
-  },
-  {
-    "benchmark": "gil_test",
-    "implementation": "fastcond_naive",
-    "fairness_mode": "naive",
-    "timestamp": "2025-10-27T10:50:20.077785",
-    "system": {
-      "os": "Linux",
-      "arch": "x86_64",
-      "python_version": "3.12.3",
-      "cores": 4
-    },
-    "config": {
-      "operations_per_sec": 6041,
+      "operations_per_sec": 6043,
       "avg_latency_us": 165.5,
       "backend": "fastcond",
       "fairness_enabled": true
@@ -159,48 +90,117 @@
         "thread_acquisitions": [
           {
             "thread_id": 0,
-            "acquisitions": 1248
+            "acquisitions": 1313
           },
           {
             "thread_id": 1,
-            "acquisitions": 1246
+            "acquisitions": 1185
           },
           {
             "thread_id": 2,
-            "acquisitions": 1351
+            "acquisitions": 1355
           },
           {
             "thread_id": 3,
-            "acquisitions": 1229
+            "acquisitions": 1211
           },
           {
             "thread_id": 4,
-            "acquisitions": 1205
+            "acquisitions": 1120
           },
           {
             "thread_id": 5,
-            "acquisitions": 1354
+            "acquisitions": 1266
           },
           {
             "thread_id": 6,
-            "acquisitions": 1131
+            "acquisitions": 1258
           },
           {
             "thread_id": 7,
-            "acquisitions": 1236
+            "acquisitions": 1292
           }
         ],
-        "coefficient_of_variation": 0.059,
-        "thread_transitions": 1547,
+        "coefficient_of_variation": 0.06,
+        "thread_transitions": 1530,
         "total_acquisitions": 10000,
-        "transition_percentage": 15.5,
-        "consecutive_reacquisitions": 8452,
-        "consecutive_percentage": 84.5,
-        "fairness_score": 5.9
+        "transition_percentage": 15.3,
+        "consecutive_reacquisitions": 8469,
+        "consecutive_percentage": 84.7,
+        "fairness_score": 6.0
       },
       "overall": {
-        "operations_per_sec": 6041,
+        "operations_per_sec": 6043,
         "avg_latency_us": 165.5,
+        "backend": "fastcond",
+        "fairness_enabled": true
+      }
+    }
+  },
+  {
+    "benchmark": "gil_test",
+    "implementation": "fastcond_naive",
+    "fairness_mode": "naive",
+    "timestamp": "2025-10-27T10:56:33.874464",
+    "system": {
+      "os": "Linux",
+      "arch": "x86_64",
+      "python_version": "3.12.3",
+      "cores": 4
+    },
+    "config": {
+      "operations_per_sec": 6047,
+      "avg_latency_us": 165.4,
+      "backend": "fastcond",
+      "fairness_enabled": true
+    },
+    "results": {
+      "fairness_stats": {
+        "thread_acquisitions": [
+          {
+            "thread_id": 0,
+            "acquisitions": 1289
+          },
+          {
+            "thread_id": 1,
+            "acquisitions": 1079
+          },
+          {
+            "thread_id": 2,
+            "acquisitions": 1226
+          },
+          {
+            "thread_id": 3,
+            "acquisitions": 1339
+          },
+          {
+            "thread_id": 4,
+            "acquisitions": 1236
+          },
+          {
+            "thread_id": 5,
+            "acquisitions": 1282
+          },
+          {
+            "thread_id": 6,
+            "acquisitions": 1260
+          },
+          {
+            "thread_id": 7,
+            "acquisitions": 1289
+          }
+        ],
+        "coefficient_of_variation": 0.062,
+        "thread_transitions": 1596,
+        "total_acquisitions": 10000,
+        "transition_percentage": 16.0,
+        "consecutive_reacquisitions": 8403,
+        "consecutive_percentage": 84.0,
+        "fairness_score": 6.2
+      },
+      "overall": {
+        "operations_per_sec": 6047,
+        "avg_latency_us": 165.4,
         "backend": "fastcond",
         "fairness_enabled": true
       }

@@ -286,13 +286,7 @@
             <p>Built using nothing but POSIX semaphores and Nordic engineering sensibilities, 
             fastcond delivers performance that lets you spend less time debugging race conditions and more time living.</p>
             
-            <p><strong>One implementation, two APIs:</strong></p>
-            <ul>
-                <li><strong>💪 Strong semantics</strong> - Full POSIX compliance with proven superior performance</li>
-                <li><strong>🔄 Backward compatibility</strong> - Legacy weak API now aliases the strong implementation</li>
-            </ul>
-            
-            <p><em>Rather amusing fact: Rigorous benchmarking during those long Nordic nights proved that strict POSIX semantics actually deliver better performance than relaxed ones. The data spoke clearly.</em></p>
+            <p><strong>Full POSIX semantics, exceptional performance.</strong> Rigorous benchmarking during those long Nordic nights proved what the standards committees never promised: strict condition variable semantics can actually outperform pthread's native implementation. The data spoke clearly.</p>
         </div>
     </div>
 
@@ -354,13 +348,13 @@
                 <tbody>
 
                     <tr>
-                        <td>native</td>
-                        <td class="numeric">665,326.74</td>
+                        <td>fastcond_strong</td>
+                        <td class="numeric">633,918.00</td>
                         <td class="numeric "></td>
                     </tr>
                     <tr>
-                        <td>fastcond_strong</td>
-                        <td class="numeric">457,023.60</td>
+                        <td>native</td>
+                        <td class="numeric">418,171.35</td>
                         <td class="numeric "></td>
                     </tr>
                 </tbody>
@@ -381,17 +375,17 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">12.54</td>
-                        <td class="numeric">0.05</td>
-                        <td class="numeric">100.55</td>
-                        <td class="numeric">13.29</td>
+                        <td class="numeric">7.71</td>
+                        <td class="numeric">0.04</td>
+                        <td class="numeric">80.93</td>
+                        <td class="numeric">9.11</td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">7.13</td>
-                        <td class="numeric">0.08</td>
-                        <td class="numeric">81.35</td>
-                        <td class="numeric">8.30</td>
+                        <td class="numeric">11.44</td>
+                        <td class="numeric">0.09</td>
+                        <td class="numeric">99.17</td>
+                        <td class="numeric">13.69</td>
                     </tr>
                 </tbody>
             </table>
@@ -416,12 +410,12 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">1,226,271.79</td>
+                        <td class="numeric">1,338,983.67</td>
                         <td class="numeric "></td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">1,109,999.88</td>
+                        <td class="numeric">1,062,731.44</td>
                         <td class="numeric "></td>
                     </tr>
                 </tbody>
@@ -442,17 +436,17 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">2.28</td>
+                        <td class="numeric">1.53</td>
                         <td class="numeric">0.08</td>
-                        <td class="numeric">1732.55</td>
-                        <td class="numeric">37.13</td>
+                        <td class="numeric">982.48</td>
+                        <td class="numeric">24.85</td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">2.20</td>
-                        <td class="numeric">0.07</td>
-                        <td class="numeric">1184.50</td>
-                        <td class="numeric">29.35</td>
+                        <td class="numeric">1.52</td>
+                        <td class="numeric">0.06</td>
+                        <td class="numeric">1045.80</td>
+                        <td class="numeric">16.31</td>
                     </tr>
                 </tbody>
             </table>
@@ -464,7 +458,7 @@
         OS: Linux x86_64, 
         Cores: 4, 
         Python: 3.12.3<br>
-        <strong>Generated:</strong> October 27, 2025 at 10:50 UTC
+        <strong>Generated:</strong> October 27, 2025 at 10:56 UTC
     </div>
     
     <div class="footer">
