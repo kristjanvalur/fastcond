@@ -131,6 +131,16 @@ jobs:
         enable_jekyll: false
         exclude_assets: '.github,.gitignore'
     
+    - name: Store results in historical database
+      if: github.event_name != 'pull_request'
+      run: |
+        echo "📊 Storing benchmark results in historical database..."
+        cd scripts
+        uv run python store_benchmark_history.py \
+          ../docs/benchmark-results.json \
+          --history-type benchmark \
+          --run-id "${{ github.run_id }}"
+    
     - name: Comment PR with results
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7

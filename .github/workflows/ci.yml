@@ -499,3 +499,13 @@ jobs:
         enable_jekyll: false
         force_orphan: false
         exclude_assets: '.github,.gitignore'
+    
+    - name: Store platform results in historical database
+      run: |
+        echo "📊 Storing cross-platform results in historical database..."
+        # Convert performance-summary.json to benchmark results format
+        cd scripts
+        uv run python store_benchmark_history.py \
+          ../performance-output/performance-summary.json \
+          --history-type platform \
+          --run-id "${{ github.run_id }}"
