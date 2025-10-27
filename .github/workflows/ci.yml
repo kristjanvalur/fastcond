@@ -326,9 +326,7 @@ jobs:
           ../combined-performance.csv \
           --output-dir ../performance-output
     
-    - name: Create performance index page
-      run: |
-        - name: Create cross-platform index page
+    - name: Create cross-platform index page
       run: |
         GENERATED_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
         cat > performance-output/index.html << EOF
