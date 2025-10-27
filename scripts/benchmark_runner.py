@@ -27,6 +27,8 @@ class BenchmarkRun:
     latency_stdev: Optional[float] = None
     latency_min: Optional[float] = None
     latency_max: Optional[float] = None
+    # Per-thread data for backward compatibility with visualize.py
+    per_thread: Optional[List[Dict[str, Any]]] = None
     # Extensible for future metrics
     false_wakeups: Optional[int] = None
     spurious_wakeups: Optional[int] = None
@@ -60,6 +62,7 @@ def parse_test_output(output: str, test_type: str) -> BenchmarkRun:
     Designed to be extensible - add new regex patterns for future metrics.
     """
     metrics = {}
+    per_thread_data = []
     
     # Throughput (always present)
     throughput_match = re.search(r"Throughput:\s+([0-9.]+)\s+items/sec", output)
@@ -73,16 +76,31 @@ def parse_test_output(output: str, test_type: str) -> BenchmarkRun:
     
     # Latency statistics (from receiver threads)
     if test_type in ["qtest", "strongtest"]:
-        # Parse first receiver's latency (representative)
-        lat_match = re.search(
-            r"receiver \d+ got \d+ latency avg ([0-9.e+-]+) stdev ([0-9.e+-]+) min ([0-9.e+-]+) max ([0-9.e+-]+)",
-            output
-        )
-        if lat_match:
-            metrics["latency_avg"] = float(lat_match.group(1))
-            metrics["latency_stdev"] = float(lat_match.group(2))
-            metrics["latency_min"] = float(lat_match.group(3))
-            metrics["latency_max"] = float(lat_match.group(4))
+        # Parse ALL receiver latency data for backward compatibility
+        lat_pattern = r"receiver (\d+) got (\d+) latency avg ([0-9.e+-]+) stdev ([0-9.e+-]+) min ([0-9.e+-]+) max ([0-9.e+-]+)"
+        for match in re.finditer(lat_pattern, output):
+            thread_id, items, avg, stdev, min_lat, max_lat = match.groups()
+            per_thread_data.append({
+                "thread_id": int(thread_id),
+                "thread_type": "receiver",
+                "items": int(items),
+                "avg_latency_sec": float(avg),
+                "stdev_latency_sec": float(stdev),
+                "min_latency_sec": float(min_lat),
+                "max_latency_sec": float(max_lat),
+            })
+        
+        # Use first receiver's latency as representative for BenchmarkRun
+        if per_thread_data:
+            first = per_thread_data[0]
+            metrics["latency_avg"] = first["avg_latency_sec"]
+            metrics["latency_stdev"] = first["stdev_latency_sec"]
+            metrics["latency_min"] = first["min_latency_sec"]
+            metrics["latency_max"] = first["max_latency_sec"]
+    
+    # Store per_thread data for backward compatibility
+    if per_thread_data:
+        metrics["per_thread"] = per_thread_data
     
     # Future: Parse false wakeup counts
     # false_wakeup_match = re.search(r"False wakeups:\s+(\d+)", output)
@@ -179,9 +197,12 @@ def run_benchmark_suite(
     iterations: int = 5,
     warmup: int = 1,
     timeout: int = 30
-) -> Optional[BenchmarkStatistics]:
+) -> Optional[tuple]:
     """
     Run benchmark multiple times with warm-up and return statistics.
+    
+    Returns:
+        Tuple of (BenchmarkStatistics, per_thread_data) or None if all runs failed
     
     Args:
         executable: Path to test executable
@@ -223,7 +244,10 @@ def run_benchmark_suite(
     stats = calculate_statistics(runs)
     print(f"  Result: {stats.mean_throughput:,.0f} ± {stats.stdev_throughput:,.0f} items/sec (CV={stats.cv_percent:.1f}%)", file=sys.stderr)
     
-    return stats
+    # Get per_thread data from first successful run for backward compatibility
+    per_thread_data = runs[0].per_thread if runs and runs[0].per_thread else None
+    
+    return (stats, per_thread_data)
 
 
 def format_result_for_json(
@@ -232,7 +256,8 @@ def format_result_for_json(
     description: str,
     stats: BenchmarkStatistics,
     config: Dict[str, Any],
-    system_info: Dict[str, Any]
+    system_info: Dict[str, Any],
+    per_thread_data: Optional[List[Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """Format benchmark results for JSON output (compatible with existing format)."""
     
@@ -240,7 +265,7 @@ def format_result_for_json(
     latency_us = stats.mean_latency * 1e6 if stats.mean_latency else None
     latency_stdev_us = stats.stdev_latency * 1e6 if stats.stdev_latency else None
     
-    return {
+    result = {
         "benchmark": benchmark_name,
         "implementation": implementation,
         "description": description,
@@ -273,6 +298,12 @@ def format_result_for_json(
             } if stats.total_false_wakeups is not None else None,
         }
     }
+    
+    # Add per_thread data for backward compatibility with visualize.py
+    if per_thread_data:
+        result["results"]["per_thread"] = per_thread_data
+    
+    return result
 
 
 def main():
@@ -362,7 +393,7 @@ def main():
             print(f"Benchmark: {benchmark['name']}_{variant}", file=sys.stderr)
             print(f"{'='*60}", file=sys.stderr)
             
-            stats = run_benchmark_suite(
+            result = run_benchmark_suite(
                 str(exe),
                 benchmark["args"],
                 benchmark["name"],
@@ -371,22 +402,24 @@ def main():
                 timeout=args.timeout
             )
             
-            if stats:
+            if result:
+                stats, per_thread_data = result
                 config = {
                     "total_items": args.items,
                     "num_threads": 4 if benchmark["name"] == "qtest" else 1,
                     "queue_size": int(benchmark["args"][-1]),
                 }
                 
-                result = format_result_for_json(
+                result_json = format_result_for_json(
                     benchmark["name"],
                     impl_names[variant],
                     benchmark["description"],
                     stats,
                     config,
-                    system_info
+                    system_info,
+                    per_thread_data
                 )
-                all_results.append(result)
+                all_results.append(result_json)
     
     # Output JSON
     print(json.dumps(all_results, indent=2))
