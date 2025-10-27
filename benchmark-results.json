@@ -3,7 +3,7 @@
     "benchmark": "qtest",
     "implementation": "native",
     "description": "Producer-consumer queue test (400K items, 4 threads, queue size 10)",
-    "timestamp": "2025-10-27T18:01:58",
+    "timestamp": "2025-10-27T22:57:42",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -17,77 +17,77 @@
     },
     "results": {
       "overall": {
-        "throughput_items_per_sec": 695620.498,
-        "throughput_stdev": 28184.830103017655,
-        "throughput_cv_percent": 4.051753820373714,
+        "throughput_items_per_sec": 737036.792,
+        "throughput_stdev": 27283.58646635682,
+        "throughput_cv_percent": 3.7017943693585407,
         "throughput_ci_95": [
-          660630.0195560216,
-          730610.9764439785
+          703165.1759343325,
+          770908.4080656675
         ],
         "total_items": 400000
       },
       "statistics": {
-        "mean": 695620.498,
-        "stdev": 28184.830103017655,
-        "min": 647293.53,
-        "max": 720901.18,
-        "cv_percent": 4.051753820373714,
+        "mean": 737036.792,
+        "stdev": 27283.58646635682,
+        "min": 705504.05,
+        "max": 770238.1,
+        "cv_percent": 3.7017943693585407,
         "individual_runs": [
-          647293.53,
-          703934.09,
-          720901.18,
-          706542.68,
-          699431.01
+          739188.62,
+          714281.84,
+          755971.35,
+          705504.05,
+          770238.1
         ]
       },
       "latency": {
-        "mean_us": 7.4149426836812,
-        "stdev_us": 0.4714657242816618
+        "mean_us": 7.0960416451272,
+        "stdev_us": 0.22299236034445882
       },
       "instrumentation": {
-        "total_spurious_wakeups": 7107,
-        "mean_spurious_wakeups": 1421.4
+        "total_spurious_wakeups": 5676,
+        "mean_spurious_wakeups": 1135.2
       },
       "per_thread": [
         {
           "thread_id": 0,
           "thread_type": "receiver",
-          "items": 100536,
-          "spurious_wakeups": 396,
-          "avg_latency_sec": 8.171263289114e-06,
-          "stdev_latency_sec": 9.872114787868e-06,
-          "min_latency_sec": 4.799999686611e-08,
-          "max_latency_sec": 0.0001083530005417
+          "items": 100686,
+          "spurious_wakeups": 320,
+          "avg_latency_sec": 7.142511549318e-06,
+          "stdev_latency_sec": 7.873763934185e-06,
+          "min_latency_sec": 6.100000149445e-08,
+          "max_latency_sec": 9.241999941878e-05
         },
         {
           "thread_id": 1,
           "thread_type": "receiver",
-          "items": 101375,
-          "spurious_wakeups": 420,
-          "avg_latency_sec": 8.015195817279e-06,
-          "stdev_latency_sec": 9.663182026998e-06,
-          "min_latency_sec": 4.799999686611e-08,
-          "max_latency_sec": 0.0001219769983436
+          "items": 100276,
+          "spurious_wakeups": 263,
+          "avg_latency_sec": 7.049025953165e-06,
+          "stdev_latency_sec": 7.778975486872e-06,
+          "min_latency_sec": 4.899999694885e-08,
+          "max_latency_sec": 9.983099880628e-05
         },
         {
           "thread_id": 2,
           "thread_type": "receiver",
-          "items": 97350,
-          "spurious_wakeups": 392,
-          "avg_latency_sec": 7.985539923538e-06,
-          "stdev_latency_sec": 9.681643859949e-06,
-          "min_latency_sec": 4.799999686611e-08,
-          "max_latency_sec": 0.0001331910025328
+          "items": 99369,
+          "spurious_wakeups": 271,
+          "avg_latency_sec": 6.976021722949e-06,
+          "stdev_latency_sec": 7.679086593271e-06,
+          "min_latency_sec": 6.399999818996e-08,
+          "max_latency_sec": 0.0001004239966278
         },
         {
           "thread_id": 3,
           "thread_type": "receiver",
-          "items": 100739,
-          "spurious_wakeups": 387,
-          "avg_latency_sec": 8.03602324595e-06,
-          "stdev_latency_sec": 9.712615792523e-06,
-          "min_latency_sec": 4.799999686611e-08,
-          "max_latency_sec": 0.0001207949972013
+          "items": 99669,
+          "spurious_wakeups": 288,
+          "avg_latency_sec": 7.136457497836e-06,
+          "stdev_latency_sec": 7.89386103861e-06,
+          "min_latency_sec": 4.300000000512e-08,
+          "max_latency_sec": 0.0001141049942817
         }
       ]
     }
@@ -96,7 +96,7 @@
     "benchmark": "qtest",
     "implementation": "fastcond_strong",
     "description": "Producer-consumer queue test (400K items, 4 threads, queue size 10)",
-    "timestamp": "2025-10-27T18:02:01",
+    "timestamp": "2025-10-27T22:57:45",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -110,77 +110,77 @@
     },
     "results": {
       "overall": {
-        "throughput_items_per_sec": 717788.6359999999,
-        "throughput_stdev": 35519.51428496775,
-        "throughput_cv_percent": 4.948464283707015,
+        "throughput_items_per_sec": 716121.474,
+        "throughput_stdev": 24745.259277951212,
+        "throughput_cv_percent": 3.4554555583612077,
         "throughput_ci_95": [
-          673692.4042900319,
-          761884.867709968
+          685401.102147799,
+          746841.8458522011
         ],
         "total_items": 400000
       },
       "statistics": {
-        "mean": 717788.6359999999,
-        "stdev": 35519.51428496775,
-        "min": 675222.25,
-        "max": 761259.1,
-        "cv_percent": 4.948464283707015,
+        "mean": 716121.474,
+        "stdev": 24745.259277951212,
+        "min": 682716.87,
+        "max": 745796.54,
+        "cv_percent": 3.4554555583612077,
         "individual_runs": [
-          691404.18,
-          717796.96,
-          675222.25,
-          761259.1,
-          743260.69
+          745796.54,
+          729307.35,
+          700570.74,
+          722215.87,
+          682716.87
         ]
       },
       "latency": {
-        "mean_us": 7.2262230787604,
-        "stdev_us": 0.4039057633277867
+        "mean_us": 7.358302718785,
+        "stdev_us": 0.2108692182357595
       },
       "instrumentation": {
-        "total_spurious_wakeups": 6441,
-        "mean_spurious_wakeups": 1288.2
+        "total_spurious_wakeups": 6427,
+        "mean_spurious_wakeups": 1285.4
       },
       "per_thread": [
         {
           "thread_id": 0,
           "thread_type": "receiver",
-          "items": 100308,
-          "spurious_wakeups": 350,
-          "avg_latency_sec": 7.225498393382e-06,
-          "stdev_latency_sec": 8.398449608649e-06,
-          "min_latency_sec": 3.799999959142e-08,
-          "max_latency_sec": 0.0001029149934766
+          "items": 99975,
+          "spurious_wakeups": 247,
+          "avg_latency_sec": 7.138096862036e-06,
+          "stdev_latency_sec": 7.637589988008e-06,
+          "min_latency_sec": 6.100000149445e-08,
+          "max_latency_sec": 0.0001182649939437
         },
         {
           "thread_id": 1,
           "thread_type": "receiver",
-          "items": 99487,
-          "spurious_wakeups": 359,
-          "avg_latency_sec": 7.442519290635e-06,
-          "stdev_latency_sec": 1.12139259727e-05,
-          "min_latency_sec": 5.799999769351e-08,
-          "max_latency_sec": 0.0008577359840274
+          "items": 99407,
+          "spurious_wakeups": 273,
+          "avg_latency_sec": 7.15885335012e-06,
+          "stdev_latency_sec": 7.701725735387e-06,
+          "min_latency_sec": 4.099999983964e-08,
+          "max_latency_sec": 9.851699724095e-05
         },
         {
           "thread_id": 2,
           "thread_type": "receiver",
-          "items": 99970,
-          "spurious_wakeups": 369,
-          "avg_latency_sec": 7.287379503396e-06,
-          "stdev_latency_sec": 8.973056537798e-06,
-          "min_latency_sec": 4.899999694885e-08,
-          "max_latency_sec": 0.0008397419587709
+          "items": 99987,
+          "spurious_wakeups": 301,
+          "avg_latency_sec": 7.136371550587e-06,
+          "stdev_latency_sec": 7.531629762525e-06,
+          "min_latency_sec": 5.099999711433e-08,
+          "max_latency_sec": 0.000111728993943
         },
         {
           "thread_id": 3,
           "thread_type": "receiver",
-          "items": 100235,
-          "spurious_wakeups": 341,
-          "avg_latency_sec": 7.314212780329e-06,
-          "stdev_latency_sec": 9.003784725792e-06,
-          "min_latency_sec": 4.899999694885e-08,
-          "max_latency_sec": 0.0008133399533108
+          "items": 100631,
+          "spurious_wakeups": 312,
+          "avg_latency_sec": 7.22919457985e-06,
+          "stdev_latency_sec": 7.753024874546e-06,
+          "min_latency_sec": 4.300000000512e-08,
+          "max_latency_sec": 0.0001121699970099
         }
       ]
     }
@@ -189,7 +189,7 @@
     "benchmark": "strongtest",
     "implementation": "native",
     "description": "Strong semantics test (400K items, queue size 5)",
-    "timestamp": "2025-10-27T18:02:04",
+    "timestamp": "2025-10-27T22:57:48",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -203,32 +203,32 @@
     },
     "results": {
       "overall": {
-        "throughput_items_per_sec": 1048527.73,
-        "throughput_stdev": 40122.60995920195,
-        "throughput_cv_percent": 3.826566414147383,
+        "throughput_items_per_sec": 1067238.76,
+        "throughput_stdev": 35695.026424182644,
+        "throughput_cv_percent": 3.344614884881303,
         "throughput_ci_95": [
-          998716.9163899048,
-          1098338.5436100953
+          1022924.6361224578,
+          1111552.8838775423
         ],
         "total_items": 400000
       },
       "statistics": {
-        "mean": 1048527.73,
-        "stdev": 40122.60995920195,
-        "min": 983690.6,
-        "max": 1089622.97,
-        "cv_percent": 3.826566414147383,
+        "mean": 1067238.76,
+        "stdev": 35695.026424182644,
+        "min": 1038103.01,
+        "max": 1110156.39,
+        "cv_percent": 3.344614884881303,
         "individual_runs": [
-          1043634.94,
-          983690.6,
-          1089622.97,
-          1055338.03,
-          1070352.11
+          1046510.16,
+          1101952.49,
+          1038103.01,
+          1039471.75,
+          1110156.39
         ]
       },
       "latency": {
-        "mean_us": 2.2742844521418,
-        "stdev_us": 0.26725877387172653
+        "mean_us": 2.3226835310198,
+        "stdev_us": 0.14408428498960765
       },
       "instrumentation": {
         "total_spurious_wakeups": 0,
@@ -240,10 +240,10 @@
           "thread_type": "receiver",
           "items": 400000,
           "spurious_wakeups": 0,
-          "avg_latency_sec": 2.544780045355e-06,
-          "stdev_latency_sec": 4.500097929849e-05,
-          "min_latency_sec": 5.099999711433e-08,
-          "max_latency_sec": 0.008011500351131
+          "avg_latency_sec": 2.229396159237e-06,
+          "stdev_latency_sec": 2.897690319514e-05,
+          "min_latency_sec": 4.50000001706e-08,
+          "max_latency_sec": 0.003998449072242
         }
       ]
     }
@@ -252,7 +252,7 @@
     "benchmark": "strongtest",
     "implementation": "fastcond_strong",
     "description": "Strong semantics test (400K items, queue size 5)",
-    "timestamp": "2025-10-27T18:02:06",
+    "timestamp": "2025-10-27T22:57:50",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -266,32 +266,32 @@
     },
     "results": {
       "overall": {
-        "throughput_items_per_sec": 1055789.724,
-        "throughput_stdev": 32329.821165483252,
-        "throughput_cv_percent": 3.0621458450076044,
+        "throughput_items_per_sec": 989630.226,
+        "throughput_stdev": 26664.161390335914,
+        "throughput_cv_percent": 2.694356001848302,
         "throughput_ci_95": [
-          1015653.3844707649,
-          1095926.063529235
+          956527.6044498555,
+          1022732.8475501445
         ],
         "total_items": 400000
       },
       "statistics": {
-        "mean": 1055789.724,
-        "stdev": 32329.821165483252,
-        "min": 1020058.65,
-        "max": 1103714.18,
-        "cv_percent": 3.0621458450076044,
+        "mean": 989630.226,
+        "stdev": 26664.161390335914,
+        "min": 966188.15,
+        "max": 1028158.89,
+        "cv_percent": 2.694356001848302,
         "individual_runs": [
-          1067194.6,
-          1020058.65,
-          1103714.18,
-          1034018.23,
-          1053962.96
+          1028158.89,
+          966188.15,
+          978466.57,
+          969262.25,
+          1006075.27
         ]
       },
       "latency": {
-        "mean_us": 2.2942045688978,
-        "stdev_us": 0.3869281495408796
+        "mean_us": 2.4114037842082,
+        "stdev_us": 0.1976351351223881
       },
       "instrumentation": {
         "total_spurious_wakeups": 0,
@@ -303,10 +303,10 @@
           "thread_type": "receiver",
           "items": 400000,
           "spurious_wakeups": 0,
-          "avg_latency_sec": 2.507302269805e-06,
-          "stdev_latency_sec": 4.411157351569e-05,
-          "min_latency_sec": 4.999999703159e-08,
-          "max_latency_sec": 0.003911512903869
+          "avg_latency_sec": 2.263992655571e-06,
+          "stdev_latency_sec": 2.843018046406e-05,
+          "min_latency_sec": 4.50000001706e-08,
+          "max_latency_sec": 0.002916462020949
         }
       ]
     }
