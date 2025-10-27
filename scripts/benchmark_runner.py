@@ -12,7 +12,7 @@ import sys
 import os
 import statistics
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 
@@ -20,6 +20,7 @@ from pathlib import Path
 @dataclass
 class BenchmarkRun:
     """Single benchmark run results."""
+
     throughput: float
     total_time: float
     latency_avg: Optional[float] = None
@@ -37,6 +38,7 @@ class BenchmarkRun:
 @dataclass
 class BenchmarkStatistics:
     """Statistical summary of multiple runs."""
+
     mean_throughput: float
     stdev_throughput: float
     cv_percent: float
@@ -44,11 +46,11 @@ class BenchmarkStatistics:
     max_throughput: float
     individual_runs: List[float]
     confidence_interval_95: tuple  # (lower, upper)
-    
+
     # Latency statistics (if available)
     mean_latency: Optional[float] = None
     stdev_latency: Optional[float] = None
-    
+
     # Spurious wakeup metrics
     total_spurious_wakeups: Optional[int] = None
     mean_spurious_wakeups: Optional[float] = None
@@ -57,18 +59,18 @@ class BenchmarkStatistics:
 def parse_test_output(output: str, test_type: str) -> BenchmarkRun:
     """
     Parse test output from JSON format.
-    
+
     Tests output JSON when FASTCOND_JSON_OUTPUT=1 is set.
     """
     try:
         # Parse JSON output from test
         data = json.loads(output.strip())
-        
+
         metrics = {
             "throughput": data["timing"]["throughput"],
             "total_time": data["timing"]["elapsed_sec"],
         }
-        
+
         # Extract per-thread data if present
         per_thread_data = []
         if "per_thread" in data:
@@ -81,14 +83,16 @@ def parse_test_output(output: str, test_type: str) -> BenchmarkRun:
                 }
                 # Add latency stats if present
                 if "latency_avg" in thread:
-                    thread_info.update({
-                        "avg_latency_sec": thread["latency_avg"],
-                        "stdev_latency_sec": thread["latency_stdev"],
-                        "min_latency_sec": thread["latency_min"],
-                        "max_latency_sec": thread["latency_max"],
-                    })
+                    thread_info.update(
+                        {
+                            "avg_latency_sec": thread["latency_avg"],
+                            "stdev_latency_sec": thread["latency_stdev"],
+                            "min_latency_sec": thread["latency_min"],
+                            "max_latency_sec": thread["latency_max"],
+                        }
+                    )
                 per_thread_data.append(thread_info)
-            
+
             # Use first receiver's latency as representative
             if per_thread_data and "avg_latency_sec" in per_thread_data[0]:
                 first = per_thread_data[0]
@@ -96,13 +100,15 @@ def parse_test_output(output: str, test_type: str) -> BenchmarkRun:
                 metrics["latency_stdev"] = first["stdev_latency_sec"]
                 metrics["latency_min"] = first["min_latency_sec"]
                 metrics["latency_max"] = first["max_latency_sec"]
-            
+
             # Sum spurious wakeups across all threads
-            metrics["spurious_wakeups"] = sum(t["spurious_wakeups"] for t in per_thread_data)
+            metrics["spurious_wakeups"] = sum(
+                t["spurious_wakeups"] for t in per_thread_data
+            )
             metrics["per_thread"] = per_thread_data
-        
+
         return BenchmarkRun(**metrics)
-    
+
     except (json.JSONDecodeError, KeyError) as e:
         print(f"Error parsing JSON output: {e}", file=sys.stderr)
         print(f"Output was: {output[:200]}...", file=sys.stderr)
@@ -110,31 +116,31 @@ def parse_test_output(output: str, test_type: str) -> BenchmarkRun:
 
 
 def run_single_benchmark(
-    executable: str,
-    args: List[str],
-    test_type: str,
-    timeout: int = 30
+    executable: str, args: List[str], test_type: str, timeout: int = 30
 ) -> Optional[BenchmarkRun]:
     """Run a single benchmark and return parsed results."""
     try:
         # Set environment to request JSON output
         env = os.environ.copy()
         env["FASTCOND_JSON_OUTPUT"] = "1"
-        
+
         result = subprocess.run(
             [executable] + args,
             capture_output=True,
             text=True,
             timeout=timeout,
-            env=env
+            env=env,
         )
-        
+
         if result.returncode != 0:
-            print(f"Warning: {executable} failed with code {result.returncode}", file=sys.stderr)
+            print(
+                f"Warning: {executable} failed with code {result.returncode}",
+                file=sys.stderr,
+            )
             return None
-        
+
         return parse_test_output(result.stdout, test_type)
-    
+
     except subprocess.TimeoutExpired:
         print(f"Warning: {executable} timed out after {timeout}s", file=sys.stderr)
         return None
@@ -146,24 +152,33 @@ def run_single_benchmark(
 def calculate_statistics(runs: List[BenchmarkRun]) -> BenchmarkStatistics:
     """Calculate statistical summary from multiple runs."""
     throughputs = [r.throughput for r in runs]
-    
+
     mean = statistics.mean(throughputs)
     stdev = statistics.stdev(throughputs) if len(throughputs) > 1 else 0.0
     cv = (stdev / mean * 100) if mean > 0 else 0.0
-    
+
     # 95% confidence interval using t-distribution
     # For small samples, this is more accurate than normal distribution
     if len(throughputs) > 1:
         import math
+
         # Approximate t-value for 95% CI (good enough for n >= 3)
-        t_values = {3: 4.303, 4: 3.182, 5: 2.776, 6: 2.571, 7: 2.447, 8: 2.365, 10: 2.262}
+        t_values = {
+            3: 4.303,
+            4: 3.182,
+            5: 2.776,
+            6: 2.571,
+            7: 2.447,
+            8: 2.365,
+            10: 2.262,
+        }
         t = t_values.get(len(throughputs), 2.0)  # Default to ~2 for larger n
         margin = t * (stdev / math.sqrt(len(throughputs)))
         ci_lower = mean - margin
         ci_upper = mean + margin
     else:
         ci_lower = ci_upper = mean
-    
+
     stats = BenchmarkStatistics(
         mean_throughput=mean,
         stdev_throughput=stdev,
@@ -171,21 +186,23 @@ def calculate_statistics(runs: List[BenchmarkRun]) -> BenchmarkStatistics:
         min_throughput=min(throughputs),
         max_throughput=max(throughputs),
         individual_runs=throughputs,
-        confidence_interval_95=(ci_lower, ci_upper)
+        confidence_interval_95=(ci_lower, ci_upper),
     )
-    
+
     # Add latency statistics if available
     latencies = [r.latency_avg for r in runs if r.latency_avg is not None]
     if latencies:
         stats.mean_latency = statistics.mean(latencies)
         stats.stdev_latency = statistics.stdev(latencies) if len(latencies) > 1 else 0.0
-    
+
     # Add spurious wakeup statistics if available
-    spurious_wakeups = [r.spurious_wakeups for r in runs if r.spurious_wakeups is not None]
+    spurious_wakeups = [
+        r.spurious_wakeups for r in runs if r.spurious_wakeups is not None
+    ]
     if spurious_wakeups:
         stats.total_spurious_wakeups = sum(spurious_wakeups)
         stats.mean_spurious_wakeups = statistics.mean(spurious_wakeups)
-    
+
     return stats
 
 
@@ -195,14 +212,14 @@ def run_benchmark_suite(
     test_type: str,
     iterations: int = 5,
     warmup: int = 1,
-    timeout: int = 30
+    timeout: int = 30,
 ) -> Optional[tuple]:
     """
     Run benchmark multiple times with warm-up and return statistics.
-    
+
     Returns:
         Tuple of (BenchmarkStatistics, per_thread_data) or None if all runs failed
-    
+
     Args:
         executable: Path to test executable
         args: Command-line arguments
@@ -211,41 +228,47 @@ def run_benchmark_suite(
         warmup: Number of warm-up runs (discarded)
         timeout: Timeout per run in seconds
     """
-    print(f"Running {os.path.basename(executable)}: {warmup} warm-up + {iterations} measurement runs", file=sys.stderr)
-    
+    print(
+        f"Running {os.path.basename(executable)}: {warmup} warm-up + {iterations} measurement runs",
+        file=sys.stderr,
+    )
+
     # Warm-up runs
     for i in range(warmup):
-        print(f"  Warm-up {i+1}/{warmup}...", end=" ", flush=True, file=sys.stderr)
+        print(f"  Warm-up {i + 1}/{warmup}...", end=" ", flush=True, file=sys.stderr)
         result = run_single_benchmark(executable, args, test_type, timeout)
         if result:
             print(f"{result.throughput:,.0f} items/sec", file=sys.stderr)
         else:
             print("FAILED", file=sys.stderr)
-    
+
     # Measurement runs
     runs = []
     for i in range(iterations):
-        print(f"  Run {i+1}/{iterations}...", end=" ", flush=True, file=sys.stderr)
+        print(f"  Run {i + 1}/{iterations}...", end=" ", flush=True, file=sys.stderr)
         result = run_single_benchmark(executable, args, test_type, timeout)
         if result:
             runs.append(result)
             print(f"{result.throughput:,.0f} items/sec", file=sys.stderr)
         else:
             print("FAILED", file=sys.stderr)
-    
+
     if not runs:
         print(f"Error: All runs failed for {executable}", file=sys.stderr)
         return None
-    
+
     if len(runs) < iterations:
         print(f"Warning: Only {len(runs)}/{iterations} runs succeeded", file=sys.stderr)
-    
+
     stats = calculate_statistics(runs)
-    print(f"  Result: {stats.mean_throughput:,.0f} ± {stats.stdev_throughput:,.0f} items/sec (CV={stats.cv_percent:.1f}%)", file=sys.stderr)
-    
+    print(
+        f"  Result: {stats.mean_throughput:,.0f} ± {stats.stdev_throughput:,.0f} items/sec (CV={stats.cv_percent:.1f}%)",
+        file=sys.stderr,
+    )
+
     # Get per_thread data from first successful run for backward compatibility
     per_thread_data = runs[0].per_thread if runs and runs[0].per_thread else None
-    
+
     return (stats, per_thread_data)
 
 
@@ -256,14 +279,14 @@ def format_result_for_json(
     stats: BenchmarkStatistics,
     config: Dict[str, Any],
     system_info: Dict[str, Any],
-    per_thread_data: Optional[List[Dict[str, Any]]] = None
+    per_thread_data: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Format benchmark results for JSON output (compatible with existing format)."""
-    
+
     # Convert to microseconds for latency reporting
     latency_us = stats.mean_latency * 1e6 if stats.mean_latency else None
     latency_stdev_us = stats.stdev_latency * 1e6 if stats.stdev_latency else None
-    
+
     result = {
         "benchmark": benchmark_name,
         "implementation": implementation,
@@ -290,18 +313,22 @@ def format_result_for_json(
             "latency": {
                 "mean_us": latency_us,
                 "stdev_us": latency_stdev_us,
-            } if latency_us else None,
+            }
+            if latency_us
+            else None,
             "instrumentation": {
                 "total_spurious_wakeups": stats.total_spurious_wakeups,
                 "mean_spurious_wakeups": stats.mean_spurious_wakeups,
-            } if stats.total_spurious_wakeups is not None else None,
-        }
+            }
+            if stats.total_spurious_wakeups is not None
+            else None,
+        },
     }
-    
+
     # Add per_thread data for backward compatibility with visualize.py
     if per_thread_data:
         result["results"]["per_thread"] = per_thread_data
-    
+
     return result
 
 
@@ -309,46 +336,45 @@ def main():
     """Main entry point."""
     import argparse
     import platform
-    
+
     parser = argparse.ArgumentParser(
         description="Run benchmarks with statistical analysis"
     )
+    parser.add_argument("build_dir", help="Build directory containing test executables")
     parser.add_argument(
-        "build_dir",
-        help="Build directory containing test executables"
-    )
-    parser.add_argument(
-        "--iterations", "-n",
+        "--iterations",
+        "-n",
         type=int,
         default=5,
-        help="Number of measurement runs per benchmark (default: 5)"
+        help="Number of measurement runs per benchmark (default: 5)",
     )
     parser.add_argument(
-        "--warmup", "-w",
+        "--warmup",
+        "-w",
         type=int,
         default=1,
-        help="Number of warm-up runs (default: 1)"
+        help="Number of warm-up runs (default: 1)",
     )
     parser.add_argument(
         "--timeout",
         type=int,
         default=30,
-        help="Timeout per run in seconds (default: 30)"
+        help="Timeout per run in seconds (default: 30)",
     )
     parser.add_argument(
         "--items",
         type=int,
         default=400000,
-        help="Number of items for qtest/strongtest (default: 400000 for ~1s runtime)"
+        help="Number of items for qtest/strongtest (default: 400000 for ~1s runtime)",
     )
-    
+
     args = parser.parse_args()
-    
+
     build_dir = Path(args.build_dir)
     if not build_dir.exists():
         print(f"Error: Build directory not found: {build_dir}", file=sys.stderr)
         sys.exit(1)
-    
+
     # System information
     system_info = {
         "os": platform.system(),
@@ -356,51 +382,51 @@ def main():
         "python_version": platform.python_version(),
         "cores": os.cpu_count(),
     }
-    
+
     # Benchmark configurations
     benchmarks = [
         {
             "name": "qtest",
             "variants": ["native", "fc"],
             "args": [str(args.items), "4", "10"],
-            "description": f"Producer-consumer queue test ({args.items//1000}K items, 4 threads, queue size 10)",
+            "description": f"Producer-consumer queue test ({args.items // 1000}K items, 4 threads, queue size 10)",
         },
         {
             "name": "strongtest",
             "variants": ["native", "fc"],
             "args": [str(args.items), "5"],
-            "description": f"Strong semantics test ({args.items//1000}K items, queue size 5)",
+            "description": f"Strong semantics test ({args.items // 1000}K items, queue size 5)",
         },
     ]
-    
+
     impl_names = {
         "native": "native",
         "fc": "fastcond_strong",
     }
-    
+
     all_results = []
-    
+
     for benchmark in benchmarks:
         for variant in benchmark["variants"]:
             exe = build_dir / f"{benchmark['name']}_{variant}"
-            
+
             if not exe.exists():
                 print(f"Warning: {exe} not found, skipping", file=sys.stderr)
                 continue
-            
-            print(f"\n{'='*60}", file=sys.stderr)
+
+            print(f"\n{'=' * 60}", file=sys.stderr)
             print(f"Benchmark: {benchmark['name']}_{variant}", file=sys.stderr)
-            print(f"{'='*60}", file=sys.stderr)
-            
+            print(f"{'=' * 60}", file=sys.stderr)
+
             result = run_benchmark_suite(
                 str(exe),
                 benchmark["args"],
                 benchmark["name"],
                 iterations=args.iterations,
                 warmup=args.warmup,
-                timeout=args.timeout
+                timeout=args.timeout,
             )
-            
+
             if result:
                 stats, per_thread_data = result
                 config = {
@@ -408,7 +434,7 @@ def main():
                     "num_threads": 4 if benchmark["name"] == "qtest" else 1,
                     "queue_size": int(benchmark["args"][-1]),
                 }
-                
+
                 result_json = format_result_for_json(
                     benchmark["name"],
                     impl_names[variant],
@@ -416,10 +442,10 @@ def main():
                     stats,
                     config,
                     system_info,
-                    per_thread_data
+                    per_thread_data,
                 )
                 all_results.append(result_json)
-    
+
     # Output JSON
     print(json.dumps(all_results, indent=2))
 

@@ -72,7 +72,7 @@ typedef struct _args {
     float latency_stdev;
     float latency_min;
     float latency_max;
-    int has_latency_data;  /* Flag to indicate if latency stats are valid */
+    int has_latency_data; /* Flag to indicate if latency stats are valid */
 } args_t;
 
 TEST_THREAD_FUNC_RETURN sender(void *arg)
@@ -123,8 +123,8 @@ TEST_THREAD_FUNC_RETURN receiver(void *arg)
     args_t *args = (args_t *) arg;
     queue_t *q = args->queue;
     int n_got = 0;
-    int n_waits = 0;  /* Total COND_WAIT calls */
-    int n_successful_waits = 0;  /* Waits that resulted in data being available */
+    int n_waits = 0;            /* Total COND_WAIT calls */
+    int n_successful_waits = 0; /* Waits that resulted in data being available */
     int have_data = 0;
     float sum_time = 0.0, sum_time2 = 0.0;
     float min_time = 1e9, max_time = 0.0;
@@ -183,7 +183,7 @@ TEST_THREAD_FUNC_RETURN receiver(void *arg)
     /* Check if JSON mode to suppress print */
     const char *json_output = getenv("FASTCOND_JSON_OUTPUT");
     int json_mode = (json_output && strcmp(json_output, "1") == 0);
-    
+
     if (q->timestamps) {
         float avg = 0.0f, variance = 0.0f, stdev = 0.0f;
         if (n_got > 0) {
@@ -197,7 +197,7 @@ TEST_THREAD_FUNC_RETURN receiver(void *arg)
             min_time = 0.0f;
             max_time = 0.0f;
         }
-        
+
         /* Store stats in args structure */
         args->n_got = n_got;
         args->n_waits = n_waits;
@@ -207,13 +207,13 @@ TEST_THREAD_FUNC_RETURN receiver(void *arg)
         args->latency_min = min_time;
         args->latency_max = max_time;
         args->has_latency_data = 1;
-        
+
         /* Calculate spurious wakeups: waits that didn't result in data */
         int spurious_wakeups = n_waits - n_successful_waits;
-        
+
         if (!json_mode) {
-            printf("receiver %d got %d latency avg %e stdev %e min %e max %e spurious %d\n", args->id, n_got, avg,
-                   stdev, min_time, max_time, spurious_wakeups);
+            printf("receiver %d got %d latency avg %e stdev %e min %e max %e spurious %d\n",
+                   args->id, n_got, avg, stdev, min_time, max_time, spurious_wakeups);
         }
     } else {
         /* No timestamp data */
@@ -221,9 +221,9 @@ TEST_THREAD_FUNC_RETURN receiver(void *arg)
         args->n_waits = n_waits;
         args->n_successful_waits = n_successful_waits;
         args->has_latency_data = 0;
-        
+
         int spurious_wakeups = n_waits - n_successful_waits;
-        
+
         if (!json_mode) {
             printf("receiver %d got %d spurious %d\n", args->id, n_got, spurious_wakeups);
         }
@@ -305,22 +305,25 @@ int main(int argc, char *argv[])
     if (json_mode) {
         /* Output compact JSON for easy parsing */
         printf("{\"test\":\"strongtest\",\"variant\":\"%s\",", variant);
-        printf("\"config\":{\"n_data\":%d,\"n_senders\":%d,\"n_receivers\":%d,\"queue_size\":%d},", 
+        printf("\"config\":{\"n_data\":%d,\"n_senders\":%d,\"n_receivers\":%d,\"queue_size\":%d},",
                n_data, n_senders, n_receivers, max_queue);
-        printf("\"timing\":{\"elapsed_sec\":%.9f,\"throughput\":%.2f},", 
-               elapsed_sec, n_data / elapsed_sec);
+        printf("\"timing\":{\"elapsed_sec\":%.9f,\"throughput\":%.2f},", elapsed_sec,
+               n_data / elapsed_sec);
         printf("\"per_thread\":[");
         for (i = 0; i < n_receivers; i++) {
             int spurious_wakeups = receivers[i].n_waits - receivers[i].n_successful_waits;
             if (receivers[i].has_latency_data) {
-                printf("{\"thread\":%d,\"type\":\"receiver\",\"n_got\":%d,\"n_waits\":%d,\"spurious_wakeups\":%d,"
-                       "\"latency_avg\":%.12e,\"latency_stdev\":%.12e,\"latency_min\":%.12e,\"latency_max\":%.12e}%s",
+                printf("{\"thread\":%d,\"type\":\"receiver\",\"n_got\":%d,\"n_waits\":%d,"
+                       "\"spurious_wakeups\":%d,"
+                       "\"latency_avg\":%.12e,\"latency_stdev\":%.12e,\"latency_min\":%.12e,"
+                       "\"latency_max\":%.12e}%s",
                        i, receivers[i].n_got, receivers[i].n_waits, spurious_wakeups,
-                       (double)receivers[i].latency_avg, (double)receivers[i].latency_stdev, 
-                       (double)receivers[i].latency_min, (double)receivers[i].latency_max,
+                       (double) receivers[i].latency_avg, (double) receivers[i].latency_stdev,
+                       (double) receivers[i].latency_min, (double) receivers[i].latency_max,
                        (i < n_receivers - 1) ? "," : "");
             } else {
-                printf("{\"thread\":%d,\"type\":\"receiver\",\"n_got\":%d,\"n_waits\":%d,\"spurious_wakeups\":%d}%s",
+                printf("{\"thread\":%d,\"type\":\"receiver\",\"n_got\":%d,\"n_waits\":%d,"
+                       "\"spurious_wakeups\":%d}%s",
                        i, receivers[i].n_got, receivers[i].n_waits, spurious_wakeups,
                        (i < n_receivers - 1) ? "," : "");
             }

@@ -473,7 +473,6 @@ def generate_html_page(results, output_path, charts_available=True):
             impl = result["implementation"]
             throughput = result["results"]["overall"].get("throughput_items_per_sec", 0)
             stdev = result["results"]["overall"].get("throughput_stdev", 0)
-            cv = result["results"]["overall"].get("throughput_cv_percent", 0)
 
             # Format with ± stdev if available
             if stdev > 0:
