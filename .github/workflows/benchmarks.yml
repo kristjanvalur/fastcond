@@ -129,13 +129,6 @@ jobs:
           
           ${resultsTable}
           
-          <details>
-          <summary>View Charts</summary>
-          
-          See the workflow artifacts for throughput and latency comparison charts.
-          
-          </details>
-          
           ---
           *Benchmarked on: \`${{ runner.os }}\` with \`${{ runner.arch }}\`*
           *Commit: \`${{ github.sha }}\`*`;
