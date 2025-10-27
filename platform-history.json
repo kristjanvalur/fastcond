@@ -1,0 +1,278 @@
+{
+  "schema_version": "1.0",
+  "description": "Historical benchmark results for fastcond",
+  "runs": [
+    {
+      "run_id": "18857929617",
+      "timestamp": "2025-10-27T22:37:03.098675+00:00",
+      "git": {
+        "commit": "4e76e48e8e0d3842ad76c151e8b15da1a0dfeac3",
+        "commit_short": "4e76e48",
+        "branch": "master"
+      },
+      "results": {
+        "metadata": {
+          "total_benchmarks": 28,
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "tests": [
+            "gil_test",
+            "qtest",
+            "strongtest"
+          ],
+          "variants": [
+            "fastcond_cond",
+            "fastcond_gil",
+            "native",
+            "native_gil"
+          ]
+        },
+        "results": [
+          {
+            "platform": "linux",
+            "test": "gil_test",
+            "threads": 4,
+            "param": 1000,
+            "variants": [
+              {
+                "variant": "fastcond_gil",
+                "throughput": 5803.5,
+                "elapsed_sec": 0.17231,
+                "speedup": 0.0
+              },
+              {
+                "variant": "fastcond_gil",
+                "throughput": 5803.91,
+                "elapsed_sec": 0.172298,
+                "speedup": 0.0
+              },
+              {
+                "variant": "native_gil",
+                "throughput": 5723.27,
+                "elapsed_sec": 0.174725,
+                "speedup": 0.0
+              },
+              {
+                "variant": "native_gil",
+                "throughput": 5991.63,
+                "elapsed_sec": 0.166899,
+                "speedup": 0.0
+              },
+              {
+                "variant": "native_gil",
+                "throughput": 5762.11,
+                "elapsed_sec": 0.173547,
+                "speedup": 0.0
+              },
+              {
+                "variant": "native_gil",
+                "throughput": 5959.78,
+                "elapsed_sec": 0.167791,
+                "speedup": 0.0
+              }
+            ]
+          },
+          {
+            "platform": "linux",
+            "test": "qtest",
+            "threads": 4,
+            "param": 10,
+            "variants": [
+              {
+                "variant": "fastcond_cond",
+                "throughput": 602811.31,
+                "elapsed_sec": 0.016589,
+                "speedup": 1.2820713826852788
+              },
+              {
+                "variant": "fastcond_cond",
+                "throughput": 731410.38,
+                "elapsed_sec": 0.013672,
+                "speedup": 1.5555785063106482
+              },
+              {
+                "variant": "native",
+                "throughput": 470185.45,
+                "elapsed_sec": 0.021268,
+                "speedup": 1.0
+              },
+              {
+                "variant": "native",
+                "throughput": 600951.07,
+                "elapsed_sec": 0.01664,
+                "speedup": 1.278114986331457
+              }
+            ]
+          },
+          {
+            "platform": "linux",
+            "test": "strongtest",
+            "threads": 1,
+            "param": 5,
+            "variants": [
+              {
+                "variant": "fastcond_cond",
+                "throughput": 1390944.4,
+                "elapsed_sec": 0.007189,
+                "speedup": 1.38235392740064
+              },
+              {
+                "variant": "fastcond_cond",
+                "throughput": 1230774.38,
+                "elapsed_sec": 0.008125,
+                "speedup": 1.223173117442428
+              },
+              {
+                "variant": "native",
+                "throughput": 1006214.38,
+                "elapsed_sec": 0.009938,
+                "speedup": 1.0
+              },
+              {
+                "variant": "native",
+                "throughput": 1209235.32,
+                "elapsed_sec": 0.00827,
+                "speedup": 1.2017670826767552
+              }
+            ]
+          },
+          {
+            "platform": "macos",
+            "test": "gil_test",
+            "threads": 4,
+            "param": 1000,
+            "variants": [
+              {
+                "variant": "fastcond_gil",
+                "throughput": 633.32,
+                "elapsed_sec": 1.578982,
+                "speedup": 0.0
+              },
+              {
+                "variant": "native_gil",
+                "throughput": 996.2,
+                "elapsed_sec": 1.003812,
+                "speedup": 0.0
+              },
+              {
+                "variant": "native_gil",
+                "throughput": 1014.04,
+                "elapsed_sec": 0.986156,
+                "speedup": 0.0
+              }
+            ]
+          },
+          {
+            "platform": "macos",
+            "test": "qtest",
+            "threads": 4,
+            "param": 10,
+            "variants": [
+              {
+                "variant": "fastcond_cond",
+                "throughput": 284422.2,
+                "elapsed_sec": 0.035159,
+                "speedup": 0.9904150005935409
+              },
+              {
+                "variant": "native",
+                "throughput": 287174.77,
+                "elapsed_sec": 0.034822,
+                "speedup": 1.0
+              }
+            ]
+          },
+          {
+            "platform": "macos",
+            "test": "strongtest",
+            "threads": 1,
+            "param": 5,
+            "variants": [
+              {
+                "variant": "fastcond_cond",
+                "throughput": 273261.37,
+                "elapsed_sec": 0.036595,
+                "speedup": 4.691815410628799
+              },
+              {
+                "variant": "native",
+                "throughput": 58242.14,
+                "elapsed_sec": 0.171697,
+                "speedup": 1.0
+              }
+            ]
+          },
+          {
+            "platform": "windows",
+            "test": "gil_test",
+            "threads": 4,
+            "param": 1000,
+            "variants": [
+              {
+                "variant": "fastcond_gil",
+                "throughput": 2355.82,
+                "elapsed_sec": 0.424481,
+                "speedup": 0.0
+              },
+              {
+                "variant": "native_gil",
+                "throughput": 2133.93,
+                "elapsed_sec": 0.468619,
+                "speedup": 0.0
+              },
+              {
+                "variant": "native_gil",
+                "throughput": 2148.99,
+                "elapsed_sec": 0.465336,
+                "speedup": 0.0
+              }
+            ]
+          },
+          {
+            "platform": "windows",
+            "test": "qtest",
+            "threads": 4,
+            "param": 10,
+            "variants": [
+              {
+                "variant": "fastcond_cond",
+                "throughput": 660318.8,
+                "elapsed_sec": 0.015144,
+                "speedup": 1.0627566917685023
+              },
+              {
+                "variant": "native",
+                "throughput": 621326.41,
+                "elapsed_sec": 0.016095,
+                "speedup": 1.0
+              }
+            ]
+          },
+          {
+            "platform": "windows",
+            "test": "strongtest",
+            "threads": 1,
+            "param": 5,
+            "variants": [
+              {
+                "variant": "fastcond_cond",
+                "throughput": 2481697.48,
+                "elapsed_sec": 0.00403,
+                "speedup": 1.0229308840014284
+              },
+              {
+                "variant": "native",
+                "throughput": 2426065.65,
+                "elapsed_sec": 0.004122,
+                "speedup": 1.0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
