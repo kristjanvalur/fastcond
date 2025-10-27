@@ -39,6 +39,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Disable man-db (speeds up apt-get)
+      if: runner.os == 'Linux'
+      run: |
+        sudo mkdir -p /etc/dpkg/dpkg.cfg.d
+        echo 'path-exclude /usr/share/man/*' | sudo tee /etc/dpkg/dpkg.cfg.d/01_nodoc
+    
     - name: Install dependencies (Ubuntu)
       if: runner.os == 'Linux'
       run: |
@@ -177,6 +183,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Disable man-db (speeds up apt-get)
+      run: |
+        sudo mkdir -p /etc/dpkg/dpkg.cfg.d
+        echo 'path-exclude /usr/share/man/*' | sudo tee /etc/dpkg/dpkg.cfg.d/01_nodoc
+    
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -209,6 +220,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Disable man-db (speeds up apt-get)
+      run: |
+        sudo mkdir -p /etc/dpkg/dpkg.cfg.d
+        echo 'path-exclude /usr/share/man/*' | sudo tee /etc/dpkg/dpkg.cfg.d/01_nodoc
+    
     - name: Install clang-tidy
       run: |
         sudo apt-get update
@@ -226,6 +242,11 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Disable man-db (speeds up apt-get)
+      run: |
+        sudo mkdir -p /etc/dpkg/dpkg.cfg.d
+        echo 'path-exclude /usr/share/man/*' | sudo tee /etc/dpkg/dpkg.cfg.d/01_nodoc
     
     - name: Install clang-format
       run: |
