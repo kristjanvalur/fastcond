@@ -1,0 +1,21 @@
+# Generated benchmark results and visualizations
+# These files are created dynamically by CI/scripts and should not be tracked
+
+# Benchmark data files
+benchmark-results.json
+benchmark-results.md
+gil-fairness-results.json
+
+# Generated HTML reports
+index.html
+gil-fairness.html
+
+# Generated charts and visualizations
+*.png
+*-comparison.png
+gil_fairness_comparison.png
+throughput-comparison.png
+latency-comparison.png
+
+# Any other generated analysis files
+performance-analysis.md
