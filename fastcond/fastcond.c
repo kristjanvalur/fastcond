@@ -1,5 +1,150 @@
 /* Copyright (c) 2017-2025 Kristján Valur Jónsson */
 
+/*
+ * FastCond: User-Space Condition Variables Using Only Semaphores
+ * ================================================================
+ *
+ * This library implements POSIX condition variables entirely in user space using
+ * only semaphores as the underlying kernel primitive. Unlike pthread_cond_t which
+ * typically relies on kernel futex operations (Linux) or other OS-specific mechanisms,
+ * fastcond achieves full POSIX semantics with a portable semaphore-based design.
+ *
+ * MOTIVATION: Why User-Space Condition Variables?
+ * ------------------------------------------------
+ * Traditional condition variable implementations (pthread_cond_t, Windows CONDITION_VARIABLE)
+ * are typically kernel-level primitives or thin wrappers around them. While robust, they
+ * impose certain constraints:
+ *
+ * 1. Platform dependency: Different kernel implementations on Linux (futex), macOS (Mach
+ *    semaphores), Windows (keyed events), etc.
+ * 2. Limited composability: Cannot easily extend or instrument behavior
+ * 3. Potential performance overhead: Kernel transitions for every wait/signal operation
+ *
+ * By implementing condition variables in user space atop semaphores, we gain:
+ * - Portability across any platform with semaphore support
+ * - Ability to optimize for specific use cases (e.g., the GIL fairness mechanisms)
+ * - Full control over wakeup behavior and scheduling hints
+ * - On macOS: Direct use of GCD dispatch_semaphore_t avoids pthread compatibility overhead
+ *
+ * THE WAKEUP STEALING PROBLEM
+ * ---------------------------
+ * The central challenge in implementing condition variables with semaphores is preventing
+ * "wakeup stealing." Consider this scenario:
+ *
+ *   Time  | Thread A (waiter)      | Thread B (signaler)  | Thread C (new waiter)
+ *   ------|------------------------|----------------------|----------------------
+ *   t1    | cond_wait() - waiting  |                      |
+ *   t2    |                        | cond_signal()        |
+ *         |                        | posts semaphore      |
+ *   t3    | [still in kernel wait] |                      | cond_wait() arrives
+ *         |                        |                      | sees posted semaphore
+ *         |                        |                      | STEALS wakeup meant for A!
+ *   t4    | [still waiting forever]|                      | [proceeds incorrectly]
+ *
+ * This violates POSIX semantics: when signal() is called with N threads already waiting,
+ * those specific N threads must be guaranteed to wake (though spurious wakeups of others
+ * are permitted). We need a mechanism to ensure that the semaphore post at t2 reaches
+ * Thread A specifically, not Thread C who arrived after the signal.
+ *
+ * THE THREE-COUNTER SOLUTION
+ * --------------------------
+ * FastCond solves this with three carefully coordinated counters:
+ *
+ * 1. w_waiting: Threads currently blocked on the semaphore RIGHT NOW (weak layer)
+ *    - Incremented before sem_wait()
+ *    - Decremented after sem_wait() returns (even if wait failed)
+ *    - Represents immediate semaphore state
+ *
+ * 2. n_waiting: Threads anywhere in the wait() call (strong layer)
+ *    - Incremented before entering wait
+ *    - Decremented after wait completes (including relocking mutex)
+ *    - Represents the full span of the wait operation
+ *
+ * 3. n_wakeup: Outstanding wakeup obligations not yet consumed (strong layer)
+ *    - Incremented when signal/broadcast posts semaphores
+ *    - Decremented when woken thread exits wait
+ *    - Represents "pending wakeups meant for already-waiting threads"
+ *
+ * Why three counters? The key insight is TIMING ASYMMETRY:
+ * - w_waiting decrements DURING the wait operation (after sem_wait, before mutex relock)
+ * - n_waiting spans the ENTIRE wait operation (including relock)
+ * - n_wakeup must satisfy: n_wakeup <= n_waiting (invariant)
+ *
+ * If we only had w_waiting, we couldn't maintain the invariant because w_waiting drops
+ * to 0 mid-operation, creating a window where signal() might not wake anyone. We need
+ * n_waiting to track "threads still in wait()" even when they've left the semaphore.
+ *
+ * SPURIOUS WAKEUP AS ENFORCEMENT MECHANISM
+ * ----------------------------------------
+ * The elegant solution to wakeup stealing: when a new thread arrives and sees n_wakeup > 0,
+ * it doesn't enter the semaphore wait (which would steal). Instead, it:
+ *
+ *   1. Unlocks the mutex
+ *   2. Yields CPU (gives already-waiting threads a chance to consume their wakeups)
+ *   3. Relocks the mutex
+ *   4. Returns immediately to the caller
+ *
+ * This is a SPURIOUS WAKEUP—perfectly legal under POSIX! The caller's standard pattern:
+ *
+ *   while (!condition)
+ *       pthread_cond_wait(&cond, &mutex);
+ *
+ * will simply retry. By the next iteration, n_wakeup has likely decreased (original waiters
+ * consumed their wakeups), and the new thread can now wait properly.
+ *
+ * Why this works:
+ * - Prevents stealing: New thread never consumes a semaphore post meant for someone else
+ * - Self-correcting: As intended recipients wake, n_wakeup decreases naturally
+ * - POSIX-compliant: Spurious wakeups are explicitly allowed by the standard
+ * - Performance: The MAYBE_YIELD() reduces retry frequency (see yield optimization below)
+ *
+ * YIELD OPTIMIZATION
+ * ------------------
+ * The MAYBE_YIELD() call in the spurious wakeup path is crucial for performance:
+ *
+ * Without yield:
+ *   - New thread spuriously wakes, immediately retries
+ *   - n_wakeup still > 0 (original thread hasn't run yet)
+ *   - Spurious wakeup again... repeats many times
+ *   - Wastes CPU cycles in tight loop
+ *
+ * With yield:
+ *   - New thread yields CPU to scheduler
+ *   - Original waiting thread gets scheduled, consumes wakeup, decrements n_wakeup
+ *   - New thread resumes, retries, now n_wakeup == 0, can wait properly
+ *   - Typically only 1-2 spurious wakeups instead of dozens
+ *
+ * Benchmarking confirmed this: the yield reduces total spurious wakeup count significantly,
+ * improving both throughput and latency.
+ *
+ * LAYERED ARCHITECTURE
+ * --------------------
+ * The implementation is layered for clarity:
+ *
+ * Weak Layer (_weak_* functions):
+ *   - Direct semaphore wrappers with w_waiting bookkeeping
+ *   - Provides basic wait/signal/broadcast on semaphores
+ *   - Used internally by strong layer
+ *
+ * Strong Layer (fastcond_cond_* functions):
+ *   - Adds n_waiting and n_wakeup tracking
+ *   - Implements wakeup stealing prevention via spurious wakeup mechanism
+ *   - Provides full POSIX semantics
+ *
+ * Originally (2017), the weak layer was exposed as fastcond_wcond_t for use cases where
+ * all waiting threads are equivalent (relaxed semantics). However, performance testing
+ * (2025) showed the strong variant is consistently faster despite additional bookkeeping,
+ * so wcond is now just an alias for the strong implementation.
+ *
+ * REFERENCES
+ * ----------
+ * - Birrell, A. D. (2003). "Implementing Condition Variables with Semaphores"
+ *   https://www.microsoft.com/en-us/research/publication/implementing-condition-variables-with-semaphores/
+ * - POSIX.1-2017: pthread_cond_wait, pthread_cond_signal specifications
+ * - This implementation extends Birrell's algorithms with the n_wakeup counter mechanism
+ *   to prevent wakeup stealing while maintaining full POSIX semantics.
+ */
+
 #include "fastcond.h"
 
 #include <assert.h>

@@ -50,6 +50,49 @@ Before committing, format your code:
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
+## How It Works
+
+**FastCond is a user-space condition variable implementation using only semaphores.**
+
+Unlike `pthread_cond_t` which typically relies on kernel primitives like futex (Linux) or Mach semaphores (macOS), fastcond implements full POSIX condition variable semantics entirely in user space. This provides:
+
+- **Portability**: Works on any platform with semaphore support
+- **Transparency**: Full control over wakeup behavior and scheduling
+- **Performance**: On macOS, direct GCD dispatch semaphores avoid pthread compatibility overhead
+
+### The Wakeup Stealing Problem
+
+The central challenge: when `signal()` is called with N threads waiting, those *specific* threads must wake—but semaphores don't track identity. A naive implementation allows "wakeup stealing":
+
+```
+Thread A waiting → Thread B signals (posts semaphore) → Thread C (new arrival) steals wakeup → Thread A stuck forever ❌
+```
+
+### The Spurious Wakeup Solution
+
+FastCond prevents stealing with a clever mechanism: when a new thread arrives and sees pending wakeups (`n_wakeup > 0`), instead of entering the semaphore wait, it:
+
+1. Takes a **spurious wakeup** (unlock → yield → relock → return immediately)
+2. Caller's `while (!condition)` loop retries
+3. By next iteration, original threads have consumed their wakeups
+4. New thread can now wait properly without stealing
+
+This uses POSIX's *allowed* spurious wakeups as an *enforcement mechanism* for strong semantics.
+
+### Three-Counter Architecture
+
+```c
+volatile int w_waiting;  // Threads blocked on semaphore RIGHT NOW
+volatile int n_waiting;  // Threads anywhere in wait() call
+volatile int n_wakeup;   // Outstanding wakeup obligations
+```
+
+**Why three?** Timing asymmetry: `w_waiting` decrements *during* the wait (after sem_wait, before mutex relock), while `n_waiting` spans the *entire* operation. The invariant `n_wakeup ≤ n_waiting` requires tracking both separately.
+
+**The `MAYBE_YIELD()` optimization**: Yielding CPU when taking spurious wakeup gives original threads time to consume their wakeups, reducing retry frequency from dozens to typically 1-2 iterations.
+
+For the complete algorithm explanation with references to Birrell's semaphore paper and detailed timing analysis, see the comprehensive documentation in `fastcond/fastcond.c`.
+
 ## Usage
 
 They can be used instead of regular `pthread_cond_t` objects subject to the
