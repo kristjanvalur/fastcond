@@ -342,13 +342,13 @@ def generate_html_page(results, output_path, charts_available=True):
             <p>Built using nothing but POSIX semaphores and Nordic engineering sensibilities, 
             fastcond delivers performance that lets you spend less time debugging race conditions and more time living.</p>
             
-            <p><strong>Two varieties of excellence:</strong></p>
+            <p><strong>One implementation, two APIs:</strong></p>
             <ul>
-                <li><strong>💪 Strong</strong> - Strict POSIX semantics with surprisingly better performance</li>
-                <li><strong>🏃 Weak</strong> - Relaxed semantics for when you're feeling adventurous</li>
+                <li><strong>💪 Strong semantics</strong> - Full POSIX compliance with proven superior performance</li>
+                <li><strong>🔄 Backward compatibility</strong> - Legacy weak API now aliases the strong implementation</li>
             </ul>
             
-            <p><em>Rather amusing fact: Both are faster than pthread. We've checked. Thoroughly. During those long Nordic nights when there's proper time for benchmarking.</em></p>
+            <p><em>Rather amusing fact: Rigorous benchmarking during those long Nordic nights proved that strict POSIX semantics actually deliver better performance than relaxed ones. The data spoke clearly.</em></p>
         </div>
     </div>
 """
