@@ -129,6 +129,7 @@ jobs:
         publish_dir: ./docs
         keep_files: true
         enable_jekyll: false
+        exclude_assets: '.github,.gitignore'
     
     - name: Comment PR with results
       if: github.event_name == 'pull_request'

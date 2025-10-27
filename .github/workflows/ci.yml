@@ -484,6 +484,11 @@ jobs:
           echo "📄 $file: $(wc -l < "$file" 2>/dev/null || echo "binary") lines"
         done
     
+    - name: Remove .gitignore from output to prevent blocking deployment
+      run: |
+        # Remove any .gitignore that might block PNG/HTML files on gh-pages
+        rm -f performance-output/.gitignore
+    
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
       with:
@@ -493,3 +498,4 @@ jobs:
         keep_files: true
         enable_jekyll: false
         force_orphan: false
+        exclude_assets: '.github,.gitignore'
