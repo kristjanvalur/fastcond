@@ -328,7 +328,10 @@ jobs:
     
     - name: Create performance index page
       run: |
-        cat > performance-output/index.html << 'EOF'
+        - name: Create cross-platform index page
+      run: |
+        GENERATED_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        cat > performance-output/index.html << EOF
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -466,7 +469,7 @@ jobs:
             </ul>
             
             <div class="footer">
-                <p>Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")</p>
+                <p>Generated: ${GENERATED_DATE}</p>
                 <p>Repository: <a href="https://github.com/kristjanvalur/fastcond">kristjanvalur/fastcond</a></p>
                 <p>Documentation: <a href="https://github.com/kristjanvalur/fastcond#readme">README</a></p>
             </div>
