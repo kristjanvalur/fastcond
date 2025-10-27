@@ -27,38 +27,38 @@
       "variants": [
         {
           "variant": "fastcond_gil",
-          "throughput": 5755.11,
-          "elapsed_sec": 0.173759,
+          "throughput": 5808.1,
+          "elapsed_sec": 0.172173,
           "speedup": 0.0
         },
         {
           "variant": "fastcond_gil",
-          "throughput": 5749.47,
-          "elapsed_sec": 0.173929,
+          "throughput": 5751.17,
+          "elapsed_sec": 0.173878,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 5707.17,
-          "elapsed_sec": 0.175218,
+          "throughput": 5785.24,
+          "elapsed_sec": 0.172854,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 6018.33,
-          "elapsed_sec": 0.166159,
+          "throughput": 6034.83,
+          "elapsed_sec": 0.165705,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 5729.17,
-          "elapsed_sec": 0.174545,
+          "throughput": 5751.98,
+          "elapsed_sec": 0.173853,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 5894.5,
-          "elapsed_sec": 0.16965,
+          "throughput": 5976.56,
+          "elapsed_sec": 0.16732,
           "speedup": 0.0
         }
       ]
@@ -71,27 +71,27 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 799704.81,
-          "elapsed_sec": 0.012505,
-          "speedup": 1.500516856179974
+          "throughput": 484194.0,
+          "elapsed_sec": 0.020653,
+          "speedup": 1.0837824098771272
         },
         {
           "variant": "fastcond_cond",
-          "throughput": 635492.78,
-          "elapsed_sec": 0.015736,
-          "speedup": 1.1923995159797423
+          "throughput": 444848.51,
+          "elapsed_sec": 0.02248,
+          "speedup": 0.9957145074041588
         },
         {
           "variant": "native",
-          "throughput": 532952.9,
-          "elapsed_sec": 0.018763,
+          "throughput": 446763.11,
+          "elapsed_sec": 0.022383,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 601589.66,
-          "elapsed_sec": 0.016623,
-          "speedup": 1.1287857895134823
+          "throughput": 348059.1,
+          "elapsed_sec": 0.028731,
+          "speedup": 0.7790685761857106
         }
       ]
     },
@@ -103,27 +103,27 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 1436087.09,
-          "elapsed_sec": 0.006963,
-          "speedup": 1.17189287632631
+          "throughput": 1384179.99,
+          "elapsed_sec": 0.007224,
+          "speedup": 1.1181722919670034
         },
         {
           "variant": "fastcond_cond",
-          "throughput": 1400139.2,
-          "elapsed_sec": 0.007142,
-          "speedup": 1.1425582513559247
+          "throughput": 1219031.42,
+          "elapsed_sec": 0.008203,
+          "speedup": 0.984761495418808
         },
         {
           "variant": "native",
-          "throughput": 1225442.29,
-          "elapsed_sec": 0.00816,
+          "throughput": 1237895.09,
+          "elapsed_sec": 0.008078,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 1295190.16,
-          "elapsed_sec": 0.007721,
-          "speedup": 1.0569164868628778
+          "throughput": 1212451.29,
+          "elapsed_sec": 0.008248,
+          "speedup": 0.979445915727802
         }
       ]
     },
@@ -135,20 +135,20 @@
       "variants": [
         {
           "variant": "fastcond_gil",
-          "throughput": 1121.46,
-          "elapsed_sec": 0.891698,
+          "throughput": 1022.64,
+          "elapsed_sec": 0.977857,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 1623.24,
-          "elapsed_sec": 0.616051,
+          "throughput": 1735.83,
+          "elapsed_sec": 0.576093,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 1777.28,
-          "elapsed_sec": 0.562659,
+          "throughput": 1728.07,
+          "elapsed_sec": 0.578681,
           "speedup": 0.0
         }
       ]
@@ -161,14 +161,14 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 516982.89,
-          "elapsed_sec": 0.019343,
-          "speedup": 0.8608799013309062
+          "throughput": 350397.7,
+          "elapsed_sec": 0.028539,
+          "speedup": 2.644206211103068
         },
         {
           "variant": "native",
-          "throughput": 600528.47,
-          "elapsed_sec": 0.016652,
+          "throughput": 132515.27,
+          "elapsed_sec": 0.075463,
           "speedup": 1.0
         }
       ]
@@ -181,14 +181,14 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 641313.41,
-          "elapsed_sec": 0.015593,
-          "speedup": 2.484319864931442
+          "throughput": 1418238.55,
+          "elapsed_sec": 0.007051,
+          "speedup": 3.0310594145230394
         },
         {
           "variant": "native",
-          "throughput": 258144.46,
-          "elapsed_sec": 0.038738,
+          "throughput": 467901.93,
+          "elapsed_sec": 0.021372,
           "speedup": 1.0
         }
       ]
@@ -201,20 +201,20 @@
       "variants": [
         {
           "variant": "fastcond_gil",
-          "throughput": 2284.64,
-          "elapsed_sec": 0.437706,
+          "throughput": 2129.35,
+          "elapsed_sec": 0.469627,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 2284.59,
-          "elapsed_sec": 0.437716,
+          "throughput": 2196.18,
+          "elapsed_sec": 0.455336,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 2206.06,
-          "elapsed_sec": 0.453297,
+          "throughput": 2126.05,
+          "elapsed_sec": 0.470355,
           "speedup": 0.0
         }
       ]
@@ -227,14 +227,14 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 700186.95,
-          "elapsed_sec": 0.014282,
-          "speedup": 1.024037423078943
+          "throughput": 673786.34,
+          "elapsed_sec": 0.014842,
+          "speedup": 1.0866893436353615
         },
         {
           "variant": "native",
-          "throughput": 683751.33,
-          "elapsed_sec": 0.014625,
+          "throughput": 620035.84,
+          "elapsed_sec": 0.016128,
           "speedup": 1.0
         }
       ]
@@ -247,14 +247,14 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 2245223.29,
-          "elapsed_sec": 0.004454,
-          "speedup": 0.8625249788034919
+          "throughput": 2403903.94,
+          "elapsed_sec": 0.00416,
+          "speedup": 0.9308877629971927
         },
         {
           "variant": "native",
-          "throughput": 2603082.05,
-          "elapsed_sec": 0.003842,
+          "throughput": 2582377.85,
+          "elapsed_sec": 0.003872,
           "speedup": 1.0
         }
       ]
