@@ -488,8 +488,8 @@ jobs:
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: performance-output
+        publish_dir: ./performance-output
         destination_dir: performance
-        keep_files: false
+        keep_files: true
         enable_jekyll: false
         force_orphan: false
