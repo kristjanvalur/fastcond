@@ -2,6 +2,31 @@
 
 This directory contains documentation for developers and contributors to the fastcond project.
 
+## Project Structure
+
+```
+fastcond/
+├── fastcond/              # Library source code
+│   ├── fastcond.h         # Public API
+│   ├── fastcond.c         # Core implementation
+│   ├── gil.h/c            # GIL implementation for testing
+│   └── native_primitives.h
+│
+├── test/                  # Test suite
+│   ├── Makefile           # Quick builds for development/CI benchmarks
+│   ├── qtest.c            # Producer-consumer test
+│   ├── strongtest.c       # Single-condition semantics test
+│   ├── gil_test.c         # GIL fairness test
+│   └── ...                # Additional test variants and utilities
+│
+├── CMakeLists.txt         # Production build system (packaging, installation)
+└── scripts/               # Automation (benchmarks, formatting, analysis)
+```
+
+**Why both CMake and Makefile?**
+- **CMakeLists.txt**: Full-featured build system for packaging, cross-platform support, installation, CTest integration
+- **test/Makefile**: Lightweight, fast iteration for development and CI benchmark workflows (used by `.github/workflows/benchmarks.yml`)
+
 ## Overview
 
 - **docs/** - User-facing documentation (API, performance results, etc.)
