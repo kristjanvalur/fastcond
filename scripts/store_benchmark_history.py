@@ -180,9 +180,7 @@ def commit_and_push_history(repo_path: Path, message: str) -> bool:
         )
 
         if result.returncode != 0:  # There are changes
-            subprocess.run(
-                ["git", "commit", "-m", message], cwd=repo_path, check=True
-            )
+            subprocess.run(["git", "commit", "-m", message], cwd=repo_path, check=True)
             subprocess.run(
                 ["git", "push", "origin", "benchmark-data"], cwd=repo_path, check=True
             )
@@ -240,8 +238,7 @@ def main():
     results = load_benchmark_results(args.results_file)
     print(f"📥 Loaded {len(results)} benchmark results", file=sys.stderr)
 
-    # Get current directory to return to
-    original_dir = Path.cwd()
+    # Get repository path
     repo_path = Path(__file__).parent.parent
 
     try:
@@ -278,10 +275,8 @@ def main():
     finally:
         # Always return to original branch and directory
         try:
-            subprocess.run(
-                ["git", "checkout", "-"], cwd=repo_path, capture_output=True
-            )
-        except:
+            subprocess.run(["git", "checkout", "-"], cwd=repo_path, capture_output=True)
+        except Exception:
             pass
 
 

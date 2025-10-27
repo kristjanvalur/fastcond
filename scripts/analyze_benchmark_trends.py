@@ -13,7 +13,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
+from typing import Dict, Any
 
 try:
     import matplotlib.pyplot as plt
@@ -48,7 +48,9 @@ def analyze_trends(history: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": "No historical data available"}
 
     # Group results by (benchmark, platform)
-    trends = defaultdict(lambda: {"native": [], "fastcond": [], "speedup": [], "timestamps": []})
+    trends = defaultdict(
+        lambda: {"native": [], "fastcond": [], "speedup": [], "timestamps": []}
+    )
 
     for run in runs:
         timestamp = datetime.fromisoformat(run["timestamp"].replace("Z", "+00:00"))
@@ -85,7 +87,9 @@ def analyze_trends(history: Dict[str, Any]) -> Dict[str, Any]:
 def generate_trend_report(trends: Dict[str, Any], output_file: Path) -> None:
     """Generate markdown report of trends."""
     lines = ["# Benchmark Performance Trends", ""]
-    lines.append(f"*Analysis of {sum(len(v['speedup']) for v in trends.values())} historical data points*")
+    lines.append(
+        f"*Analysis of {sum(len(v['speedup']) for v in trends.values())} historical data points*"
+    )
     lines.append("")
 
     for key, data in sorted(trends.items()):
@@ -115,13 +119,23 @@ def generate_trend_report(trends: Dict[str, Any], output_file: Path) -> None:
                 (x[i] - x_mean) ** 2 for i in range(n)
             )
 
-            trend_direction = "📈 Improving" if slope > 0.001 else "📉 Declining" if slope < -0.001 else "➡️  Stable"
+            trend_direction = (
+                "📈 Improving"
+                if slope > 0.001
+                else "📉 Declining"
+                if slope < -0.001
+                else "➡️  Stable"
+            )
 
-            lines.append(f"**Data Points:** {n} runs from {timestamps[0].date()} to {timestamps[-1].date()}")
+            lines.append(
+                f"**Data Points:** {n} runs from {timestamps[0].date()} to {timestamps[-1].date()}"
+            )
             lines.append("")
             lines.append("| Metric | Value |")
             lines.append("|--------|-------|")
-            lines.append(f"| Mean Speedup | **{mean_speedup:.3f}×** ({(mean_speedup - 1) * 100:+.1f}%) |")
+            lines.append(
+                f"| Mean Speedup | **{mean_speedup:.3f}×** ({(mean_speedup - 1) * 100:+.1f}%) |"
+            )
             lines.append(f"| Std Deviation | {stdev_speedup:.3f}× |")
             lines.append(f"| Range | {min_speedup:.3f}× to {max_speedup:.3f}× |")
             lines.append(f"| Trend | {trend_direction} (slope: {slope:.4f}) |")
@@ -131,15 +145,24 @@ def generate_trend_report(trends: Dict[str, Any], output_file: Path) -> None:
             if mean_speedup > 1.0:
                 # Calculate t-statistic
                 import math
+
                 t_stat = (mean_speedup - 1.0) / (stdev_speedup / math.sqrt(n))
                 # Approximate p-value check (t > 2.0 is roughly p < 0.05 for most sample sizes)
                 is_significant = abs(t_stat) > 2.0
-                significance = "✅ Statistically significant" if is_significant else "⚠️  Not statistically significant"
-                lines.append(f"**Performance Difference:** {significance} (t={t_stat:.2f})")
+                significance = (
+                    "✅ Statistically significant"
+                    if is_significant
+                    else "⚠️  Not statistically significant"
+                )
+                lines.append(
+                    f"**Performance Difference:** {significance} (t={t_stat:.2f})"
+                )
                 lines.append("")
 
         else:
-            lines.append("*Insufficient data for trend analysis (need at least 2 runs)*")
+            lines.append(
+                "*Insufficient data for trend analysis (need at least 2 runs)*"
+            )
             lines.append("")
 
     with open(output_file, "w") as f:
@@ -167,19 +190,45 @@ def generate_trend_charts(trends: Dict[str, Any], output_dir: Path) -> None:
         fig, ax = plt.subplots(figsize=(12, 6))
 
         # Plot speedup over time
-        ax.plot(timestamps, speedups, marker="o", linestyle="-", linewidth=2, markersize=6, label="Speedup")
+        ax.plot(
+            timestamps,
+            speedups,
+            marker="o",
+            linestyle="-",
+            linewidth=2,
+            markersize=6,
+            label="Speedup",
+        )
 
         # Add mean line
         mean_speedup = statistics.mean(speedups)
-        ax.axhline(y=mean_speedup, color="green", linestyle="--", linewidth=2, alpha=0.7, label=f"Mean: {mean_speedup:.3f}×")
+        ax.axhline(
+            y=mean_speedup,
+            color="green",
+            linestyle="--",
+            linewidth=2,
+            alpha=0.7,
+            label=f"Mean: {mean_speedup:.3f}×",
+        )
 
         # Add baseline
-        ax.axhline(y=1.0, color="red", linestyle="--", linewidth=2, alpha=0.7, label="Baseline (1.0×)")
+        ax.axhline(
+            y=1.0,
+            color="red",
+            linestyle="--",
+            linewidth=2,
+            alpha=0.7,
+            label="Baseline (1.0×)",
+        )
 
         # Formatting
         ax.set_xlabel("Date", fontsize=12, fontweight="bold")
         ax.set_ylabel("Speedup (fastcond / native)", fontsize=12, fontweight="bold")
-        ax.set_title(f"{key.replace('_', ' - ')} Performance Trend", fontsize=14, fontweight="bold")
+        ax.set_title(
+            f"{key.replace('_', ' - ')} Performance Trend",
+            fontsize=14,
+            fontweight="bold",
+        )
         ax.grid(True, alpha=0.3)
         ax.legend(fontsize=10)
 
@@ -259,7 +308,9 @@ def main():
         print("📊 Generating trend charts...", file=sys.stderr)
         generate_trend_charts(trends, args.output_dir)
 
-    print(f"\n✅ Trend analysis complete! Results in {args.output_dir}", file=sys.stderr)
+    print(
+        f"\n✅ Trend analysis complete! Results in {args.output_dir}", file=sys.stderr
+    )
     return 0
 
 
