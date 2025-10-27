@@ -49,7 +49,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake
+        sudo apt-get install -y --no-install-recommends build-essential cmake
     
     - name: Set compiler
       if: runner.os != 'Windows'
@@ -191,7 +191,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang cmake
+        sudo apt-get install -y --no-install-recommends clang cmake
     
     - name: Configure with sanitizer
       run: |
@@ -228,7 +228,7 @@ jobs:
     - name: Install clang-tidy
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang-tidy cmake
+        sudo apt-get install -y --no-install-recommends clang-tidy cmake
     
     - name: Run clang-tidy
       run: |
@@ -251,7 +251,7 @@ jobs:
     - name: Install clang-format
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang-format
+        sudo apt-get install -y --no-install-recommends clang-format
     
     - name: Install uv
       uses: astral-sh/setup-uv@v5
