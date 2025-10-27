@@ -202,7 +202,7 @@ def main():
     ]
 
     impl_names = {
-        "pt": "pthread",
+        "pt": "native",
         "fc": "fastcond_strong",
         "wcond": "fastcond_weak",
         # fc_unfair and fc_naive are handled by GIL-specific scripts
