@@ -77,9 +77,9 @@ def parse_test_output(output: str, test_type: str) -> BenchmarkRun:
     # Latency statistics (from receiver threads)
     if test_type in ["qtest", "strongtest"]:
         # Parse ALL receiver latency data for backward compatibility
-        lat_pattern = r"receiver (\d+) got (\d+) latency avg ([0-9.e+-]+) stdev ([0-9.e+-]+) min ([0-9.e+-]+) max ([0-9.e+-]+)"
+        lat_pattern = r"receiver (\d+) got (\d+) latency avg ([0-9.e+-]+) stdev ([0-9.e+-]+) min ([0-9.e+-]+) max ([0-9.e+-]+) spurious (\d+)"
         for match in re.finditer(lat_pattern, output):
-            thread_id, items, avg, stdev, min_lat, max_lat = match.groups()
+            thread_id, items, avg, stdev, min_lat, max_lat, spurious = match.groups()
             per_thread_data.append({
                 "thread_id": int(thread_id),
                 "thread_type": "receiver",
@@ -88,6 +88,7 @@ def parse_test_output(output: str, test_type: str) -> BenchmarkRun:
                 "stdev_latency_sec": float(stdev),
                 "min_latency_sec": float(min_lat),
                 "max_latency_sec": float(max_lat),
+                "spurious_wakeups": int(spurious),
             })
         
         # Use first receiver's latency as representative for BenchmarkRun
@@ -97,6 +98,8 @@ def parse_test_output(output: str, test_type: str) -> BenchmarkRun:
             metrics["latency_stdev"] = first["stdev_latency_sec"]
             metrics["latency_min"] = first["min_latency_sec"]
             metrics["latency_max"] = first["max_latency_sec"]
+            # Sum spurious wakeups across all threads
+            metrics["spurious_wakeups"] = sum(t["spurious_wakeups"] for t in per_thread_data)
     
     # Store per_thread data for backward compatibility
     if per_thread_data:
@@ -181,11 +184,11 @@ def calculate_statistics(runs: List[BenchmarkRun]) -> BenchmarkStatistics:
         stats.mean_latency = statistics.mean(latencies)
         stats.stdev_latency = statistics.stdev(latencies) if len(latencies) > 1 else 0.0
     
-    # Add false wakeup statistics if available
-    false_wakeups = [r.false_wakeups for r in runs if r.false_wakeups is not None]
-    if false_wakeups:
-        stats.total_false_wakeups = sum(false_wakeups)
-        stats.mean_false_wakeups = statistics.mean(false_wakeups)
+    # Add spurious wakeup statistics if available
+    spurious_wakeups = [r.spurious_wakeups for r in runs if r.spurious_wakeups is not None]
+    if spurious_wakeups:
+        stats.total_false_wakeups = sum(spurious_wakeups)
+        stats.mean_false_wakeups = statistics.mean(spurious_wakeups)
     
     return stats
 
