@@ -124,10 +124,24 @@ jobs:
           const fs = require('fs');
           const resultsTable = fs.readFileSync('docs/benchmark-results.md', 'utf8');
           
+          // Construct artifact URL
+          const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+          
           // Create comment body
           const body = `## 📊 Performance Benchmark Results
           
           ${resultsTable}
+          
+          <details>
+          <summary>📈 View Charts</summary>
+          
+          Charts are available in the [workflow run artifacts](${runUrl}).
+          Download the artifacts to view:
+          - Throughput comparison chart
+          - Latency comparison chart
+          - GIL fairness comparison chart
+          
+          </details>
           
           ---
           *Benchmarked on: \`${{ runner.os }}\` with \`${{ runner.arch }}\`*
