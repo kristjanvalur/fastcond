@@ -4,10 +4,11 @@
  * FastCond: User-Space Condition Variables Using Only Semaphores
  * ================================================================
  *
- * This library implements POSIX condition variables entirely in user space using
- * only semaphores as the underlying kernel primitive. Unlike pthread_cond_t which
- * typically relies on kernel futex operations (Linux) or other OS-specific mechanisms,
- * fastcond achieves full POSIX semantics with a portable semaphore-based design.
+ * This library implements condition variables (Mesa/POSIX semantics) entirely in user
+ * space using only semaphores as the underlying kernel primitive. Unlike pthread_cond_t
+ * which typically relies on kernel futex operations (Linux) or other OS-specific
+ * mechanisms, fastcond achieves full Mesa-style semantics with a portable semaphore-based
+ * design.
  *
  * MOTIVATION: Why User-Space Condition Variables?
  * ------------------------------------------------
@@ -136,13 +137,41 @@
  * (2025) showed the strong variant is consistently faster despite additional bookkeeping,
  * so wcond is now just an alias for the strong implementation.
  *
+ * HISTORICAL CONTEXT
+ * ------------------
+ * Condition variables originated with monitors in concurrent programming research:
+ *
+ * - Hoare, C. A. R. (1974). "Monitors: An Operating System Structuring Concept"
+ *   Communications of the ACM, 17(10), 549-557.
+ *   Introduced monitors with wait/signal primitives (Hoare semantics: signal immediately
+ *   transfers control to waiting thread).
+ *
+ * - Lampson, B. W., & Redell, D. D. (1980). "Experience with processes and monitors in Mesa"
+ *   Communications of the ACM, 23(2), 105-117.
+ *   Defined Mesa semantics: signal is a hint, spurious wakeups allowed. This practical
+ *   approach (easier to implement efficiently) became the foundation for modern condition
+ *   variables including POSIX pthread_cond_t.
+ *
+ * - Birrell, A. D. (1989). "An Introduction to Programming with Threads"
+ *   Digital Equipment Corporation Systems Research Center, Research Report 35.
+ *   Comprehensive treatment of Mesa-style condition variables and their usage patterns.
+ *
+ * POSIX (IEEE 1003.1, ~1995 for pthreads) adopted Mesa semantics: wait() may return
+ * spuriously, signal() guarantees eventual wakeup of waiting threads. The semantics
+ * predate POSIX by 15+ years—POSIX standardized existing practice.
+ *
  * REFERENCES
  * ----------
  * - Birrell, A. D. (2003). "Implementing Condition Variables with Semaphores"
  *   https://www.microsoft.com/en-us/research/publication/implementing-condition-variables-with-semaphores/
+ *   Discusses various semaphore-based implementations and their trade-offs.
+ *
  * - POSIX.1-2017: pthread_cond_wait, pthread_cond_signal specifications
+ *   Current standard documenting Mesa-style semantics.
+ *
  * - This implementation extends Birrell's algorithms with the n_wakeup counter mechanism
- *   to prevent wakeup stealing while maintaining full POSIX semantics.
+ *   to prevent wakeup stealing while maintaining Mesa/POSIX semantics: spurious wakeups
+ *   allowed, but threads waiting before signal() must eventually wake.
  */
 
 #include "fastcond.h"
