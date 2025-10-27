@@ -472,6 +472,14 @@ def generate_html_page(results, output_path, charts_available=True):
         for result in sorted_results:
             impl = result["implementation"]
             throughput = result["results"]["overall"].get("throughput_items_per_sec", 0)
+            stdev = result["results"]["overall"].get("throughput_stdev", 0)
+            cv = result["results"]["overall"].get("throughput_cv_percent", 0)
+
+            # Format with ± stdev if available
+            if stdev > 0:
+                throughput_display = f"{throughput:,.2f} ± {stdev:,.0f}"
+            else:
+                throughput_display = f"{throughput:,.2f}"
 
             speedup_class = ""
             speedup_text = ""
@@ -486,14 +494,14 @@ def generate_html_page(results, output_path, charts_available=True):
                     speedup_text = f"{speedup_ratio:.1f}%"
                 else:
                     speedup_text = f"{speedup_ratio:+.1f}%"
-            elif impl == "pthread":
+            elif impl == "native":
                 speedup_class = "baseline"
                 speedup_text = "baseline"
 
             html_content += f"""
                     <tr>
                         <td>{impl}</td>
-                        <td class="numeric">{throughput:,.2f}</td>
+                        <td class="numeric">{throughput_display}</td>
                         <td class="numeric {speedup_class}">{speedup_text}</td>
                     </tr>"""
 

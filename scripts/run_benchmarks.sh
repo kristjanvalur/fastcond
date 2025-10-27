@@ -56,9 +56,10 @@ fi
 echo "Running benchmarks..."
 echo ""
 
-# Generate JSON results
+# Generate JSON results using robust benchmark runner
+# Uses 400K items (~1s runtime), 5 iterations with 1 warm-up run
 JSON_FILE="$OUTPUT_DIR/benchmark-results.json"
-(cd "$SCRIPT_DIR" && uv run benchmark_json.py "$BUILD_DIR") > "$JSON_FILE"
+(cd "$SCRIPT_DIR" && uv run benchmark_runner.py "$BUILD_DIR" --iterations 5 --warmup 1 --items 400000) > "$JSON_FILE"
 
 if [ $? -ne 0 ]; then
     echo "Error: Benchmark execution failed"
