@@ -2,7 +2,7 @@
 """
 Visualize performance benchmarks from JSON data.
 
-Creates comparison charts and tables showing pthread vs fastcond performance.
+Creates comparison charts and tables showing native vs fastcond performance.
 """
 
 import json
@@ -66,19 +66,20 @@ def create_comparison_table(results):
         # Throughput comparison
         output.append("### Throughput Comparison\n")
         output.append(
-            "| Implementation | Throughput (items/sec) | Speedup vs pthread |\n"
+            "| Implementation | Throughput (items/sec) | Speedup vs native |\n"
         )
         output.append("|---|---:|---:|\n")
 
-        pthread_throughput = None
+        native_throughput = None
         throughput_data = []
 
         for result in bench_results:
             impl = result["implementation"]
             throughput = result["results"]["overall"].get("throughput_items_per_sec", 0)
 
-            if impl == "pthread":
-                pthread_throughput = throughput
+            # Support both 'native' and legacy 'pthread' naming
+            if impl in ("native", "pthread"):
+                native_throughput = throughput
 
             throughput_data.append((impl, throughput))
 
@@ -86,10 +87,10 @@ def create_comparison_table(results):
             throughput_data, key=lambda x: x[1], reverse=True
         ):
             speedup = ""
-            if pthread_throughput and impl != "pthread":
-                speedup_ratio = (throughput / pthread_throughput - 1) * 100
+            if native_throughput and impl not in ("native", "pthread"):
+                speedup_ratio = (throughput / native_throughput - 1) * 100
                 speedup = f"{speedup_ratio:+.1f}%"
-            elif impl == "pthread":
+            elif impl in ("native", "pthread"):
                 speedup = "baseline"
 
             output.append(f"| {impl} | {throughput:,.2f} | {speedup} |\n")
@@ -157,7 +158,8 @@ def create_throughput_chart(results, output_path):
         colors = []
 
         color_map = {
-            "pthread": "#3498db",
+            "native": "#3498db",
+            "pthread": "#3498db",  # Legacy alias
             "fastcond_strong": "#2ecc71",
             "fastcond_weak": "#f39c12",
         }
@@ -232,7 +234,8 @@ def create_latency_chart(results, output_path):
         colors = []
 
         color_map = {
-            "pthread": "#3498db",
+            "native": "#3498db",
+            "pthread": "#3498db",  # Legacy alias
             "fastcond_strong": "#2ecc71",
             "fastcond_weak": "#f39c12",
         }

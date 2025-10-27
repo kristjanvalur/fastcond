@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-10-26
+
+### Changed
+- **API Unification (Phase 1)**: `fastcond_wcond_t` is now an alias for `fastcond_cond_t`
+  - Both variants now provide strong POSIX semantics (only wake already-waiting threads)
+  - Weak variant discontinued as separate offering - rigorous performance testing showed 
+    strong variant is actually **faster** despite additional bookkeeping
+  - All `fastcond_wcond_*` functions are now wrappers calling `fastcond_cond_*` functions
+  - Backward compatible: existing wcond API code continues to work with better semantics
+  
+  **Historical Context:** The weak variant was originally designed (2017) as a simpler, 
+  potentially higher-performance option that relaxed POSIX semantics - allowing any 
+  thread (including newly-arriving ones) to wake up on signal/broadcast. The theory 
+  was that removing the bookkeeping overhead to enforce "only already-waiting threads 
+  wake" would improve performance. However, cross-platform benchmarking (2025) proved 
+  this assumption wrong: the strong variant consistently outperforms weak across all 
+  test scenarios. The additional bookkeeping actually helps reduce contention and 
+  improve cache behavior. Since strong is both faster AND semantically correct, 
+  maintaining weak as a separate variant serves no purpose.
+  
+- **Internal architecture**: Layered implementation with static inline `_weak_*` helper functions
+  - Separate counter tracking: `w_waiting` (semaphore level), `n_waiting` (wait level), `n_wakeup` (pending wakeups)
+  - Conceptually clear separation between weak primitive layer and strong bookkeeping layer
+
+### Removed
+- Weak variant documentation from README (no longer showcased as separate option)
+- `*_wcond` test executable variants (now redundant - wcond is just an alias)
+- Weak variant performance testing and CI test runs
+- "Weak vs Strong Showdown" section explaining semantic differences
+
+### Fixed
+- `strongtest` with wcond patch now passes (previously would deadlock with true weak semantics)
+
 ## [0.2.1] - 2025-10-26
 
 ### Added

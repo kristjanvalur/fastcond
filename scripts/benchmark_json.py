@@ -187,13 +187,13 @@ def main():
     benchmarks = [
         {
             "name": "qtest",
-            "variants": ["pt", "fc", "wcond"],
+            "variants": ["native", "fc"],
             "args": ["10000", "4", "10"],
             "description": "Producer-consumer queue test (10K items, 4 threads, queue size 10)",
         },
         {
             "name": "strongtest",
-            "variants": ["pt", "fc"],  # Don't run wcond (will deadlock)
+            "variants": ["native", "fc"],
             "args": ["10000", "5"],
             "description": "Strong semantics test (10K items, queue size 5)",
         },
@@ -202,9 +202,10 @@ def main():
     ]
 
     impl_names = {
-        "pt": "pthread",
+        "native": "native",
+        "pt": "native",  # Legacy alias
         "fc": "fastcond_strong",
-        "wcond": "fastcond_weak",
+        "wcond": "fastcond_weak",  # Legacy, no longer built
         # fc_unfair and fc_naive are handled by GIL-specific scripts
     }
 

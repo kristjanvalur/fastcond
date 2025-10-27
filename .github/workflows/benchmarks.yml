@@ -13,6 +13,7 @@ jobs:
   benchmark:
     name: Run Performance Benchmarks
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     steps:
     - uses: actions/checkout@v4
@@ -123,15 +124,22 @@ jobs:
           const fs = require('fs');
           const resultsTable = fs.readFileSync('docs/benchmark-results.md', 'utf8');
           
+          // Construct artifact URL
+          const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+          
           // Create comment body
           const body = `## 📊 Performance Benchmark Results
           
           ${resultsTable}
           
           <details>
-          <summary>View Charts</summary>
+          <summary>📈 View Charts</summary>
           
-          See the workflow artifacts for throughput and latency comparison charts.
+          Charts are available in the [workflow run artifacts](${runUrl}).
+          Download the artifacts to view:
+          - Throughput comparison chart
+          - Latency comparison chart
+          - GIL fairness comparison chart
           
           </details>
           
@@ -149,6 +157,7 @@ jobs:
   compare-baseline:
     name: Compare with Baseline
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.event_name == 'pull_request'
     
     steps:

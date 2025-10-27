@@ -10,6 +10,7 @@ jobs:
   build-and-test:
     name: ${{ matrix.os }} - ${{ matrix.compiler }} - ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     
     strategy:
       fail-fast: false
@@ -100,25 +101,19 @@ jobs:
           echo "Native CONDITION_VARIABLE:"
           ./${{ matrix.build_type }}/qtest_native.exe 10000 4 10
           echo ""
-          echo "Fastcond strong:"
+          echo "Fastcond (strong semantics):"
           ./${{ matrix.build_type }}/qtest_fc.exe 10000 4 10
-          echo ""
-          echo "Fastcond weak:"
-          ./${{ matrix.build_type }}/qtest_wcond.exe 10000 4 10
           echo ""
           echo "=== Running strongtest (single condition) on Windows ==="
           echo "Native CONDITION_VARIABLE:"
           ./${{ matrix.build_type }}/strongtest_native.exe 10000 5
           echo ""
-          echo "Fastcond strong:"
+          echo "Fastcond (strong semantics):"
           ./${{ matrix.build_type }}/strongtest_fc.exe 10000 5
           echo ""
-          echo "=== Running patch tests on Windows ==="
-          echo "Patch test (strong):"
+          echo "=== Running patch test on Windows ==="
+          echo "Patch test:"
           ./${{ matrix.build_type }}/patch_test_cond.exe
-          echo ""
-          echo "Patch test (weak):"
-          ./${{ matrix.build_type }}/patch_test_wcond.exe
         else
           # On POSIX systems, run full test suite via CTest
           ctest --output-on-failure --build-config ${{ matrix.build_type }}
@@ -166,6 +161,7 @@ jobs:
   sanitizers:
     name: ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     strategy:
       fail-fast: false
@@ -208,6 +204,7 @@ jobs:
   static-analysis:
     name: Static Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
     - uses: actions/checkout@v4
@@ -225,6 +222,7 @@ jobs:
   format-check:
     name: Code Formatting Check
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     
     steps:
     - uses: actions/checkout@v4
@@ -254,6 +252,7 @@ jobs:
   analyze-and-deploy-performance:
     name: Analyze Cross-Platform Performance
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [build-and-test]
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     
