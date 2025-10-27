@@ -10,6 +10,7 @@ jobs:
   build-and-test:
     name: ${{ matrix.os }} - ${{ matrix.compiler }} - ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     
     strategy:
       fail-fast: false
@@ -160,6 +161,7 @@ jobs:
   sanitizers:
     name: ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     strategy:
       fail-fast: false
@@ -202,6 +204,7 @@ jobs:
   static-analysis:
     name: Static Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
     - uses: actions/checkout@v4
@@ -219,6 +222,7 @@ jobs:
   format-check:
     name: Code Formatting Check
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     
     steps:
     - uses: actions/checkout@v4
@@ -248,6 +252,7 @@ jobs:
   analyze-and-deploy-performance:
     name: Analyze Cross-Platform Performance
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [build-and-test]
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     
