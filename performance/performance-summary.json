@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "total_benchmarks": 32,
+    "total_benchmarks": 28,
     "platforms": [
       "linux",
       "macos",
@@ -14,7 +14,6 @@
     "variants": [
       "fastcond_cond",
       "fastcond_gil",
-      "fastcond_wcond",
       "native",
       "native_gil"
     ]
@@ -28,38 +27,38 @@
       "variants": [
         {
           "variant": "fastcond_gil",
-          "throughput": 5785.64,
-          "elapsed_sec": 0.172842,
+          "throughput": 5809.55,
+          "elapsed_sec": 0.17213,
           "speedup": 0.0
         },
         {
           "variant": "fastcond_gil",
-          "throughput": 5657.26,
-          "elapsed_sec": 0.176764,
+          "throughput": 5760.74,
+          "elapsed_sec": 0.173589,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 5764.92,
-          "elapsed_sec": 0.173463,
+          "throughput": 5605.23,
+          "elapsed_sec": 0.178405,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 6025.02,
-          "elapsed_sec": 0.165975,
+          "throughput": 6034.58,
+          "elapsed_sec": 0.165712,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 5723.43,
-          "elapsed_sec": 0.174721,
+          "throughput": 5754.36,
+          "elapsed_sec": 0.173781,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 6040.41,
-          "elapsed_sec": 0.165552,
+          "throughput": 6009.05,
+          "elapsed_sec": 0.166416,
           "speedup": 0.0
         }
       ]
@@ -72,39 +71,27 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 597418.92,
-          "elapsed_sec": 0.016739,
-          "speedup": 1.869316451985778
+          "throughput": 700320.92,
+          "elapsed_sec": 0.014279,
+          "speedup": 1.7842782596023115
         },
         {
           "variant": "fastcond_cond",
-          "throughput": 688487.07,
-          "elapsed_sec": 0.014525,
-          "speedup": 2.154267573130231
-        },
-        {
-          "variant": "fastcond_wcond",
-          "throughput": 467059.29,
-          "elapsed_sec": 0.021411,
-          "speedup": 1.4614227732355654
-        },
-        {
-          "variant": "fastcond_wcond",
-          "throughput": 750043.95,
-          "elapsed_sec": 0.013333,
-          "speedup": 2.346878293455115
+          "throughput": 373109.84,
+          "elapsed_sec": 0.026802,
+          "speedup": 0.9506095804701892
         },
         {
           "variant": "native",
-          "throughput": 319592.18,
-          "elapsed_sec": 0.03129,
+          "throughput": 392495.35,
+          "elapsed_sec": 0.025478,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 456800.78,
-          "elapsed_sec": 0.021891,
-          "speedup": 1.4293240216328198
+          "throughput": 519981.35,
+          "elapsed_sec": 0.019231,
+          "speedup": 1.3248089435964019
         }
       ]
     },
@@ -116,27 +103,27 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 1445818.39,
-          "elapsed_sec": 0.006916,
-          "speedup": 1.0830408662047373
+          "throughput": 1371252.86,
+          "elapsed_sec": 0.007293,
+          "speedup": 1.1763229590972195
         },
         {
           "variant": "fastcond_cond",
-          "throughput": 1373751.48,
-          "elapsed_sec": 0.007279,
-          "speedup": 1.0290566250504256
+          "throughput": 748601.89,
+          "elapsed_sec": 0.013358,
+          "speedup": 0.6421846882642572
         },
         {
           "variant": "native",
-          "throughput": 1334961.99,
-          "elapsed_sec": 0.007491,
+          "throughput": 1165711.21,
+          "elapsed_sec": 0.008578,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 1015614.77,
-          "elapsed_sec": 0.009846,
-          "speedup": 0.7607817882515142
+          "throughput": 535215.84,
+          "elapsed_sec": 0.018684,
+          "speedup": 0.45913244670607567
         }
       ]
     },
@@ -148,20 +135,20 @@
       "variants": [
         {
           "variant": "fastcond_gil",
-          "throughput": 1357.76,
-          "elapsed_sec": 0.736507,
+          "throughput": 818.95,
+          "elapsed_sec": 1.221075,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 1658.81,
-          "elapsed_sec": 0.602842,
+          "throughput": 959.89,
+          "elapsed_sec": 1.041788,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 1683.44,
-          "elapsed_sec": 0.594022,
+          "throughput": 948.22,
+          "elapsed_sec": 1.054608,
           "speedup": 0.0
         }
       ]
@@ -174,20 +161,14 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 459157.9,
-          "elapsed_sec": 0.021779,
-          "speedup": 0.8049497095218504
-        },
-        {
-          "variant": "fastcond_wcond",
-          "throughput": 559471.86,
-          "elapsed_sec": 0.017874,
-          "speedup": 0.9808101117124399
+          "throughput": 682454.1,
+          "elapsed_sec": 0.014653,
+          "speedup": 1.2435678617711148
         },
         {
           "variant": "native",
-          "throughput": 570418.12,
-          "elapsed_sec": 0.017531,
+          "throughput": 548787.18,
+          "elapsed_sec": 0.018222,
           "speedup": 1.0
         }
       ]
@@ -200,14 +181,14 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 1272588.44,
-          "elapsed_sec": 0.007858,
-          "speedup": 5.3593789330527635
+          "throughput": 3240440.7,
+          "elapsed_sec": 0.003086,
+          "speedup": 11.115683815388252
         },
         {
           "variant": "native",
-          "throughput": 237450.73,
-          "elapsed_sec": 0.042114,
+          "throughput": 291519.69,
+          "elapsed_sec": 0.034303,
           "speedup": 1.0
         }
       ]
@@ -220,20 +201,20 @@
       "variants": [
         {
           "variant": "fastcond_gil",
-          "throughput": 2046.01,
-          "elapsed_sec": 0.488757,
+          "throughput": 2070.74,
+          "elapsed_sec": 0.482919,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 1947.7,
-          "elapsed_sec": 0.513425,
+          "throughput": 2123.48,
+          "elapsed_sec": 0.470924,
           "speedup": 0.0
         },
         {
           "variant": "native_gil",
-          "throughput": 2146.14,
-          "elapsed_sec": 0.465954,
+          "throughput": 2090.86,
+          "elapsed_sec": 0.478271,
           "speedup": 0.0
         }
       ]
@@ -246,20 +227,14 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 522075.98,
-          "elapsed_sec": 0.019154,
-          "speedup": 0.9967944548108284
-        },
-        {
-          "variant": "fastcond_wcond",
-          "throughput": 526676.15,
-          "elapsed_sec": 0.018987,
-          "speedup": 1.0055775134514255
+          "throughput": 653804.16,
+          "elapsed_sec": 0.015295,
+          "speedup": 1.184935051274032
         },
         {
           "variant": "native",
-          "throughput": 523754.9,
-          "elapsed_sec": 0.019093,
+          "throughput": 551763.71,
+          "elapsed_sec": 0.018124,
           "speedup": 1.0
         }
       ]
@@ -272,14 +247,14 @@
       "variants": [
         {
           "variant": "fastcond_cond",
-          "throughput": 1928677.51,
-          "elapsed_sec": 0.005185,
-          "speedup": 1.1943528380004689
+          "throughput": 2522322.55,
+          "elapsed_sec": 0.003965,
+          "speedup": 1.02603036886062
         },
         {
           "variant": "native",
-          "throughput": 1614830.6,
-          "elapsed_sec": 0.006193,
+          "throughput": 2458331.28,
+          "elapsed_sec": 0.004068,
           "speedup": 1.0
         }
       ]
