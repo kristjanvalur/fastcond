@@ -301,12 +301,12 @@
     <div class="summary-cards">
         <div class="card">
             <h3>Average Performance Gain</h3>
-            <div class="value">+55.6%</div>
+            <div class="value">+1.9%</div>
             <div class="label">vs native condition variables</div>
         </div>
         <div class="card">
             <h3>Best Case Improvement</h3>
-            <div class="value">+98.4%</div>
+            <div class="value">+3.2%</div>
             <div class="label">maximum observed speedup</div>
         </div>
         <div class="card">
@@ -342,7 +342,7 @@
     <div class="benchmark-section">
         <h2>QTEST Results</h2>
         <div class="benchmark-content">
-            <p><strong>Configuration:</strong> Producer-consumer queue test (10K items, 4 threads, queue size 10)</p>
+            <p><strong>Configuration:</strong> Producer-consumer queue test (400K items, 4 threads, queue size 10)</p>
             
             <h3>Throughput Comparison</h3>
             <table>
@@ -357,13 +357,13 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">658,650.80</td>
-                        <td class="numeric improvement">+98.4%</td>
+                        <td class="numeric">717,788.64 ± 35,520</td>
+                        <td class="numeric improvement">+3.2%</td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">331,936.91</td>
-                        <td class="numeric "></td>
+                        <td class="numeric">695,620.50 ± 28,185</td>
+                        <td class="numeric baseline">baseline</td>
                     </tr>
                 </tbody>
             </table>
@@ -383,17 +383,17 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">7.30</td>
-                        <td class="numeric">0.08</td>
-                        <td class="numeric">192.57</td>
-                        <td class="numeric">12.06</td>
+                        <td class="numeric">7.32</td>
+                        <td class="numeric">0.04</td>
+                        <td class="numeric">857.74</td>
+                        <td class="numeric">9.40</td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">14.74</td>
-                        <td class="numeric">0.07</td>
-                        <td class="numeric">314.77</td>
-                        <td class="numeric">25.07</td>
+                        <td class="numeric">8.05</td>
+                        <td class="numeric">0.05</td>
+                        <td class="numeric">133.19</td>
+                        <td class="numeric">9.73</td>
                     </tr>
                 </tbody>
             </table>
@@ -403,7 +403,7 @@
     <div class="benchmark-section">
         <h2>STRONGTEST Results</h2>
         <div class="benchmark-content">
-            <p><strong>Configuration:</strong> Strong semantics test (10K items, queue size 5)</p>
+            <p><strong>Configuration:</strong> Strong semantics test (400K items, queue size 5)</p>
             
             <h3>Throughput Comparison</h3>
             <table>
@@ -418,13 +418,13 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">1,131,000.64</td>
-                        <td class="numeric improvement">+12.7%</td>
+                        <td class="numeric">1,055,789.72 ± 32,330</td>
+                        <td class="numeric ">+0.7%</td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">1,003,776.31</td>
-                        <td class="numeric "></td>
+                        <td class="numeric">1,048,527.73 ± 40,123</td>
+                        <td class="numeric baseline">baseline</td>
                     </tr>
                 </tbody>
             </table>
@@ -444,17 +444,17 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">2.72</td>
-                        <td class="numeric">0.07</td>
-                        <td class="numeric">1927.88</td>
-                        <td class="numeric">46.24</td>
+                        <td class="numeric">2.51</td>
+                        <td class="numeric">0.05</td>
+                        <td class="numeric">3911.51</td>
+                        <td class="numeric">44.11</td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">2.75</td>
-                        <td class="numeric">0.07</td>
-                        <td class="numeric">924.77</td>
-                        <td class="numeric">33.05</td>
+                        <td class="numeric">2.54</td>
+                        <td class="numeric">0.05</td>
+                        <td class="numeric">8011.50</td>
+                        <td class="numeric">45.00</td>
                     </tr>
                 </tbody>
             </table>
@@ -466,7 +466,7 @@
         OS: Linux x86_64, 
         Cores: 4, 
         Python: 3.12.3<br>
-        <strong>Generated:</strong> October 27, 2025 at 11:05 UTC
+        <strong>Generated:</strong> October 27, 2025 at 18:01 UTC
     </div>
     
     <div class="footer">
