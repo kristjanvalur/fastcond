@@ -345,6 +345,14 @@ def generate_html_page(results, output_path, charts_available=True):
             <p><strong>Full POSIX semantics, exceptional performance.</strong> Rigorous benchmarking during those long Nordic nights proved what the standards committees never promised: strict condition variable semantics can actually outperform pthread's native implementation. The data spoke clearly.</p>
         </div>
     </div>
+    
+    <div class="intro-section" style="background: #e8f4f8; border-left: 4px solid #0366d6; padding: 1rem; margin: 2rem 0;">
+        <p style="margin: 0;">
+            <strong>📊 Platform Note:</strong> The results below are from Ubuntu Linux (x86_64). 
+            For comprehensive cross-platform performance comparisons including macOS and Windows, see the 
+            <a href="https://kristjanvalur.github.io/fastcond/performance/" style="color: #0366d6; font-weight: 600;">cross-platform performance analysis</a>.
+        </p>
+    </div>
 """
 
     # Add summary cards
@@ -352,7 +360,7 @@ def generate_html_page(results, output_path, charts_available=True):
         # Calculate overall improvements
         improvements = []
         for bench_name, bench_results in by_benchmark.items():
-            pthread_throughput = None
+            native_throughput = None
             fastcond_throughput = None
 
             for result in bench_results:
@@ -361,13 +369,13 @@ def generate_html_page(results, output_path, charts_available=True):
                     "throughput_items_per_sec", 0
                 )
 
-                if impl == "pthread":
-                    pthread_throughput = throughput
+                if impl == "native":
+                    native_throughput = throughput
                 elif impl == "fastcond_strong":
                     fastcond_throughput = throughput
 
-            if pthread_throughput and fastcond_throughput:
-                improvement = ((fastcond_throughput / pthread_throughput) - 1) * 100
+            if native_throughput and fastcond_throughput:
+                improvement = ((fastcond_throughput / native_throughput) - 1) * 100
                 improvements.append(improvement)
 
         avg_improvement = sum(improvements) / len(improvements) if improvements else 0
@@ -378,7 +386,7 @@ def generate_html_page(results, output_path, charts_available=True):
         <div class="card">
             <h3>Average Performance Gain</h3>
             <div class="value">{avg_improvement:+.1f}%</div>
-            <div class="label">vs pthread condition variables</div>
+            <div class="label">vs native condition variables</div>
         </div>
         <div class="card">
             <h3>Best Case Improvement</h3>
@@ -439,17 +447,17 @@ def generate_html_page(results, output_path, charts_available=True):
                     <tr>
                         <th>Implementation</th>
                         <th class="numeric">Throughput (items/sec)</th>
-                        <th class="numeric">Speedup vs pthread</th>
+                        <th class="numeric">Speedup vs native</th>
                     </tr>
                 </thead>
                 <tbody>
 """
 
-        # Find pthread baseline
-        pthread_throughput = None
+        # Find native baseline
+        native_throughput = None
         for result in bench_results:
-            if result["implementation"] == "pthread":
-                pthread_throughput = result["results"]["overall"].get(
+            if result["implementation"] == "native":
+                native_throughput = result["results"]["overall"].get(
                     "throughput_items_per_sec", 0
                 )
                 break
@@ -468,8 +476,8 @@ def generate_html_page(results, output_path, charts_available=True):
             speedup_class = ""
             speedup_text = ""
 
-            if pthread_throughput and impl != "pthread":
-                speedup_ratio = (throughput / pthread_throughput - 1) * 100
+            if native_throughput and impl != "native":
+                speedup_ratio = (throughput / native_throughput - 1) * 100
                 if speedup_ratio > 2:
                     speedup_class = "improvement"
                     speedup_text = f"+{speedup_ratio:.1f}%"
