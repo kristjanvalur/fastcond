@@ -172,9 +172,16 @@ static int _sem_timedwait_gcd(dispatch_semaphore_t sem, const struct timespec *a
     - fastcond_wcond_t: "weak" semantics (could wake signalling thread, violating POSIX)
     - fastcond_cond_t: "strong" semantics (guarantees only waiting threads wake)
 
-    Performance benchmarking showed the strong variant is actually FASTER than weak
-    despite additional bookkeeping, while also providing correct POSIX semantics.
-    Therefore, the API has been unified - fastcond_wcond_t is now an alias for
+    The weak variant was originally conceived (2017) as a performance optimization,
+    hypothesizing that simpler bookkeeping would yield better performance for cases
+    where all waiting threads are equivalent. However, rigorous cross-platform
+    benchmarking (2025) disproved this: the strong variant is consistently FASTER
+    than weak across all test scenarios, despite maintaining additional counters
+    (n_waiting, n_wakeup). The bookkeeping overhead is offset by reduced contention
+    and better cache behavior.
+
+    Since strong is both faster AND semantically correct (proper POSIX behavior),
+    the API was unified in v0.3.0. fastcond_wcond_t is now an alias for
     fastcond_cond_t, and both provide strong semantics.
 
     Implementation Strategy:

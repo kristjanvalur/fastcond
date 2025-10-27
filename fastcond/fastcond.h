@@ -72,15 +72,25 @@ fastcond_cond_broadcast(fastcond_cond_t *cond);
 
 /* The weak condition variable API is now an alias for strong
  *
- * Historical note: The original fastcond implementation (2017) used "weak"
- * semantics that could wake threads not yet waiting (wakeup stealing).
- * The strong variant was developed to fix this with spurious wakeup prevention.
- * Performance testing showed strong is actually FASTER than weak, so we've
- * unified on the strong implementation.
+ * Historical note: The original fastcond implementation (2017) introduced both
+ * "weak" and "strong" semantic variants. The weak variant relaxed POSIX semantics,
+ * allowing signal/broadcast to wake ANY thread (including newly-arriving ones that
+ * haven't started waiting yet). The rationale was that simpler bookkeeping might
+ * offer better performance for use cases where all waiting threads are equivalent.
  *
- * The wcond API is kept for backwards compatibility but now provides strong
- * semantics - which is strictly better! Code using wcond will continue to work
- * and will automatically get correct POSIX semantics.
+ * However, rigorous cross-platform performance testing (2025) disproved this theory.
+ * The strong variant consistently outperforms weak across all benchmarks, despite
+ * maintaining additional counters (n_waiting, n_wakeup) to prevent wakeup stealing.
+ * The bookkeeping overhead is more than offset by reduced contention and better
+ * cache behavior.
+ *
+ * Since strong is both faster AND semantically correct (proper POSIX behavior),
+ * maintaining weak as a separate implementation serves no purpose. As of v0.3.0,
+ * fastcond_wcond_t is a typedef alias of fastcond_cond_t.
+ *
+ * The wcond API is kept for backwards compatibility - existing code continues to
+ * work unchanged and automatically receives the performance and correctness benefits
+ * of strong semantics.
  */
 typedef fastcond_cond_t fastcond_wcond_t;
 
