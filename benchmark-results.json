@@ -2,7 +2,7 @@
   {
     "benchmark": "qtest",
     "implementation": "native",
-    "timestamp": "2025-10-27T10:56:26.510271",
+    "timestamp": "2025-10-27T11:03:33.340641",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -14,8 +14,8 @@
       "num_senders": 4,
       "num_receivers": 4,
       "queue_size": 10,
-      "total_time_sec": 0.023914,
-      "throughput_items_per_sec": 418171.35
+      "total_time_sec": 0.015452,
+      "throughput_items_per_sec": 647163.53
     },
     "results": {
       "overall": {
@@ -23,45 +23,45 @@
         "num_senders": 4,
         "num_receivers": 4,
         "queue_size": 10,
-        "total_time_sec": 0.023914,
-        "throughput_items_per_sec": 418171.35
+        "total_time_sec": 0.015452,
+        "throughput_items_per_sec": 647163.53
       },
       "per_thread": [
         {
+          "thread_id": 1,
+          "thread_type": "receiver",
+          "items": 2486,
+          "avg_latency_sec": 8.005738e-06,
+          "stdev_latency_sec": 9.245362e-06,
+          "min_latency_sec": 5.8e-08,
+          "max_latency_sec": 8.651199e-05
+        },
+        {
           "thread_id": 3,
           "thread_type": "receiver",
-          "items": 2383,
-          "avg_latency_sec": 1.107517e-05,
-          "stdev_latency_sec": 1.281474e-05,
-          "min_latency_sec": 1.3e-07,
-          "max_latency_sec": 8.776499e-05
+          "items": 2503,
+          "avg_latency_sec": 8.630882e-06,
+          "stdev_latency_sec": 1.02984e-05,
+          "min_latency_sec": 7.3e-08,
+          "max_latency_sec": 7.9028e-05
         },
         {
           "thread_id": 2,
           "thread_type": "receiver",
-          "items": 2777,
-          "avg_latency_sec": 1.165162e-05,
-          "stdev_latency_sec": 1.357806e-05,
-          "min_latency_sec": 9.2e-08,
-          "max_latency_sec": 8.8152e-05
+          "items": 2448,
+          "avg_latency_sec": 8.087551e-06,
+          "stdev_latency_sec": 9.276374e-06,
+          "min_latency_sec": 1.65e-07,
+          "max_latency_sec": 6.5663e-05
         },
         {
           "thread_id": 0,
           "thread_type": "receiver",
-          "items": 2585,
-          "avg_latency_sec": 1.129312e-05,
-          "stdev_latency_sec": 1.373579e-05,
-          "min_latency_sec": 1.08e-07,
-          "max_latency_sec": 8.564e-05
-        },
-        {
-          "thread_id": 1,
-          "thread_type": "receiver",
-          "items": 2255,
-          "avg_latency_sec": 1.174033e-05,
-          "stdev_latency_sec": 1.465021e-05,
-          "min_latency_sec": 8.7e-08,
-          "max_latency_sec": 9.9175e-05
+          "items": 2563,
+          "avg_latency_sec": 7.904497e-06,
+          "stdev_latency_sec": 9.482535e-06,
+          "min_latency_sec": 1.07e-07,
+          "max_latency_sec": 8.8053e-05
         }
       ]
     },
@@ -70,7 +70,7 @@
   {
     "benchmark": "qtest",
     "implementation": "fastcond_strong",
-    "timestamp": "2025-10-27T10:56:26.527499",
+    "timestamp": "2025-10-27T11:03:33.359801",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -82,8 +82,8 @@
       "num_senders": 4,
       "num_receivers": 4,
       "queue_size": 10,
-      "total_time_sec": 0.015775,
-      "throughput_items_per_sec": 633918.0
+      "total_time_sec": 0.018108,
+      "throughput_items_per_sec": 552252.11
     },
     "results": {
       "overall": {
@@ -91,45 +91,45 @@
         "num_senders": 4,
         "num_receivers": 4,
         "queue_size": 10,
-        "total_time_sec": 0.015775,
-        "throughput_items_per_sec": 633918.0
+        "total_time_sec": 0.018108,
+        "throughput_items_per_sec": 552252.11
       },
       "per_thread": [
         {
-          "thread_id": 1,
-          "thread_type": "receiver",
-          "items": 2446,
-          "avg_latency_sec": 7.426015e-06,
-          "stdev_latency_sec": 8.536274e-06,
-          "min_latency_sec": 5.5e-08,
-          "max_latency_sec": 7.1176e-05
-        },
-        {
-          "thread_id": 2,
-          "thread_type": "receiver",
-          "items": 2459,
-          "avg_latency_sec": 8.419934e-06,
-          "stdev_latency_sec": 1.017861e-05,
-          "min_latency_sec": 9.4e-08,
-          "max_latency_sec": 7.9168e-05
-        },
-        {
           "thread_id": 3,
           "thread_type": "receiver",
-          "items": 2545,
-          "avg_latency_sec": 7.983114e-06,
-          "stdev_latency_sec": 9.635956e-06,
-          "min_latency_sec": 9.799999e-08,
-          "max_latency_sec": 8.0931e-05
+          "items": 2444,
+          "avg_latency_sec": 9.867017e-06,
+          "stdev_latency_sec": 1.13232e-05,
+          "min_latency_sec": 8.2e-08,
+          "max_latency_sec": 7.5241e-05
+        },
+        {
+          "thread_id": 1,
+          "thread_type": "receiver",
+          "items": 2506,
+          "avg_latency_sec": 9.7217e-06,
+          "stdev_latency_sec": 1.109672e-05,
+          "min_latency_sec": 1.07e-07,
+          "max_latency_sec": 6.2905e-05
         },
         {
           "thread_id": 0,
           "thread_type": "receiver",
-          "items": 2550,
-          "avg_latency_sec": 7.038387e-06,
-          "stdev_latency_sec": 8.070238e-06,
-          "min_latency_sec": 4.3e-08,
-          "max_latency_sec": 6.8689e-05
+          "items": 2640,
+          "avg_latency_sec": 8.803245e-06,
+          "stdev_latency_sec": 1.0359e-05,
+          "min_latency_sec": 7.2e-08,
+          "max_latency_sec": 8.335899e-05
+        },
+        {
+          "thread_id": 2,
+          "thread_type": "receiver",
+          "items": 2410,
+          "avg_latency_sec": 9.331325e-06,
+          "stdev_latency_sec": 1.057816e-05,
+          "min_latency_sec": 1.1e-07,
+          "max_latency_sec": 6.6384e-05
         }
       ]
     },
@@ -138,7 +138,7 @@
   {
     "benchmark": "strongtest",
     "implementation": "native",
-    "timestamp": "2025-10-27T10:56:26.537928",
+    "timestamp": "2025-10-27T11:03:33.368890",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -150,8 +150,8 @@
       "num_senders": 1,
       "num_receivers": 1,
       "queue_size": 5,
-      "total_time_sec": 0.00941,
-      "throughput_items_per_sec": 1062731.44
+      "total_time_sec": 0.008299,
+      "throughput_items_per_sec": 1204929.61
     },
     "results": {
       "overall": {
@@ -159,18 +159,18 @@
         "num_senders": 1,
         "num_receivers": 1,
         "queue_size": 5,
-        "total_time_sec": 0.00941,
-        "throughput_items_per_sec": 1062731.44
+        "total_time_sec": 0.008299,
+        "throughput_items_per_sec": 1204929.61
       },
       "per_thread": [
         {
           "thread_id": 0,
           "thread_type": "receiver",
           "items": 10000,
-          "avg_latency_sec": 1.516634e-06,
-          "stdev_latency_sec": 1.631238e-05,
-          "min_latency_sec": 6.499999e-08,
-          "max_latency_sec": 0.001045798
+          "avg_latency_sec": 2.358349e-06,
+          "stdev_latency_sec": 3.54696e-05,
+          "min_latency_sec": 4.4e-08,
+          "max_latency_sec": 0.001399983
         }
       ]
     },
@@ -179,7 +179,7 @@
   {
     "benchmark": "strongtest",
     "implementation": "fastcond_strong",
-    "timestamp": "2025-10-27T10:56:26.546476",
+    "timestamp": "2025-10-27T11:03:33.377486",
     "system": {
       "os": "Linux",
       "arch": "x86_64",
@@ -191,8 +191,8 @@
       "num_senders": 1,
       "num_receivers": 1,
       "queue_size": 5,
-      "total_time_sec": 0.007468,
-      "throughput_items_per_sec": 1338983.67
+      "total_time_sec": 0.007836,
+      "throughput_items_per_sec": 1276227.43
     },
     "results": {
       "overall": {
@@ -200,18 +200,18 @@
         "num_senders": 1,
         "num_receivers": 1,
         "queue_size": 5,
-        "total_time_sec": 0.007468,
-        "throughput_items_per_sec": 1338983.67
+        "total_time_sec": 0.007836,
+        "throughput_items_per_sec": 1276227.43
       },
       "per_thread": [
         {
           "thread_id": 0,
           "thread_type": "receiver",
           "items": 10000,
-          "avg_latency_sec": 1.53234e-06,
-          "stdev_latency_sec": 2.4847e-05,
-          "min_latency_sec": 8.1e-08,
-          "max_latency_sec": 0.000982482
+          "avg_latency_sec": 1.691651e-06,
+          "stdev_latency_sec": 2.483628e-05,
+          "min_latency_sec": 7.3e-08,
+          "max_latency_sec": 0.00093988
         }
       ]
     },
