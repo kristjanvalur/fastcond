@@ -3,11 +3,10 @@
 Robust benchmark runner with statistical analysis.
 
 Runs benchmarks multiple times with proper warm-up and statistical reporting.
-Flexible metric extraction to support future instrumentation (false wakeups, etc).
+Uses JSON output from tests for robust parsing.
 """
 
 import subprocess
-import re
 import json
 import sys
 import os
@@ -50,72 +49,64 @@ class BenchmarkStatistics:
     mean_latency: Optional[float] = None
     stdev_latency: Optional[float] = None
     
-    # Extended metrics
-    total_false_wakeups: Optional[int] = None
-    mean_false_wakeups: Optional[float] = None
+    # Spurious wakeup metrics
+    total_spurious_wakeups: Optional[int] = None
+    mean_spurious_wakeups: Optional[float] = None
 
 
 def parse_test_output(output: str, test_type: str) -> BenchmarkRun:
     """
-    Parse test output and extract metrics.
+    Parse test output from JSON format.
     
-    Designed to be extensible - add new regex patterns for future metrics.
+    Tests output JSON when FASTCOND_JSON_OUTPUT=1 is set.
     """
-    metrics = {}
-    per_thread_data = []
-    
-    # Throughput (always present)
-    throughput_match = re.search(r"Throughput:\s+([0-9.]+)\s+items/sec", output)
-    if throughput_match:
-        metrics["throughput"] = float(throughput_match.group(1))
-    
-    # Total time (always present)
-    time_match = re.search(r"Total time:\s+([0-9.]+)\s+seconds", output)
-    if time_match:
-        metrics["total_time"] = float(time_match.group(1))
-    
-    # Latency statistics (from receiver threads)
-    if test_type in ["qtest", "strongtest"]:
-        # Parse ALL receiver latency data for backward compatibility
-        lat_pattern = r"receiver (\d+) got (\d+) latency avg ([0-9.e+-]+) stdev ([0-9.e+-]+) min ([0-9.e+-]+) max ([0-9.e+-]+) spurious (\d+)"
-        for match in re.finditer(lat_pattern, output):
-            thread_id, items, avg, stdev, min_lat, max_lat, spurious = match.groups()
-            per_thread_data.append({
-                "thread_id": int(thread_id),
-                "thread_type": "receiver",
-                "items": int(items),
-                "avg_latency_sec": float(avg),
-                "stdev_latency_sec": float(stdev),
-                "min_latency_sec": float(min_lat),
-                "max_latency_sec": float(max_lat),
-                "spurious_wakeups": int(spurious),
-            })
+    try:
+        # Parse JSON output from test
+        data = json.loads(output.strip())
         
-        # Use first receiver's latency as representative for BenchmarkRun
-        if per_thread_data:
-            first = per_thread_data[0]
-            metrics["latency_avg"] = first["avg_latency_sec"]
-            metrics["latency_stdev"] = first["stdev_latency_sec"]
-            metrics["latency_min"] = first["min_latency_sec"]
-            metrics["latency_max"] = first["max_latency_sec"]
+        metrics = {
+            "throughput": data["timing"]["throughput"],
+            "total_time": data["timing"]["elapsed_sec"],
+        }
+        
+        # Extract per-thread data if present
+        per_thread_data = []
+        if "per_thread" in data:
+            for thread in data["per_thread"]:
+                thread_info = {
+                    "thread_id": thread["thread"],
+                    "thread_type": thread["type"],
+                    "items": thread["n_got"],
+                    "spurious_wakeups": thread["spurious_wakeups"],
+                }
+                # Add latency stats if present
+                if "latency_avg" in thread:
+                    thread_info.update({
+                        "avg_latency_sec": thread["latency_avg"],
+                        "stdev_latency_sec": thread["latency_stdev"],
+                        "min_latency_sec": thread["latency_min"],
+                        "max_latency_sec": thread["latency_max"],
+                    })
+                per_thread_data.append(thread_info)
+            
+            # Use first receiver's latency as representative
+            if per_thread_data and "avg_latency_sec" in per_thread_data[0]:
+                first = per_thread_data[0]
+                metrics["latency_avg"] = first["avg_latency_sec"]
+                metrics["latency_stdev"] = first["stdev_latency_sec"]
+                metrics["latency_min"] = first["min_latency_sec"]
+                metrics["latency_max"] = first["max_latency_sec"]
+            
             # Sum spurious wakeups across all threads
             metrics["spurious_wakeups"] = sum(t["spurious_wakeups"] for t in per_thread_data)
+            metrics["per_thread"] = per_thread_data
+        
+        return BenchmarkRun(**metrics)
     
-    # Store per_thread data for backward compatibility
-    if per_thread_data:
-        metrics["per_thread"] = per_thread_data
-    
-    # Future: Parse false wakeup counts
-    # false_wakeup_match = re.search(r"False wakeups:\s+(\d+)", output)
-    # if false_wakeup_match:
-    #     metrics["false_wakeups"] = int(false_wakeup_match.group(1))
-    
-    # Future: Parse spurious wakeup counts
-    # spurious_match = re.search(r"Spurious wakeups:\s+(\d+)", output)
-    # if spurious_match:
-    #     metrics["spurious_wakeups"] = int(spurious_match.group(1))
-    
-    return BenchmarkRun(**metrics)
+    except (json.JSONDecodeError, KeyError) as e:
+        print(f"Error parsing JSON output: {e}", file=sys.stderr)
+        print(f"Output was: {output[:200]}...", file=sys.stderr)
+        raise
 
 
 def run_single_benchmark(
@@ -126,11 +117,16 @@ def run_single_benchmark(
 ) -> Optional[BenchmarkRun]:
     """Run a single benchmark and return parsed results."""
     try:
+        # Set environment to request JSON output
+        env = os.environ.copy()
+        env["FASTCOND_JSON_OUTPUT"] = "1"
+        
         result = subprocess.run(
             [executable] + args,
             capture_output=True,
             text=True,
-            timeout=timeout
+            timeout=timeout,
+            env=env
         )
         
         if result.returncode != 0:
@@ -187,8 +183,8 @@ def calculate_statistics(runs: List[BenchmarkRun]) -> BenchmarkStatistics:
     # Add spurious wakeup statistics if available
     spurious_wakeups = [r.spurious_wakeups for r in runs if r.spurious_wakeups is not None]
     if spurious_wakeups:
-        stats.total_false_wakeups = sum(spurious_wakeups)
-        stats.mean_false_wakeups = statistics.mean(spurious_wakeups)
+        stats.total_spurious_wakeups = sum(spurious_wakeups)
+        stats.mean_spurious_wakeups = statistics.mean(spurious_wakeups)
     
     return stats
 
@@ -296,9 +292,9 @@ def format_result_for_json(
                 "stdev_us": latency_stdev_us,
             } if latency_us else None,
             "instrumentation": {
-                "false_wakeups_total": stats.total_false_wakeups,
-                "false_wakeups_mean": stats.mean_false_wakeups,
-            } if stats.total_false_wakeups is not None else None,
+                "total_spurious_wakeups": stats.total_spurious_wakeups,
+                "mean_spurious_wakeups": stats.mean_spurious_wakeups,
+            } if stats.total_spurious_wakeups is not None else None,
         }
     }
     
