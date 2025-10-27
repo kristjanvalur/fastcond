@@ -1,6 +1,8 @@
 name: Performance Benchmarks
 
 on:
+  push:
+    branches: [ master, main ]
   pull_request:
     branches: [ master, main, develop ]
   workflow_dispatch:  # Allow manual trigger
