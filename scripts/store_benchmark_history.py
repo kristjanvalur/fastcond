@@ -10,7 +10,7 @@ import argparse
 import json
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -67,7 +67,7 @@ def append_to_history(
     # Create new run entry
     run_entry = {
         "run_id": run_id,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "git": git_info,
         "results": results,
     }
@@ -168,8 +168,19 @@ Do not manually edit these files - they are managed by CI automation.
 def commit_and_push_history(repo_path: Path, message: str) -> bool:
     """Commit and push changes to benchmark-data branch."""
     try:
+        # Add only files that exist
+        files_to_add = []
+        if (repo_path / "benchmark-history.json").exists():
+            files_to_add.append("benchmark-history.json")
+        if (repo_path / "platform-history.json").exists():
+            files_to_add.append("platform-history.json")
+
+        if not files_to_add:
+            print("ℹ️  No history files to commit", file=sys.stderr)
+            return True
+
         subprocess.run(
-            ["git", "add", "benchmark-history.json", "platform-history.json"],
+            ["git", "add"] + files_to_add,
             cwd=repo_path,
             check=True,
         )
@@ -225,7 +236,7 @@ def main():
         return 1
 
     # Generate run ID if not provided
-    run_id = args.run_id or datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    run_id = args.run_id or datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
 
     # Get git info
     git_info = get_git_info()
