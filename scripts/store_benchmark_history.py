@@ -106,13 +106,20 @@ def setup_benchmark_data_branch(repo_path: Path) -> bool:
                 text=True,
             )
             if result.stdout.strip():
-                # Exists remotely, fetch it
+                # Exists remotely, fetch it and checkout
                 subprocess.run(
                     ["git", "fetch", "origin", "benchmark-data:benchmark-data"],
                     cwd=repo_path,
                     check=True,
                 )
-                print("📥 Fetched benchmark-data branch from remote", file=sys.stderr)
+                subprocess.run(
+                    ["git", "checkout", "benchmark-data"],
+                    cwd=repo_path,
+                    check=True,
+                )
+                print(
+                    "📥 Fetched and checked out benchmark-data branch", file=sys.stderr
+                )
             else:
                 # Create new orphan branch
                 print("🆕 Creating new benchmark-data branch", file=sys.stderr)
