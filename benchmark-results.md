@@ -7,25 +7,25 @@ Generated from: `/home/runner/work/fastcond/fastcond/docs/benchmark-results.json
 ### Throughput Comparison
 | Implementation | Throughput (items/sec) | Speedup vs native |
 |---|---:|---:|
-| native | 647,163.53 | baseline |
-| fastcond_strong | 552,252.11 | -14.7% |
+| fastcond_strong | 658,650.80 | +98.4% |
+| native | 331,936.91 | baseline |
 
 ### Average Latency Comparison
 | Implementation | Avg Latency (μs) | Min (μs) | Max (μs) | Stdev (μs) |
 |---|---:|---:|---:|---:|
-| native | 8.16 | 0.06 | 88.05 | 9.58 |
-| fastcond_strong | 9.42 | 0.07 | 83.36 | 10.84 |
+| native | 14.74 | 0.07 | 314.77 | 25.07 |
+| fastcond_strong | 7.30 | 0.08 | 192.57 | 12.06 |
 
 ## STRONGTEST
 **Configuration:** Strong semantics test (10K items, queue size 5)
 ### Throughput Comparison
 | Implementation | Throughput (items/sec) | Speedup vs native |
 |---|---:|---:|
-| fastcond_strong | 1,276,227.43 | +5.9% |
-| native | 1,204,929.61 | baseline |
+| fastcond_strong | 1,131,000.64 | +12.7% |
+| native | 1,003,776.31 | baseline |
 
 ### Average Latency Comparison
 | Implementation | Avg Latency (μs) | Min (μs) | Max (μs) | Stdev (μs) |
 |---|---:|---:|---:|---:|
-| native | 2.36 | 0.04 | 1399.98 | 35.47 |
-| fastcond_strong | 1.69 | 0.07 | 939.88 | 24.84 |
+| native | 2.75 | 0.07 | 924.77 | 33.05 |
+| fastcond_strong | 2.72 | 0.07 | 1927.88 | 46.24 |

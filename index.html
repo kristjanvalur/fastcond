@@ -289,16 +289,24 @@
             <p><strong>Full POSIX semantics, exceptional performance.</strong> Rigorous benchmarking during those long Nordic nights proved what the standards committees never promised: strict condition variable semantics can actually outperform pthread's native implementation. The data spoke clearly.</p>
         </div>
     </div>
+    
+    <div class="intro-section" style="background: #e8f4f8; border-left: 4px solid #0366d6; padding: 1rem; margin: 2rem 0;">
+        <p style="margin: 0;">
+            <strong>📊 Platform Note:</strong> The results below are from Ubuntu Linux (x86_64). 
+            For comprehensive cross-platform performance comparisons including macOS and Windows, see the 
+            <a href="https://kristjanvalur.github.io/fastcond/performance/" style="color: #0366d6; font-weight: 600;">cross-platform performance analysis</a>.
+        </p>
+    </div>
 
     <div class="summary-cards">
         <div class="card">
             <h3>Average Performance Gain</h3>
-            <div class="value">+0.0%</div>
-            <div class="label">vs pthread condition variables</div>
+            <div class="value">+55.6%</div>
+            <div class="label">vs native condition variables</div>
         </div>
         <div class="card">
             <h3>Best Case Improvement</h3>
-            <div class="value">+0.0%</div>
+            <div class="value">+98.4%</div>
             <div class="label">maximum observed speedup</div>
         </div>
         <div class="card">
@@ -342,19 +350,19 @@
                     <tr>
                         <th>Implementation</th>
                         <th class="numeric">Throughput (items/sec)</th>
-                        <th class="numeric">Speedup vs pthread</th>
+                        <th class="numeric">Speedup vs native</th>
                     </tr>
                 </thead>
                 <tbody>
 
                     <tr>
-                        <td>native</td>
-                        <td class="numeric">647,163.53</td>
-                        <td class="numeric "></td>
+                        <td>fastcond_strong</td>
+                        <td class="numeric">658,650.80</td>
+                        <td class="numeric improvement">+98.4%</td>
                     </tr>
                     <tr>
-                        <td>fastcond_strong</td>
-                        <td class="numeric">552,252.11</td>
+                        <td>native</td>
+                        <td class="numeric">331,936.91</td>
                         <td class="numeric "></td>
                     </tr>
                 </tbody>
@@ -375,17 +383,17 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">9.42</td>
-                        <td class="numeric">0.07</td>
-                        <td class="numeric">83.36</td>
-                        <td class="numeric">10.84</td>
+                        <td class="numeric">7.30</td>
+                        <td class="numeric">0.08</td>
+                        <td class="numeric">192.57</td>
+                        <td class="numeric">12.06</td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">8.16</td>
-                        <td class="numeric">0.06</td>
-                        <td class="numeric">88.05</td>
-                        <td class="numeric">9.58</td>
+                        <td class="numeric">14.74</td>
+                        <td class="numeric">0.07</td>
+                        <td class="numeric">314.77</td>
+                        <td class="numeric">25.07</td>
                     </tr>
                 </tbody>
             </table>
@@ -403,19 +411,19 @@
                     <tr>
                         <th>Implementation</th>
                         <th class="numeric">Throughput (items/sec)</th>
-                        <th class="numeric">Speedup vs pthread</th>
+                        <th class="numeric">Speedup vs native</th>
                     </tr>
                 </thead>
                 <tbody>
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">1,276,227.43</td>
-                        <td class="numeric "></td>
+                        <td class="numeric">1,131,000.64</td>
+                        <td class="numeric improvement">+12.7%</td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">1,204,929.61</td>
+                        <td class="numeric">1,003,776.31</td>
                         <td class="numeric "></td>
                     </tr>
                 </tbody>
@@ -436,17 +444,17 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">1.69</td>
+                        <td class="numeric">2.72</td>
                         <td class="numeric">0.07</td>
-                        <td class="numeric">939.88</td>
-                        <td class="numeric">24.84</td>
+                        <td class="numeric">1927.88</td>
+                        <td class="numeric">46.24</td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">2.36</td>
-                        <td class="numeric">0.04</td>
-                        <td class="numeric">1399.98</td>
-                        <td class="numeric">35.47</td>
+                        <td class="numeric">2.75</td>
+                        <td class="numeric">0.07</td>
+                        <td class="numeric">924.77</td>
+                        <td class="numeric">33.05</td>
                     </tr>
                 </tbody>
             </table>
@@ -458,7 +466,7 @@
         OS: Linux x86_64, 
         Cores: 4, 
         Python: 3.12.3<br>
-        <strong>Generated:</strong> October 27, 2025 at 11:03 UTC
+        <strong>Generated:</strong> October 27, 2025 at 11:05 UTC
     </div>
     
     <div class="footer">
