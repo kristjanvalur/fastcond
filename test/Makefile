@@ -37,8 +37,9 @@ qtest_native: qtest.c fastcond.o
 qtest_fc: qtest.c fastcond.o
 	$(CC) $(INCLUDES) $(CFLAGS) $(DOPATCH) -o $@ $^ $(LDLIBS)
 
-qtest_wcond: qtest.c fastcond.o
-	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_PATCH_WCOND -o $@ $^ $(LDLIBS)
+# Legacy qtest_wcond removed - wcond is now just an alias for cond (strong semantics)
+# qtest_wcond: qtest.c fastcond.o
+# 	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_PATCH_WCOND -o $@ $^ $(LDLIBS)
 
 strongtest_native: strongtest.c fastcond.o 
 	$(CC) $(INCLUDES) $(CFLAGS) -o $@ $^ $(LDLIBS)
@@ -82,7 +83,7 @@ gil_benchmark_native_unfair: gil_benchmark.c gil_native_unfair.o
 	$(CC) $(INCLUDES) $(CFLAGS) -DFASTCOND_GIL_USE_NATIVE_COND=1 -DFASTCOND_GIL_YIELD_FAIR=0 -DFASTCOND_GIL_ACQUIRE_GREEDY=1 -o $@ $^ $(LDLIBS)
 
 
-ALL=qtest_native qtest_fc qtest_wcond strongtest_native strongtest_fc gil_test_fc gil_test_native gil_test_fc_unfair gil_test_fc_naive gil_test_native_unfair gil_benchmark_fc gil_benchmark_native gil_benchmark_fc_unfair gil_benchmark_native_unfair
+ALL=qtest_native qtest_fc strongtest_native strongtest_fc gil_test_fc gil_test_native gil_test_fc_unfair gil_test_fc_naive gil_test_native_unfair gil_benchmark_fc gil_benchmark_native gil_benchmark_fc_unfair gil_benchmark_native_unfair
 
 .PHONY: all
 all: $(ALL)
