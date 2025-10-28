@@ -282,11 +282,16 @@ def generate_charts(data: List[PerformanceData], output_dir: Path):
                 results = test_data[key]
                 for result in results:
                     # Use simpler variant names for chart
-                    variant_name = result.variant.replace("fastcond_", "").replace(
-                        "_gil", ""
-                    )
-                    if "native" in result.variant:
+                    # For GIL tests, use "fastcond" vs "native" labels
+                    if "fastcond" in result.variant:
+                        variant_name = "fastcond"
+                    elif "native" in result.variant:
                         variant_name = "native"
+                    else:
+                        # For other tests, clean up variant names
+                        variant_name = result.variant.replace("fastcond_", "").replace(
+                            "_gil", ""
+                        )
 
                     if variant_name not in throughput_by_variant:
                         throughput_by_variant[variant_name] = []
