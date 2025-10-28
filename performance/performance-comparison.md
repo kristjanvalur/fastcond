@@ -2,19 +2,21 @@
 
 | Platform | Test | Threads | Variant | Throughput (ops/sec) | Speedup vs Native |
 |----------|------|---------|---------|---------------------|-------------------|
-| linux | gil_test | 4 | fc | 5,796 | 1.00x |
-| linux | gil_test | 4 | fc | 5,781 | 1.00x |
-| linux | gil_test | 4 | native | 5,768 | 1.00x |
-| linux | gil_test | 4 | native | 5,751 | 1.00x |
-| linux | qtest | 4 | fc | 750,957 | 1.17x |
-| linux | qtest | 4 | fc | 742,186 | 1.15x |
-| linux | qtest | 4 | native | 642,742 | 1.00x |
-| linux | qtest | 4 | native | 668,413 | 1.04x |
-| linux | strongtest | 1 | fc | 1,427,913 | 1.29x |
-| linux | strongtest | 1 | fc | 1,442,135 | 1.30x |
-| linux | strongtest | 1 | native | 1,110,468 | 1.00x |
-| linux | strongtest | 1 | native | 1,119,817 | 1.01x |
-| macos | qtest | 4 | fc | 640,689 | 6.17x |
-| macos | qtest | 4 | native | 103,779 | 1.00x |
-| macos | strongtest | 1 | fc | 3,284,668 | 7.14x |
-| macos | strongtest | 1 | native | 460,009 | 1.00x |
+| linux | gil_test | 4 | fc | 5,792 | 1.01x |
+| linux | gil_test | 4 | fc | 5,779 | 1.00x |
+| linux | gil_test | 4 | native | 5,760 | 1.00x |
+| linux | gil_test | 4 | native | 5,753 | 1.00x |
+| linux | qtest | 4 | fc | 800,972 | 1.28x |
+| linux | qtest | 4 | fc | 796,380 | 1.27x |
+| linux | qtest | 4 | native | 625,378 | 1.00x |
+| linux | qtest | 4 | native | 634,306 | 1.01x |
+| linux | strongtest | 1 | fc | 1,429,275 | 1.38x |
+| linux | strongtest | 1 | fc | 1,429,264 | 1.38x |
+| linux | strongtest | 1 | native | 1,035,730 | 1.00x |
+| linux | strongtest | 1 | native | 1,163,544 | 1.12x |
+| macos | gil_test | 4 | fc | 1,397 | 0.79x |
+| macos | gil_test | 4 | native | 1,762 | 1.00x |
+| macos | qtest | 4 | fc | 694,320 | 1.27x |
+| macos | qtest | 4 | native | 547,195 | 1.00x |
+| macos | strongtest | 1 | fc | 3,376,342 | 15.52x |
+| macos | strongtest | 1 | native | 217,522 | 1.00x |
