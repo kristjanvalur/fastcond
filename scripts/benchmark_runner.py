@@ -459,8 +459,11 @@ def main():
         {
             "name": "gil_test",
             "variants": ["native", "fc"],
-            "args": ["4", str(args.items)],  # 4 threads, total_acquisitions
-            "description": f"GIL acquire/release test ({args.items // 1000}K acquisitions, 4 threads)",
+            "args": [
+                "4",
+                str(args.items // 10),
+            ],  # 4 threads, 10% of items for faster execution
+            "description": f"GIL acquire/release test ({args.items // 10000}K acquisitions, 4 threads)",
         },
     ]
 
