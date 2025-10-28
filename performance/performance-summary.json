@@ -1,11 +1,12 @@
 {
   "metadata": {
-    "total_benchmarks": 12,
+    "total_benchmarks": 16,
     "platforms": [
       "linux",
       "macos"
     ],
     "tests": [
+      "gil_test",
       "qtest",
       "strongtest"
     ],
@@ -17,33 +18,65 @@
   "results": [
     {
       "platform": "linux",
+      "test": "gil_test",
+      "threads": 4,
+      "param": 100000,
+      "variants": [
+        {
+          "variant": "fc",
+          "throughput": 5795.92,
+          "elapsed_sec": 17.253522,
+          "speedup": 1.0048823113305685
+        },
+        {
+          "variant": "fc",
+          "throughput": 5780.81,
+          "elapsed_sec": 17.29862,
+          "speedup": 1.0022625768062472
+        },
+        {
+          "variant": "native",
+          "throughput": 5767.76,
+          "elapsed_sec": 17.337747,
+          "speedup": 1.0
+        },
+        {
+          "variant": "native",
+          "throughput": 5751.26,
+          "elapsed_sec": 17.387488,
+          "speedup": 0.997139270704745
+        }
+      ]
+    },
+    {
+      "platform": "linux",
       "test": "qtest",
       "threads": 4,
       "param": 10,
       "variants": [
         {
           "variant": "fc",
-          "throughput": 750363.78,
-          "elapsed_sec": 0.133269,
-          "speedup": 1.2958178602783261
+          "throughput": 750957.25,
+          "elapsed_sec": 0.133163,
+          "speedup": 1.1683649893736523
         },
         {
           "variant": "fc",
-          "throughput": 723853.43,
-          "elapsed_sec": 0.13815,
-          "speedup": 1.250036619328464
+          "throughput": 742185.53,
+          "elapsed_sec": 0.134737,
+          "speedup": 1.154717647205255
         },
         {
           "variant": "native",
-          "throughput": 579065.78,
-          "elapsed_sec": 0.172692,
+          "throughput": 642742.0,
+          "elapsed_sec": 0.155583,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 547833.91,
-          "elapsed_sec": 0.182537,
-          "speedup": 0.9460650739886581
+          "throughput": 668413.09,
+          "elapsed_sec": 0.149608,
+          "speedup": 1.039939960357344
         }
       ]
     },
@@ -55,27 +88,27 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 1409593.46,
-          "elapsed_sec": 0.070942,
-          "speedup": 1.2391621031104747
+          "throughput": 1427912.69,
+          "elapsed_sec": 0.070032,
+          "speedup": 1.28586547162477
         },
         {
           "variant": "fc",
-          "throughput": 2115694.43,
-          "elapsed_sec": 0.047266,
-          "speedup": 1.8598897014022167
+          "throughput": 1442135.41,
+          "elapsed_sec": 0.069342,
+          "speedup": 1.298673330738752
         },
         {
           "variant": "native",
-          "throughput": 1137537.58,
-          "elapsed_sec": 0.087909,
+          "throughput": 1110468.18,
+          "elapsed_sec": 0.090052,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 474796.59,
-          "elapsed_sec": 0.210617,
-          "speedup": 0.4173898061460088
+          "throughput": 1119816.64,
+          "elapsed_sec": 0.0893,
+          "speedup": 1.0084184852554712
         }
       ]
     },
@@ -87,14 +120,14 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 74299.0,
-          "elapsed_sec": 1.345913,
-          "speedup": 0.3663848292744531
+          "throughput": 640689.15,
+          "elapsed_sec": 0.156082,
+          "speedup": 6.17359980635748
         },
         {
           "variant": "native",
-          "throughput": 202789.51,
-          "elapsed_sec": 0.493122,
+          "throughput": 103778.86,
+          "elapsed_sec": 0.963587,
           "speedup": 1.0
         }
       ]
@@ -107,14 +140,14 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 3011486.8,
-          "elapsed_sec": 0.033206,
-          "speedup": 7.854704108099981
+          "throughput": 3284668.14,
+          "elapsed_sec": 0.030444,
+          "speedup": 7.140445381856341
         },
         {
           "variant": "native",
-          "throughput": 383399.14,
-          "elapsed_sec": 0.260825,
+          "throughput": 460008.86,
+          "elapsed_sec": 0.217387,
           "speedup": 1.0
         }
       ]
