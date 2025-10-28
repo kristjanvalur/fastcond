@@ -23,27 +23,27 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 731819.75,
-          "elapsed_sec": 0.136646,
-          "speedup": 1.0768286817983255
+          "throughput": 750363.78,
+          "elapsed_sec": 0.133269,
+          "speedup": 1.2958178602783261
         },
         {
           "variant": "fc",
-          "throughput": 731066.46,
-          "elapsed_sec": 0.136786,
-          "speedup": 1.075720260936888
+          "throughput": 723853.43,
+          "elapsed_sec": 0.13815,
+          "speedup": 1.250036619328464
         },
         {
           "variant": "native",
-          "throughput": 679606.48,
-          "elapsed_sec": 0.147144,
+          "throughput": 579065.78,
+          "elapsed_sec": 0.172692,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 604288.61,
-          "elapsed_sec": 0.165484,
-          "speedup": 0.889174290980863
+          "throughput": 547833.91,
+          "elapsed_sec": 0.182537,
+          "speedup": 0.9460650739886581
         }
       ]
     },
@@ -55,27 +55,27 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 1449362.61,
-          "elapsed_sec": 0.068996,
-          "speedup": 1.2231239841391142
+          "throughput": 1409593.46,
+          "elapsed_sec": 0.070942,
+          "speedup": 1.2391621031104747
         },
         {
           "variant": "fc",
-          "throughput": 1441220.52,
-          "elapsed_sec": 0.069386,
-          "speedup": 1.2162528357520177
+          "throughput": 2115694.43,
+          "elapsed_sec": 0.047266,
+          "speedup": 1.8598897014022167
         },
         {
           "variant": "native",
-          "throughput": 1184967.86,
-          "elapsed_sec": 0.08439,
+          "throughput": 1137537.58,
+          "elapsed_sec": 0.087909,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 979733.57,
-          "elapsed_sec": 0.102069,
-          "speedup": 0.8268018087849234
+          "throughput": 474796.59,
+          "elapsed_sec": 0.210617,
+          "speedup": 0.4173898061460088
         }
       ]
     },
@@ -87,14 +87,14 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 87910.61,
-          "elapsed_sec": 1.137519,
-          "speedup": 0.556672523370617
+          "throughput": 74299.0,
+          "elapsed_sec": 1.345913,
+          "speedup": 0.3663848292744531
         },
         {
           "variant": "native",
-          "throughput": 157921.59,
-          "elapsed_sec": 0.633226,
+          "throughput": 202789.51,
+          "elapsed_sec": 0.493122,
           "speedup": 1.0
         }
       ]
@@ -107,14 +107,14 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 325190.72,
-          "elapsed_sec": 0.307512,
-          "speedup": 3.737177449512762
+          "throughput": 3011486.8,
+          "elapsed_sec": 0.033206,
+          "speedup": 7.854704108099981
         },
         {
           "variant": "native",
-          "throughput": 87015.06,
-          "elapsed_sec": 1.149226,
+          "throughput": 383399.14,
+          "elapsed_sec": 0.260825,
           "speedup": 1.0
         }
       ]
