@@ -476,7 +476,11 @@ def main():
 
     for benchmark in benchmarks:
         for variant in benchmark["variants"]:
-            exe = build_dir / f"{benchmark['name']}_{variant}"
+            exe_name = f"{benchmark['name']}_{variant}"
+            # Add .exe suffix on Windows
+            if platform.system() == "Windows":
+                exe_name += ".exe"
+            exe = build_dir / exe_name
 
             if not exe.exists():
                 print(f"Warning: {exe} not found, skipping", file=sys.stderr)
