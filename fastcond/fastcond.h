@@ -18,6 +18,38 @@
 /* Use native primitives abstraction for platform-specific mutex types */
 #include "native_primitives.h"
 
+/**
+ * CRITICAL USAGE REQUIREMENT: Mutex Must Be Held
+ * ==============================================
+ *
+ * Unlike some condition variable implementations, fastcond requires that the
+ * associated mutex be held when calling signal or broadcast. Calling these
+ * functions without holding the mutex produces UNDEFINED BEHAVIOR.
+ *
+ * This matches the original intent in Birrell's seminal paper "Implementing
+ * Condition Variables with Semaphores" (DEC SRC-RR-1995-004) and POSIX's
+ * historical design assumptions, though POSIX.1-2008 later clarified that
+ * signal/broadcast without the lock is technically permitted (albeit with
+ * reduced guarantees).
+ *
+ * Required pattern:
+ *     native_mutex_lock(&mutex);
+ *     // ... modify shared state ...
+ *     fastcond_cond_signal(&cond);   // Mutex MUST be held
+ *     native_mutex_unlock(&mutex);
+ *
+ * The rationale: fastcond's internal bookkeeping (n_waiting, n_wakeup) is
+ * NOT protected by atomic operations. The algorithm assumes the calling thread
+ * holds the associated mutex, which provides the necessary memory ordering and
+ * mutual exclusion for correct operation. Violating this assumption creates
+ * race conditions in the counter updates.
+ *
+ * This differs from implementations like Linux's futex-based pthread_cond_t,
+ * which use atomic operations for internal state and can safely handle
+ * signal/broadcast without the lock held (though POSIX still recommends
+ * holding it for predictable scheduling behavior).
+ */
+
 /* Platform detection and synchronization primitive selection */
 #if defined(_WIN32) || defined(_WIN64)
 /* Windows platform */
@@ -64,9 +96,13 @@ FASTCOND_API(int)
 fastcond_cond_timedwait(fastcond_cond_t *restrict cond, native_mutex_t *restrict mutex,
                         const struct timespec *restrict abstime);
 
+/* Signal one waiting thread. CRITICAL: The associated mutex MUST be held.
+ * Calling without the mutex produces undefined behavior. */
 FASTCOND_API(int)
 fastcond_cond_signal(fastcond_cond_t *cond);
 
+/* Wake all waiting threads. CRITICAL: The associated mutex MUST be held.
+ * Calling without the mutex produces undefined behavior. */
 FASTCOND_API(int)
 fastcond_cond_broadcast(fastcond_cond_t *cond);
 
@@ -107,9 +143,13 @@ FASTCOND_API(int)
 fastcond_wcond_timedwait(fastcond_wcond_t *restrict cond, native_mutex_t *restrict mutex,
                          const struct timespec *restrict abstime);
 
+/* Signal one waiting thread. CRITICAL: The associated mutex MUST be held.
+ * Calling without the mutex produces undefined behavior. */
 FASTCOND_API(int)
 fastcond_wcond_signal(fastcond_wcond_t *cond);
 
+/* Wake all waiting threads. CRITICAL: The associated mutex MUST be held.
+ * Calling without the mutex produces undefined behavior. */
 FASTCOND_API(int)
 fastcond_wcond_broadcast(fastcond_wcond_t *cond);
 
