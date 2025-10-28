@@ -1,97 +1,49 @@
 {
   "metadata": {
-    "total_benchmarks": 28,
+    "total_benchmarks": 12,
     "platforms": [
       "linux",
-      "macos",
-      "windows"
+      "macos"
     ],
     "tests": [
-      "gil_test",
       "qtest",
       "strongtest"
     ],
     "variants": [
-      "fastcond_cond",
-      "fastcond_gil",
-      "native",
-      "native_gil"
+      "fc",
+      "native"
     ]
   },
   "results": [
     {
       "platform": "linux",
-      "test": "gil_test",
-      "threads": 4,
-      "param": 1000,
-      "variants": [
-        {
-          "variant": "fastcond_gil",
-          "throughput": 5706.52,
-          "elapsed_sec": 0.175238,
-          "speedup": 0.0
-        },
-        {
-          "variant": "fastcond_gil",
-          "throughput": 5734.06,
-          "elapsed_sec": 0.174397,
-          "speedup": 0.0
-        },
-        {
-          "variant": "native_gil",
-          "throughput": 5714.81,
-          "elapsed_sec": 0.174984,
-          "speedup": 0.0
-        },
-        {
-          "variant": "native_gil",
-          "throughput": 5999.93,
-          "elapsed_sec": 0.166669,
-          "speedup": 0.0
-        },
-        {
-          "variant": "native_gil",
-          "throughput": 5744.64,
-          "elapsed_sec": 0.174075,
-          "speedup": 0.0
-        },
-        {
-          "variant": "native_gil",
-          "throughput": 6016.5,
-          "elapsed_sec": 0.16621,
-          "speedup": 0.0
-        }
-      ]
-    },
-    {
-      "platform": "linux",
       "test": "qtest",
       "threads": 4,
       "param": 10,
       "variants": [
         {
-          "variant": "fastcond_cond",
-          "throughput": 670184.06,
-          "elapsed_sec": 0.014921,
-          "speedup": 1.146830162699747
+          "variant": "fc",
+          "throughput": 731819.75,
+          "elapsed_sec": 0.136646,
+          "speedup": 1.0768286817983255
         },
         {
-          "variant": "fastcond_cond",
-          "throughput": 686521.32,
-          "elapsed_sec": 0.014566,
-          "speedup": 1.1747867550183824
+          "variant": "fc",
+          "throughput": 731066.46,
+          "elapsed_sec": 0.136786,
+          "speedup": 1.075720260936888
         },
         {
           "variant": "native",
-          "throughput": 584379.52,
-          "elapsed_sec": 0.017112,
+          "throughput": 679606.48,
+          "elapsed_sec": 0.147144,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 517528.7,
-          "elapsed_sec": 0.019323,
-          "speedup": 0.8856037596937004
+          "throughput": 604288.61,
+          "elapsed_sec": 0.165484,
+          "speedup": 0.889174290980863
         }
       ]
     },
@@ -102,54 +54,28 @@
       "param": 5,
       "variants": [
         {
-          "variant": "fastcond_cond",
-          "throughput": 1377929.37,
-          "elapsed_sec": 0.007257,
-          "speedup": 1.3354974120261407
+          "variant": "fc",
+          "throughput": 1449362.61,
+          "elapsed_sec": 0.068996,
+          "speedup": 1.2231239841391142
         },
         {
-          "variant": "fastcond_cond",
-          "throughput": 1384526.48,
-          "elapsed_sec": 0.007223,
-          "speedup": 1.3418913706162328
+          "variant": "fc",
+          "throughput": 1441220.52,
+          "elapsed_sec": 0.069386,
+          "speedup": 1.2162528357520177
         },
         {
           "variant": "native",
-          "throughput": 1031772.4,
-          "elapsed_sec": 0.009692,
+          "throughput": 1184967.86,
+          "elapsed_sec": 0.08439,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 865350.73,
-          "elapsed_sec": 0.011556,
-          "speedup": 0.8387031190212104
-        }
-      ]
-    },
-    {
-      "platform": "macos",
-      "test": "gil_test",
-      "threads": 4,
-      "param": 1000,
-      "variants": [
-        {
-          "variant": "fastcond_gil",
-          "throughput": 829.71,
-          "elapsed_sec": 1.20524,
-          "speedup": 0.0
-        },
-        {
-          "variant": "native_gil",
-          "throughput": 1278.19,
-          "elapsed_sec": 0.782358,
-          "speedup": 0.0
-        },
-        {
-          "variant": "native_gil",
-          "throughput": 1433.39,
-          "elapsed_sec": 0.697645,
-          "speedup": 0.0
+          "throughput": 979733.57,
+          "elapsed_sec": 0.102069,
+          "speedup": 0.8268018087849234
         }
       ]
     },
@@ -160,15 +86,15 @@
       "param": 10,
       "variants": [
         {
-          "variant": "fastcond_cond",
-          "throughput": 248157.43,
-          "elapsed_sec": 0.040297,
-          "speedup": 0.4858426195050916
+          "variant": "fc",
+          "throughput": 87910.61,
+          "elapsed_sec": 1.137519,
+          "speedup": 0.556672523370617
         },
         {
           "variant": "native",
-          "throughput": 510777.4,
-          "elapsed_sec": 0.019578,
+          "throughput": 157921.59,
+          "elapsed_sec": 0.633226,
           "speedup": 1.0
         }
       ]
@@ -180,81 +106,15 @@
       "param": 5,
       "variants": [
         {
-          "variant": "fastcond_cond",
-          "throughput": 870397.77,
-          "elapsed_sec": 0.011489,
-          "speedup": 4.707633368098011
+          "variant": "fc",
+          "throughput": 325190.72,
+          "elapsed_sec": 0.307512,
+          "speedup": 3.737177449512762
         },
         {
           "variant": "native",
-          "throughput": 184890.73,
-          "elapsed_sec": 0.054086,
-          "speedup": 1.0
-        }
-      ]
-    },
-    {
-      "platform": "windows",
-      "test": "gil_test",
-      "threads": 4,
-      "param": 1000,
-      "variants": [
-        {
-          "variant": "fastcond_gil",
-          "throughput": 2183.69,
-          "elapsed_sec": 0.457941,
-          "speedup": 0.0
-        },
-        {
-          "variant": "native_gil",
-          "throughput": 2363.06,
-          "elapsed_sec": 0.423179,
-          "speedup": 0.0
-        },
-        {
-          "variant": "native_gil",
-          "throughput": 2201.78,
-          "elapsed_sec": 0.454179,
-          "speedup": 0.0
-        }
-      ]
-    },
-    {
-      "platform": "windows",
-      "test": "qtest",
-      "threads": 4,
-      "param": 10,
-      "variants": [
-        {
-          "variant": "fastcond_cond",
-          "throughput": 630099.87,
-          "elapsed_sec": 0.01587,
-          "speedup": 0.9421946350819314
-        },
-        {
-          "variant": "native",
-          "throughput": 668757.65,
-          "elapsed_sec": 0.014953,
-          "speedup": 1.0
-        }
-      ]
-    },
-    {
-      "platform": "windows",
-      "test": "strongtest",
-      "threads": 1,
-      "param": 5,
-      "variants": [
-        {
-          "variant": "fastcond_cond",
-          "throughput": 2300807.58,
-          "elapsed_sec": 0.004346,
-          "speedup": 0.911856061838856
-        },
-        {
-          "variant": "native",
-          "throughput": 2523213.56,
-          "elapsed_sec": 0.003963,
+          "throughput": 87015.06,
+          "elapsed_sec": 1.149226,
           "speedup": 1.0
         }
       ]
