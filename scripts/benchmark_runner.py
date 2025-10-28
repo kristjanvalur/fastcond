@@ -456,6 +456,12 @@ def main():
             "args": [str(args.items), "5"],
             "description": f"Strong semantics test ({args.items // 1000}K items, queue size 5)",
         },
+        {
+            "name": "gil_test",
+            "variants": ["native", "fc"],
+            "args": ["4", str(args.items)],  # 4 threads, total_acquisitions
+            "description": f"GIL acquire/release test ({args.items // 1000}K acquisitions, 4 threads)",
+        },
     ]
 
     impl_names = {
@@ -488,11 +494,26 @@ def main():
 
             if result:
                 stats, per_thread_data = result
-                config = {
-                    "total_items": args.items,
-                    "num_threads": 4 if benchmark["name"] == "qtest" else 1,
-                    "queue_size": int(benchmark["args"][-1]),
-                }
+
+                # Configure based on test type
+                if benchmark["name"] == "gil_test":
+                    config = {
+                        "total_items": args.items,  # total_acquisitions
+                        "num_threads": 4,
+                        "queue_size": 0,  # Not applicable for gil_test
+                    }
+                elif benchmark["name"] == "qtest":
+                    config = {
+                        "total_items": args.items,
+                        "num_threads": 4,
+                        "queue_size": int(benchmark["args"][-1]),
+                    }
+                else:  # strongtest
+                    config = {
+                        "total_items": args.items,
+                        "num_threads": 1,
+                        "queue_size": int(benchmark["args"][-1]),
+                    }
 
                 result_json = format_result_for_json(
                     benchmark["name"],
@@ -530,11 +551,15 @@ def main():
 
                 # Extract parameters
                 num_threads = config["num_threads"]
-                queue_size = config["queue_size"]
+                # For gil_test, param is total_acquisitions; for others, it's queue_size
+                if benchmark_name == "gil_test":
+                    param = config["total_items"]  # total_acquisitions
+                else:
+                    param = config["queue_size"]
 
                 f.write(
                     f"{platform_name},{os_version},{benchmark_name},{variant_name},"
-                    f"{num_threads},{queue_size},{config['total_items']},"
+                    f"{num_threads},{param},{config['total_items']},"
                     f"{elapsed_sec:.6f},{stats['mean']:.2f}\n"
                 )
 
