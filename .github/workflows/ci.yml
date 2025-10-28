@@ -152,8 +152,16 @@ jobs:
           BUILD_DIR="build"
         fi
         
-        # Run benchmark script
-        ./scripts/run_performance_benchmarks.sh "$BUILD_DIR" "performance-results.csv"
+        # Run robust benchmark harness with statistical analysis
+        # Uses 5 iterations + 1 warmup for stable measurements
+        # Reduced item count from 400K to 100K for faster CI runs (~0.3s per test)
+        python3 scripts/benchmark_runner.py "$BUILD_DIR" \
+          --output-csv performance-results.csv \
+          --iterations 5 \
+          --warmup 1 \
+          --items 100000 \
+          --platform "$FASTCOND_PLATFORM" \
+          --os-version "$FASTCOND_OS_VERSION"
       shell: bash
     
     - name: Upload performance results artifact

@@ -367,6 +367,24 @@ def main():
         default=400000,
         help="Number of items for qtest/strongtest (default: 400000 for ~1s runtime)",
     )
+    parser.add_argument(
+        "--output-csv",
+        type=str,
+        metavar="FILE",
+        help="Output results in CSV format compatible with run_performance_benchmarks.sh",
+    )
+    parser.add_argument(
+        "--platform",
+        type=str,
+        default=None,
+        help="Platform name for CSV output (default: auto-detect)",
+    )
+    parser.add_argument(
+        "--os-version",
+        type=str,
+        default=None,
+        help="OS version for CSV output (default: auto-detect)",
+    )
 
     args = parser.parse_args()
 
@@ -374,6 +392,47 @@ def main():
     if not build_dir.exists():
         print(f"Error: Build directory not found: {build_dir}", file=sys.stderr)
         sys.exit(1)
+
+    # Auto-detect platform and OS version if needed for CSV output
+    platform_name = args.platform
+    os_version = args.os_version
+
+    if args.output_csv and not platform_name:
+        # Auto-detect platform
+        sys_name = platform.system()
+        if sys_name == "Linux":
+            platform_name = "linux"
+        elif sys_name == "Darwin":
+            platform_name = "macos"
+        elif sys_name == "Windows":
+            platform_name = "windows"
+        else:
+            platform_name = "unknown"
+
+    if args.output_csv and not os_version:
+        # Auto-detect OS version
+        if platform_name == "linux":
+            try:
+                import subprocess
+
+                result = subprocess.run(
+                    ["lsb_release", "-ds"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                if result.returncode == 0:
+                    os_version = result.stdout.strip().strip('"')
+                else:
+                    os_version = "unknown"
+            except Exception:
+                os_version = "unknown"
+        elif platform_name == "macos":
+            os_version = platform.mac_ver()[0] or "unknown"
+        elif platform_name == "windows":
+            os_version = platform.win32_ver()[0] or "unknown"
+        else:
+            os_version = "unknown"
 
     # System information
     system_info = {
@@ -446,8 +505,46 @@ def main():
                 )
                 all_results.append(result_json)
 
-    # Output JSON
-    print(json.dumps(all_results, indent=2))
+    # Output results
+    if args.output_csv:
+        # Write CSV format compatible with run_performance_benchmarks.sh
+        # Format: platform,os_version,test,variant,threads,param,iterations,elapsed_sec,throughput
+        with open(args.output_csv, "w") as f:
+            # Write header
+            f.write(
+                "platform,os_version,test,variant,threads,param,iterations,elapsed_sec,throughput\n"
+            )
+
+            # Write data rows
+            for result in all_results:
+                benchmark_name = result["benchmark"]
+                implementation = result["implementation"]
+                # Map implementation name back to variant for CSV
+                variant_name = "fc" if "fastcond" in implementation else "native"
+
+                config = result["config"]
+                stats = result["results"]["statistics"]
+
+                # Calculate elapsed time from throughput (items / items_per_sec = seconds)
+                elapsed_sec = config["total_items"] / stats["mean"]
+
+                # Extract parameters
+                num_threads = config["num_threads"]
+                queue_size = config["queue_size"]
+
+                f.write(
+                    f"{platform_name},{os_version},{benchmark_name},{variant_name},"
+                    f"{num_threads},{queue_size},{config['total_items']},"
+                    f"{elapsed_sec:.6f},{stats['mean']:.2f}\n"
+                )
+
+        print(
+            f"CSV results written to {args.output_csv} ({len(all_results)} benchmarks)",
+            file=sys.stderr,
+        )
+    else:
+        # Output JSON to stdout
+        print(json.dumps(all_results, indent=2))
 
 
 if __name__ == "__main__":
