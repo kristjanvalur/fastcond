@@ -301,12 +301,12 @@
     <div class="summary-cards">
         <div class="card">
             <h3>Average Performance Gain</h3>
-            <div class="value">+2.9%</div>
+            <div class="value">-3.8%</div>
             <div class="label">vs native condition variables</div>
         </div>
         <div class="card">
             <h3>Best Case Improvement</h3>
-            <div class="value">+5.6%</div>
+            <div class="value">-3.7%</div>
             <div class="label">maximum observed speedup</div>
         </div>
         <div class="card">
@@ -356,14 +356,14 @@
                 <tbody>
 
                     <tr>
-                        <td>fastcond_strong</td>
-                        <td class="numeric">726,666.91 ± 72,996</td>
-                        <td class="numeric improvement">+5.6%</td>
+                        <td>native</td>
+                        <td class="numeric">728,464.96 ± 67,309</td>
+                        <td class="numeric baseline">baseline</td>
                     </tr>
                     <tr>
-                        <td>native</td>
-                        <td class="numeric">688,283.37 ± 54,445</td>
-                        <td class="numeric baseline">baseline</td>
+                        <td>fastcond_strong</td>
+                        <td class="numeric">701,257.26 ± 32,654</td>
+                        <td class="numeric regression">-3.7%</td>
                     </tr>
                 </tbody>
             </table>
@@ -383,17 +383,17 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">7.57</td>
+                        <td class="numeric">7.24</td>
                         <td class="numeric">0.04</td>
-                        <td class="numeric">240.37</td>
-                        <td class="numeric">8.93</td>
+                        <td class="numeric">117.49</td>
+                        <td class="numeric">8.05</td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">7.93</td>
-                        <td class="numeric">0.03</td>
-                        <td class="numeric">130.64</td>
-                        <td class="numeric">9.32</td>
+                        <td class="numeric">7.52</td>
+                        <td class="numeric">0.04</td>
+                        <td class="numeric">852.61</td>
+                        <td class="numeric">9.28</td>
                     </tr>
                 </tbody>
             </table>
@@ -417,14 +417,14 @@
                 <tbody>
 
                     <tr>
-                        <td>fastcond_strong</td>
-                        <td class="numeric">1,072,690.58 ± 37,163</td>
-                        <td class="numeric ">+0.3%</td>
+                        <td>native</td>
+                        <td class="numeric">1,128,736.96 ± 36,797</td>
+                        <td class="numeric baseline">baseline</td>
                     </tr>
                     <tr>
-                        <td>native</td>
-                        <td class="numeric">1,069,428.51 ± 54,690</td>
-                        <td class="numeric baseline">baseline</td>
+                        <td>fastcond_strong</td>
+                        <td class="numeric">1,085,231.41 ± 88,223</td>
+                        <td class="numeric regression">-3.9%</td>
                     </tr>
                 </tbody>
             </table>
@@ -444,17 +444,17 @@
 
                     <tr>
                         <td>fastcond_strong</td>
-                        <td class="numeric">1.99</td>
-                        <td class="numeric">0.03</td>
-                        <td class="numeric">5002.33</td>
-                        <td class="numeric">31.86</td>
+                        <td class="numeric">2.01</td>
+                        <td class="numeric">0.04</td>
+                        <td class="numeric">10019.04</td>
+                        <td class="numeric">51.35</td>
                     </tr>
                     <tr>
                         <td>native</td>
-                        <td class="numeric">2.40</td>
+                        <td class="numeric">2.18</td>
                         <td class="numeric">0.04</td>
-                        <td class="numeric">10998.46</td>
-                        <td class="numeric">44.11</td>
+                        <td class="numeric">4955.03</td>
+                        <td class="numeric">41.27</td>
                     </tr>
                 </tbody>
             </table>
@@ -466,7 +466,7 @@
         OS: Linux x86_64, 
         Cores: 4, 
         Python: 3.12.3<br>
-        <strong>Generated:</strong> October 27, 2025 at 23:34 UTC
+        <strong>Generated:</strong> October 28, 2025 at 08:27 UTC
     </div>
     
     <div class="footer">
