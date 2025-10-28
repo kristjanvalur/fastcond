@@ -949,6 +949,138 @@
           }
         ]
       }
+    },
+    {
+      "run_id": "18872063994",
+      "timestamp": "2025-10-28T10:42:16.475154+00:00",
+      "git": {
+        "commit": "f0fa0c1e289389150a7c590b97ff82105854429d",
+        "commit_short": "f0fa0c1",
+        "branch": "master"
+      },
+      "results": {
+        "metadata": {
+          "total_benchmarks": 12,
+          "platforms": [
+            "linux",
+            "macos"
+          ],
+          "tests": [
+            "qtest",
+            "strongtest"
+          ],
+          "variants": [
+            "fc",
+            "native"
+          ]
+        },
+        "results": [
+          {
+            "platform": "linux",
+            "test": "qtest",
+            "threads": 4,
+            "param": 10,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 750363.78,
+                "elapsed_sec": 0.133269,
+                "speedup": 1.2958178602783261
+              },
+              {
+                "variant": "fc",
+                "throughput": 723853.43,
+                "elapsed_sec": 0.13815,
+                "speedup": 1.250036619328464
+              },
+              {
+                "variant": "native",
+                "throughput": 579065.78,
+                "elapsed_sec": 0.172692,
+                "speedup": 1.0
+              },
+              {
+                "variant": "native",
+                "throughput": 547833.91,
+                "elapsed_sec": 0.182537,
+                "speedup": 0.9460650739886581
+              }
+            ]
+          },
+          {
+            "platform": "linux",
+            "test": "strongtest",
+            "threads": 1,
+            "param": 5,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 1409593.46,
+                "elapsed_sec": 0.070942,
+                "speedup": 1.2391621031104747
+              },
+              {
+                "variant": "fc",
+                "throughput": 2115694.43,
+                "elapsed_sec": 0.047266,
+                "speedup": 1.8598897014022167
+              },
+              {
+                "variant": "native",
+                "throughput": 1137537.58,
+                "elapsed_sec": 0.087909,
+                "speedup": 1.0
+              },
+              {
+                "variant": "native",
+                "throughput": 474796.59,
+                "elapsed_sec": 0.210617,
+                "speedup": 0.4173898061460088
+              }
+            ]
+          },
+          {
+            "platform": "macos",
+            "test": "qtest",
+            "threads": 4,
+            "param": 10,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 74299.0,
+                "elapsed_sec": 1.345913,
+                "speedup": 0.3663848292744531
+              },
+              {
+                "variant": "native",
+                "throughput": 202789.51,
+                "elapsed_sec": 0.493122,
+                "speedup": 1.0
+              }
+            ]
+          },
+          {
+            "platform": "macos",
+            "test": "strongtest",
+            "threads": 1,
+            "param": 5,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 3011486.8,
+                "elapsed_sec": 0.033206,
+                "speedup": 7.854704108099981
+              },
+              {
+                "variant": "native",
+                "throughput": 383399.14,
+                "elapsed_sec": 0.260825,
+                "speedup": 1.0
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }
