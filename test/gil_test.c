@@ -35,6 +35,7 @@
  *
  * Environment variables:
  *   FASTCOND_CSV_OUTPUT - If set, output results in CSV format to specified file
+ *   FASTCOND_JSON_OUTPUT - If set to "1", output results as JSON to stdout
  *   FASTCOND_PLATFORM - Platform name for CSV output (e.g., "linux", "macos", "windows")
  *   FASTCOND_OS_VERSION - OS version for CSV output (e.g., "ubuntu-latest")
  */
@@ -507,7 +508,7 @@ static void print_fairness_statistics(struct test_context *ctx, int num_threads)
 }
 
 int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int work_cycles,
-                 int release_delay_us, int release_delay_variance_us)
+                 int release_delay_us, int release_delay_variance_us, int json_mode)
 {
     struct test_context ctx;
     test_thread_t threads[MAX_THREADS];
@@ -518,17 +519,20 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
         return 1;
     }
 
-    printf("=== GIL Correctness and Fairness Test ===\n");
-    printf("Backend: %s\n", FASTCOND_GIL_USE_NATIVE_COND ? "Native pthread" : "fastcond");
-    printf("Fairness: %s\n", FASTCOND_GIL_DISABLE_FAIRNESS ? "DISABLED (plain mutex)" : "ENABLED");
-    printf("Configuration: %d threads competing for %d total acquisitions\n", num_threads,
-           total_acquisitions);
-    printf("Hold time: %d μs, Work cycles: %d, Release delay: %d±%d μs", hold_time_us, work_cycles,
-           release_delay_us, release_delay_variance_us);
-    if (release_delay_us < 0) {
-        printf(" (mostly instant, occasional I/O)");
+    if (!json_mode) {
+        printf("=== GIL Correctness and Fairness Test ===\n");
+        printf("Backend: %s\n", FASTCOND_GIL_USE_NATIVE_COND ? "Native pthread" : "fastcond");
+        printf("Fairness: %s\n",
+               FASTCOND_GIL_DISABLE_FAIRNESS ? "DISABLED (plain mutex)" : "ENABLED");
+        printf("Configuration: %d threads competing for %d total acquisitions\n", num_threads,
+               total_acquisitions);
+        printf("Hold time: %d μs, Work cycles: %d, Release delay: %d±%d μs", hold_time_us,
+               work_cycles, release_delay_us, release_delay_variance_us);
+        if (release_delay_us < 0) {
+            printf(" (mostly instant, occasional I/O)");
+        }
+        printf("\n");
     }
-    printf("\n");
 
     // Initialize test context
     memset(&ctx, 0, sizeof(ctx));
@@ -591,32 +595,61 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
     // Calculate elapsed time
     double elapsed = test_timespec_diff(&end_time, &start_time);
 
-    printf("Test completed in %.3f seconds\n", elapsed);
+    if (!json_mode) {
+        printf("Test completed in %.3f seconds\n", elapsed);
 
-    // Check for correctness violations
-    printf("\n=== Correctness Results ===\n");
-    if (ctx.max_holder_violation > 1) {
-        printf("❌ MUTUAL EXCLUSION VIOLATION: Up to %d threads held GIL simultaneously!\n",
-               ctx.max_holder_violation);
-    } else {
-        printf("✅ Mutual exclusion: PASSED (max holders: %d)\n", ctx.max_holder_violation);
+        // Check for correctness violations
+        printf("\n=== Correctness Results ===\n");
+        if (ctx.max_holder_violation > 1) {
+            printf("❌ MUTUAL EXCLUSION VIOLATION: Up to %d threads held GIL simultaneously!\n",
+                   ctx.max_holder_violation);
+        } else {
+            printf("✅ Mutual exclusion: PASSED (max holders: %d)\n", ctx.max_holder_violation);
+        }
+
+        if (ctx.holder_count != 0) {
+            printf("❌ CLEANUP VIOLATION: %d threads still holding GIL after test\n",
+                   ctx.holder_count);
+        } else {
+            printf("✅ Cleanup: PASSED (no threads holding GIL)\n");
+        }
+
+        // Print fairness statistics
+        print_fairness_statistics(&ctx, num_threads);
+
+        // Performance metrics
+        printf("\n=== Performance Metrics ===\n");
+        printf("Total acquire/release cycles: %d\n", ctx.global_acquisitions_done);
+        printf("Operations per second: %.0f\n", ctx.global_acquisitions_done / elapsed);
+        printf("Average latency per operation: %.1f μs\n",
+               (elapsed * 1e6) / ctx.global_acquisitions_done);
     }
 
-    if (ctx.holder_count != 0) {
-        printf("❌ CLEANUP VIOLATION: %d threads still holding GIL after test\n", ctx.holder_count);
-    } else {
-        printf("✅ Cleanup: PASSED (no threads holding GIL)\n");
+    /* Determine variant based on compile-time configuration */
+    const char *variant;
+#if FASTCOND_GIL_USE_NATIVE_COND
+    variant = "native_gil";
+#else
+    variant = "fastcond_gil";
+#endif
+
+    /* Check if JSON output is requested and output JSON format */
+    if (json_mode) {
+        /* Output compact JSON for easy parsing */
+        double throughput = ctx.global_acquisitions_done / elapsed;
+        printf("{\"test\":\"gil_test\",\"variant\":\"%s\",", variant);
+        printf("\"config\":{\"num_threads\":%d,\"total_acquisitions\":%d},", num_threads,
+               total_acquisitions);
+        printf("\"timing\":{\"elapsed_sec\":%.9f,\"throughput\":%.2f}", elapsed, throughput);
+        printf("}\n");
+
+        // Cleanup and return
+        fastcond_gil_destroy(&ctx.gil);
+        test_mutex_destroy(&ctx.start_mutex);
+        test_cond_destroy(&ctx.start_cond);
+        free(ctx.acquisition_sequence);
+        return (ctx.max_holder_violation > 1) ? 1 : 0;
     }
-
-    // Print fairness statistics
-    print_fairness_statistics(&ctx, num_threads);
-
-    // Performance metrics
-    printf("\n=== Performance Metrics ===\n");
-    printf("Total acquire/release cycles: %d\n", ctx.global_acquisitions_done);
-    printf("Operations per second: %.0f\n", ctx.global_acquisitions_done / elapsed);
-    printf("Average latency per operation: %.1f μs\n",
-           (elapsed * 1e6) / ctx.global_acquisitions_done);
 
     /* Check if CSV output is requested */
     {
@@ -624,14 +657,6 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
         if (csv_file) {
             const char *platform = getenv("FASTCOND_PLATFORM");
             const char *os_version = getenv("FASTCOND_OS_VERSION");
-            const char *variant;
-
-            /* Determine variant based on compile-time configuration */
-#if FASTCOND_GIL_USE_NATIVE_COND
-            variant = "native_gil";
-#else
-            variant = "fastcond_gil";
-#endif
 
             /* Default values if env vars not set */
             if (!platform)
@@ -645,9 +670,9 @@ int run_gil_test(int num_threads, int total_acquisitions, int hold_time_us, int 
                  * platform,os_version,test,variant,threads,param,iterations,elapsed_sec,throughput
                  * For gil_test: param=total_acquisitions, iterations=1 (single run)
                  */
+                double throughput = ctx.global_acquisitions_done / elapsed;
                 fprintf(fp, "%s,%s,gil_test,%s,%d,%d,%d,%.6f,%.2f\n", platform, os_version, variant,
-                        num_threads, ctx.global_acquisitions_done, 1, elapsed,
-                        ctx.global_acquisitions_done / elapsed);
+                        num_threads, ctx.global_acquisitions_done, 1, elapsed, throughput);
                 fclose(fp);
             }
         }
@@ -695,6 +720,10 @@ int main(int argc, char *argv[])
     int release_delay_us = 1000;       // 1ms default release delay (simulates I/O)
     int release_delay_variance_us = 0; // No variance by default
 
+    /* Check if JSON mode early to suppress informational output */
+    const char *json_output = getenv("FASTCOND_JSON_OUTPUT");
+    int json_mode = (json_output && strcmp(json_output, "1") == 0);
+
     // Parse command line arguments
     if (argc > 1) {
         num_threads = atoi(argv[1]);
@@ -736,17 +765,19 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("fastcond GIL Test Suite\n");
-    printf("Usage: %s [num_threads] [total_acquisitions] [hold_time_us] [work_cycles] "
-           "[release_delay_us] [release_delay_variance_us]\n\n",
-           argv[0]);
+    if (!json_mode) {
+        printf("fastcond GIL Test Suite\n");
+        printf("Usage: %s [num_threads] [total_acquisitions] [hold_time_us] [work_cycles] "
+               "[release_delay_us] [release_delay_variance_us]\n\n",
+               argv[0]);
 
-    // Run yield API test first
-    test_gil_yield();
+        // Run yield API test first
+        test_gil_yield();
+    }
 
     // Initialize random seed for release delay variance
     srand(time(NULL));
 
     return run_gil_test(num_threads, total_acquisitions, hold_time_us, work_cycles,
-                        release_delay_us, release_delay_variance_us);
+                        release_delay_us, release_delay_variance_us, json_mode);
 }
