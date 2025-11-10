@@ -1923,6 +1923,252 @@
           }
         ]
       }
+    },
+    {
+      "run_id": "19229736625",
+      "timestamp": "2025-11-10T11:20:50.114599+00:00",
+      "git": {
+        "commit": "7392870c22a9d8bb12c7e21740a1e35e18df6f89",
+        "commit_short": "7392870",
+        "branch": "master"
+      },
+      "results": {
+        "metadata": {
+          "total_benchmarks": 24,
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "tests": [
+            "gil_test",
+            "qtest",
+            "strongtest"
+          ],
+          "variants": [
+            "fc",
+            "native"
+          ]
+        },
+        "results": [
+          {
+            "platform": "linux",
+            "test": "gil_test",
+            "threads": 4,
+            "param": 33000,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 5779.8,
+                "elapsed_sec": 5.709543,
+                "speedup": 1.0081404049794789
+              },
+              {
+                "variant": "fc",
+                "throughput": 5781.57,
+                "elapsed_sec": 5.707794,
+                "speedup": 1.0084491368589235
+              },
+              {
+                "variant": "native",
+                "throughput": 5733.13,
+                "elapsed_sec": 5.75602,
+                "speedup": 1.0
+              },
+              {
+                "variant": "native",
+                "throughput": 5744.82,
+                "elapsed_sec": 5.74431,
+                "speedup": 1.0020390258026592
+              }
+            ]
+          },
+          {
+            "platform": "linux",
+            "test": "qtest",
+            "threads": 4,
+            "param": 10,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 753125.59,
+                "elapsed_sec": 0.043817,
+                "speedup": 1.3392040376687817
+              },
+              {
+                "variant": "fc",
+                "throughput": 768806.62,
+                "elapsed_sec": 0.042924,
+                "speedup": 1.3670879642935632
+              },
+              {
+                "variant": "native",
+                "throughput": 562368.07,
+                "elapsed_sec": 0.05868,
+                "speedup": 1.0
+              },
+              {
+                "variant": "native",
+                "throughput": 566004.71,
+                "elapsed_sec": 0.058303,
+                "speedup": 1.0064666544812901
+              }
+            ]
+          },
+          {
+            "platform": "linux",
+            "test": "strongtest",
+            "threads": 1,
+            "param": 5,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 1404743.22,
+                "elapsed_sec": 0.023492,
+                "speedup": 1.1920252830907179
+              },
+              {
+                "variant": "fc",
+                "throughput": 1379149.49,
+                "elapsed_sec": 0.023928,
+                "speedup": 1.1703071691932916
+              },
+              {
+                "variant": "native",
+                "throughput": 1178450.86,
+                "elapsed_sec": 0.028003,
+                "speedup": 1.0
+              },
+              {
+                "variant": "native",
+                "throughput": 1261448.36,
+                "elapsed_sec": 0.02616,
+                "speedup": 1.0704293261748734
+              }
+            ]
+          },
+          {
+            "platform": "macos",
+            "test": "gil_test",
+            "threads": 4,
+            "param": 33000,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 1315.98,
+                "elapsed_sec": 25.076369,
+                "speedup": 0.6261353633876532
+              },
+              {
+                "variant": "native",
+                "throughput": 2101.75,
+                "elapsed_sec": 15.701191,
+                "speedup": 1.0
+              }
+            ]
+          },
+          {
+            "platform": "macos",
+            "test": "qtest",
+            "threads": 4,
+            "param": 10,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 32842.26,
+                "elapsed_sec": 1.004803,
+                "speedup": 1.1590589540671559
+              },
+              {
+                "variant": "native",
+                "throughput": 28335.28,
+                "elapsed_sec": 1.164626,
+                "speedup": 1.0
+              }
+            ]
+          },
+          {
+            "platform": "macos",
+            "test": "strongtest",
+            "threads": 1,
+            "param": 5,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 8074.33,
+                "elapsed_sec": 4.087025,
+                "speedup": 0.6066486698077271
+              },
+              {
+                "variant": "native",
+                "throughput": 13309.73,
+                "elapsed_sec": 2.47939,
+                "speedup": 1.0
+              }
+            ]
+          },
+          {
+            "platform": "windows",
+            "test": "gil_test",
+            "threads": 4,
+            "param": 33000,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 2134.28,
+                "elapsed_sec": 15.461906,
+                "speedup": 1.0312374675666665
+              },
+              {
+                "variant": "native",
+                "throughput": 2069.63,
+                "elapsed_sec": 15.944905,
+                "speedup": 1.0
+              }
+            ]
+          },
+          {
+            "platform": "windows",
+            "test": "qtest",
+            "threads": 4,
+            "param": 10,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 754863.19,
+                "elapsed_sec": 0.043717,
+                "speedup": 1.0325344787105124
+              },
+              {
+                "variant": "native",
+                "throughput": 731077.95,
+                "elapsed_sec": 0.045139,
+                "speedup": 1.0
+              }
+            ]
+          },
+          {
+            "platform": "windows",
+            "test": "strongtest",
+            "threads": 1,
+            "param": 5,
+            "variants": [
+              {
+                "variant": "fc",
+                "throughput": 2775552.94,
+                "elapsed_sec": 0.01189,
+                "speedup": 0.9830270155498945
+              },
+              {
+                "variant": "native",
+                "throughput": 2823475.75,
+                "elapsed_sec": 0.011688,
+                "speedup": 1.0
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }
