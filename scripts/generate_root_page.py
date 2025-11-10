@@ -24,24 +24,24 @@ def main():
     # Calculate overall performance improvements
     improvements = []
     platforms = set()
+    speedups = []
 
-    for result in data:
+    for result in data["results"]:
         platform = result["platform"]
         test = result["test"]
-        speedup = result["speedup_vs_native"]
         platforms.add(platform.title())
 
-        if speedup > 1.0:
-            improvements.append(f"{test}: {speedup:.1f}x faster on {platform.title()}")
+        # Find fastcond variant speedups
+        for variant in result["variants"]:
+            if variant["variant"] != "native" and variant["speedup"] > 1.0:
+                speedups.append(variant["speedup"])
+                improvements.append(
+                    f"{test}: {variant['speedup']:.1f}x faster on {platform.title()}"
+                )
 
     platforms_str = ", ".join(sorted(platforms))
-    avg_improvement = sum(
-        r["speedup_vs_native"] for r in data if r["speedup_vs_native"] > 1.0
-    )
-    num_improvements = len([r for r in data if r["speedup_vs_native"] > 1.0])
-    avg_improvement = avg_improvement / max(num_improvements, 1)
-
-    best_improvement = max((r["speedup_vs_native"] for r in data), default=1.0)
+    avg_improvement = sum(speedups) / max(len(speedups), 1) if speedups else 1.0
+    best_improvement = max(speedups) if speedups else 1.0
 
     # Generate timestamp
     timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
