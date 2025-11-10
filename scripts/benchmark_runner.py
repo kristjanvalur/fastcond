@@ -436,7 +436,7 @@ def main():
         "--output-csv",
         type=str,
         metavar="FILE",
-        help="Output results in CSV format compatible with run_performance_benchmarks.sh",
+        help="Output results in CSV format for cross-platform analysis",
     )
     parser.add_argument(
         "--platform",
@@ -600,7 +600,7 @@ def main():
 
     # Output results
     if args.output_csv:
-        # Write CSV format compatible with run_performance_benchmarks.sh
+        # Write CSV format for cross-platform performance analysis
         # Format: platform,os_version,test,variant,threads,param,iterations,elapsed_sec,throughput
         with open(args.output_csv, "w") as f:
             # Write header
