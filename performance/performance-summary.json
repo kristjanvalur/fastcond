@@ -21,31 +21,31 @@
       "platform": "linux",
       "test": "gil_test",
       "threads": 4,
-      "param": 100000,
+      "param": 33000,
       "variants": [
         {
           "variant": "fc",
-          "throughput": 5777.59,
-          "elapsed_sec": 17.308255,
-          "speedup": 1.0060720355510977
+          "throughput": 5805.41,
+          "elapsed_sec": 5.684351,
+          "speedup": 1.0067336272105822
         },
         {
           "variant": "fc",
-          "throughput": 5790.6,
-          "elapsed_sec": 17.269356,
-          "speedup": 1.0083375125376128
+          "throughput": 5779.47,
+          "elapsed_sec": 5.709865,
+          "speedup": 1.0022352937096164
         },
         {
           "variant": "native",
-          "throughput": 5742.72,
-          "elapsed_sec": 17.413363,
+          "throughput": 5766.58,
+          "elapsed_sec": 5.722629,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 5749.1,
-          "elapsed_sec": 17.394039,
-          "speedup": 1.0011109718043019
+          "throughput": 5744.95,
+          "elapsed_sec": 5.744179,
+          "speedup": 0.9962490765757173
         }
       ]
     },
@@ -57,27 +57,27 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 687702.73,
-          "elapsed_sec": 0.145412,
-          "speedup": 1.1093288524174885
+          "throughput": 727397.14,
+          "elapsed_sec": 0.045367,
+          "speedup": 1.1220572125246573
         },
         {
           "variant": "fc",
-          "throughput": 764188.57,
-          "elapsed_sec": 0.130858,
-          "speedup": 1.2327076691823828
+          "throughput": 782186.66,
+          "elapsed_sec": 0.042189,
+          "speedup": 1.2065735966374187
         },
         {
           "variant": "native",
-          "throughput": 619926.84,
-          "elapsed_sec": 0.161309,
+          "throughput": 648270.99,
+          "elapsed_sec": 0.050905,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 635240.72,
-          "elapsed_sec": 0.157421,
-          "speedup": 1.0247027213727349
+          "throughput": 620464.71,
+          "elapsed_sec": 0.053186,
+          "speedup": 0.9571070116834937
         }
       ]
     },
@@ -89,27 +89,27 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 1401196.78,
-          "elapsed_sec": 0.071368,
-          "speedup": 1.263730603907056
+          "throughput": 1430824.29,
+          "elapsed_sec": 0.023064,
+          "speedup": 1.204898455597012
         },
         {
           "variant": "fc",
-          "throughput": 1380940.62,
-          "elapsed_sec": 0.072414,
-          "speedup": 1.2454617000136015
+          "throughput": 1452103.41,
+          "elapsed_sec": 0.022726,
+          "speedup": 1.2228176221946543
         },
         {
           "variant": "native",
-          "throughput": 1108778.07,
-          "elapsed_sec": 0.090189,
+          "throughput": 1187506.12,
+          "elapsed_sec": 0.027789,
           "speedup": 1.0
         },
         {
           "variant": "native",
-          "throughput": 1042290.02,
-          "elapsed_sec": 0.095943,
-          "speedup": 0.9400348439431165
+          "throughput": 1192603.99,
+          "elapsed_sec": 0.027671,
+          "speedup": 1.0042929210335352
         }
       ]
     },
@@ -117,18 +117,18 @@
       "platform": "macos",
       "test": "gil_test",
       "threads": 4,
-      "param": 100000,
+      "param": 33000,
       "variants": [
         {
           "variant": "fc",
-          "throughput": 1405.91,
-          "elapsed_sec": 71.128511,
-          "speedup": 0.8814427495752378
+          "throughput": 1060.06,
+          "elapsed_sec": 31.130235,
+          "speedup": 0.5599332343821803
         },
         {
           "variant": "native",
-          "throughput": 1595.01,
-          "elapsed_sec": 62.695374,
+          "throughput": 1893.19,
+          "elapsed_sec": 17.43092,
           "speedup": 1.0
         }
       ]
@@ -141,14 +141,14 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 140176.64,
-          "elapsed_sec": 0.713386,
-          "speedup": 1.1323059027847897
+          "throughput": 25950.3,
+          "elapsed_sec": 1.271662,
+          "speedup": 0.9162264476033982
         },
         {
           "variant": "native",
-          "throughput": 123797.5,
-          "elapsed_sec": 0.807771,
+          "throughput": 28323.02,
+          "elapsed_sec": 1.16513,
           "speedup": 1.0
         }
       ]
@@ -161,14 +161,14 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 1645393.7,
-          "elapsed_sec": 0.060776,
-          "speedup": 10.91133830590048
+          "throughput": 21974.7,
+          "elapsed_sec": 1.501727,
+          "speedup": 1.66157161490331
         },
         {
           "variant": "native",
-          "throughput": 150796.69,
-          "elapsed_sec": 0.663145,
+          "throughput": 13225.25,
+          "elapsed_sec": 2.495227,
           "speedup": 1.0
         }
       ]
@@ -177,18 +177,18 @@
       "platform": "windows",
       "test": "gil_test",
       "threads": 4,
-      "param": 100000,
+      "param": 33000,
       "variants": [
         {
           "variant": "fc",
-          "throughput": 2065.98,
-          "elapsed_sec": 48.403132,
-          "speedup": 1.0258246150637795
+          "throughput": 2028.03,
+          "elapsed_sec": 16.271943,
+          "speedup": 0.964672025876421
         },
         {
           "variant": "native",
-          "throughput": 2013.97,
-          "elapsed_sec": 49.653173,
+          "throughput": 2102.3,
+          "elapsed_sec": 15.697074,
           "speedup": 1.0
         }
       ]
@@ -201,14 +201,14 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 794468.78,
-          "elapsed_sec": 0.12587,
-          "speedup": 0.9791867737024986
+          "throughput": 764330.68,
+          "elapsed_sec": 0.043175,
+          "speedup": 0.9978729956456728
         },
         {
           "variant": "native",
-          "throughput": 811355.71,
-          "elapsed_sec": 0.123251,
+          "throughput": 765959.88,
+          "elapsed_sec": 0.043083,
           "speedup": 1.0
         }
       ]
@@ -221,14 +221,14 @@
       "variants": [
         {
           "variant": "fc",
-          "throughput": 2984026.34,
-          "elapsed_sec": 0.033512,
-          "speedup": 0.9938619209912393
+          "throughput": 2890369.93,
+          "elapsed_sec": 0.011417,
+          "speedup": 0.9716184651515819
         },
         {
           "variant": "native",
-          "throughput": 3002455.65,
-          "elapsed_sec": 0.033306,
+          "throughput": 2974799.3,
+          "elapsed_sec": 0.011093,
           "speedup": 1.0
         }
       ]
