@@ -149,17 +149,80 @@ def run_single_benchmark(
         return None
 
 
-def calculate_statistics(runs: List[BenchmarkRun]) -> BenchmarkStatistics:
-    """Calculate statistical summary from multiple runs."""
-    throughputs = [r.throughput for r in runs]
+def filter_outliers_iqr(values: List[float], k: float = 1.5) -> tuple:
+    """
+    Filter outliers using IQR method.
+    
+    Args:
+        values: List of numerical values
+        k: IQR multiplier (1.5 = standard, 2.0 = conservative)
+        
+    Returns:
+        Tuple of (clean_values, outliers, bounds)
+    """
+    if len(values) < 3:
+        # Too few points for meaningful outlier detection
+        return values, [], (None, None)
+    
+    sorted_values = sorted(values)
+    n = len(sorted_values)
+    
+    # Calculate quartiles with proper interpolation
+    def quartile(data, q):
+        pos = q * (n - 1)
+        if pos == int(pos):
+            return data[int(pos)]
+        else:
+            lower = int(pos)
+            upper = lower + 1
+            weight = pos - lower
+            return data[lower] * (1 - weight) + data[upper] * weight
+    
+    q1 = quartile(sorted_values, 0.25)
+    q3 = quartile(sorted_values, 0.75)
+    iqr = q3 - q1
+    
+    # Calculate outlier bounds
+    lower_bound = q1 - k * iqr
+    upper_bound = q3 + k * iqr
+    
+    # Separate inliers and outliers
+    inliers = []
+    outliers = []
+    for x in values:
+        if x < lower_bound or x > upper_bound:
+            outliers.append(x)
+        else:
+            inliers.append(x)
+    
+    return inliers, outliers, (lower_bound, upper_bound)
 
-    mean = statistics.mean(throughputs)
-    stdev = statistics.stdev(throughputs) if len(throughputs) > 1 else 0.0
+
+def calculate_statistics(runs: List[BenchmarkRun]) -> BenchmarkStatistics:
+    """Calculate statistical summary from multiple runs with IQR outlier filtering."""
+    throughputs = [r.throughput for r in runs]
+    
+    # Apply IQR outlier filtering
+    clean_throughputs, outliers, bounds = filter_outliers_iqr(throughputs)
+    
+    # Log outlier removal if any
+    if outliers:
+        print(f"    IQR filter removed {len(outliers)} outliers: {[f'{x:,.0f}' for x in outliers]}", file=sys.stderr)
+        print(f"    IQR bounds: [{bounds[0]:,.0f}, {bounds[1]:,.0f}]", file=sys.stderr)
+    
+    # Use clean data for statistics
+    if not clean_throughputs:
+        # All runs were outliers (shouldn't happen with reasonable data)
+        print("    Warning: All runs filtered as outliers, using original data", file=sys.stderr)
+        clean_throughputs = throughputs
+    
+    mean = statistics.mean(clean_throughputs)
+    stdev = statistics.stdev(clean_throughputs) if len(clean_throughputs) > 1 else 0.0
     cv = (stdev / mean * 100) if mean > 0 else 0.0
 
     # 95% confidence interval using t-distribution
     # For small samples, this is more accurate than normal distribution
-    if len(throughputs) > 1:
+    if len(clean_throughputs) > 1:
         import math
 
         # Approximate t-value for 95% CI (good enough for n >= 3)
@@ -172,8 +235,8 @@ def calculate_statistics(runs: List[BenchmarkRun]) -> BenchmarkStatistics:
             8: 2.365,
             10: 2.262,
         }
-        t = t_values.get(len(throughputs), 2.0)  # Default to ~2 for larger n
-        margin = t * (stdev / math.sqrt(len(throughputs)))
+        t = t_values.get(len(clean_throughputs), 2.0)  # Default to ~2 for larger n
+        margin = t * (stdev / math.sqrt(len(clean_throughputs)))
         ci_lower = mean - margin
         ci_upper = mean + margin
     else:
@@ -183,17 +246,19 @@ def calculate_statistics(runs: List[BenchmarkRun]) -> BenchmarkStatistics:
         mean_throughput=mean,
         stdev_throughput=stdev,
         cv_percent=cv,
-        min_throughput=min(throughputs),
-        max_throughput=max(throughputs),
-        individual_runs=throughputs,
+        min_throughput=min(clean_throughputs),  # Min of CLEAN data
+        max_throughput=max(clean_throughputs),  # Max of CLEAN data
+        individual_runs=clean_throughputs,      # Store clean runs only
         confidence_interval_95=(ci_lower, ci_upper),
     )
 
-    # Add latency statistics if available
+    # Add latency statistics if available (also filter outliers)
     latencies = [r.latency_avg for r in runs if r.latency_avg is not None]
     if latencies:
-        stats.mean_latency = statistics.mean(latencies)
-        stats.stdev_latency = statistics.stdev(latencies) if len(latencies) > 1 else 0.0
+        clean_latencies, _, _ = filter_outliers_iqr(latencies)
+        if clean_latencies:
+            stats.mean_latency = statistics.mean(clean_latencies)
+            stats.stdev_latency = statistics.stdev(clean_latencies) if len(clean_latencies) > 1 else 0.0
 
     # Add spurious wakeup statistics if available
     spurious_wakeups = [
